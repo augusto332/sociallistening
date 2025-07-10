@@ -14,7 +14,7 @@ export default function SocialListeningApp() {
   const [activeTab, setActiveTab] = useState("home");
 
   return (
-    <div className="min-h-screen flex bg-gray-100 text-gray-800">
+    <div className="min-h-screen flex bg-neutral-950 text-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md p-6 space-y-4">
         <h1 className="text-xl font-bold mb-4">🔍 Social Listening</h1>
@@ -28,7 +28,7 @@ export default function SocialListeningApp() {
         {activeTab === "home" && (
           <section className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
               {[...Array(6)].map((_, i) => (
                 <MentionCard
                   key={i}
