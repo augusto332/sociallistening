@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
@@ -29,15 +30,13 @@ export default function SocialListeningApp() {
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
             <div className="flex flex-col gap-4">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="rounded-xl shadow-sm border bg-white">
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="font-semibold">@usuario_placeholder</div>
-                      <div className="text-sm text-gray-600">Twitter · Hace 3h</div>
-                    </div>
-                    <p className="text-gray-800 leading-relaxed">Contenido de la mención sobre "palabra clave"... #ejemplo</p>
-                  </CardContent>
-                </Card>
+                <MentionCard
+                  key={i}
+                  source={i % 2 === 0 ? "twitter" : "youtube"}
+                  username={`usuario_${i + 1}`}
+                  timestamp="Hace 3h"
+                  content={'Contenido de la mención sobre "palabra clave"... #ejemplo'}
+                />
               ))}
             </div>
           </section>
