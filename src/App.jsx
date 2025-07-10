@@ -16,7 +16,7 @@ export default function SocialListeningApp() {
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-6 space-y-4">
+      <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
         <h1 className="text-xl font-bold mb-4">🔍 Social Listening</h1>
         <button onClick={() => setActiveTab("home")} className={`w-full text-left p-2 rounded hover:bg-gray-100 ${activeTab === "home" ? "bg-gray-200 font-semibold" : ""}`}>🏠 Home</button>
         <button onClick={() => setActiveTab("dashboard")} className={`w-full text-left p-2 rounded hover:bg-gray-100 ${activeTab === "dashboard" ? "bg-gray-200 font-semibold" : ""}`}>📊 Dashboard</button>
@@ -84,10 +84,10 @@ export default function SocialListeningApp() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="bg-secondary">
+                    <CardContent className="p-4">
                     <p className="font-semibold">📌 Título de gráfico o insight {i + 1}</p>
                     <p className="text-sm text-gray-600">Placeholder de gráfico o métrica</p>
                   </CardContent>
