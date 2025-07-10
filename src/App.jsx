@@ -3,12 +3,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 export default function SocialListeningApp() {
-  const [date, setDate] = useState(new Date());
+  // State for date range filters in dashboard
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("home");
 
   return (
@@ -47,7 +48,23 @@ export default function SocialListeningApp() {
             <h2 className="text-2xl font-bold mb-4">📈 Análisis de palabras clave</h2>
             <div className="flex flex-wrap gap-4 mb-4">
               <Input placeholder="Buscar keyword..." className="w-64" />
-              <Calendar mode="single" selected={date} onSelect={setDate} className="border rounded-md" />
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="Desde"
+                  className="w-40"
+                />
+                <span>a</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="Hasta"
+                  className="w-40"
+                />
+              </div>
               <Select>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Plataforma" />
