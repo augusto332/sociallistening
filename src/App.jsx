@@ -39,7 +39,7 @@ export default function SocialListeningApp() {
                 placeholder="Buscar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-full max-w-md"
+                className="pl-9 w-full max-w-xl"
               />
             </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
