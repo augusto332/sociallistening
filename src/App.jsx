@@ -7,7 +7,13 @@ import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import RightSidebar from "@/components/RightSidebar";
-import { Search, CircleUser } from "lucide-react";
+import {
+  Search,
+  CircleUser,
+  Home,
+  BarChart2,
+  Settings,
+} from "lucide-react";
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
@@ -23,10 +29,37 @@ export default function SocialListeningApp() {
       </button>
       {/* Sidebar */}
       <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
-        <h1 className="text-xl font-bold mb-4">🔍 Social Listening</h1>
-        <button onClick={() => setActiveTab("home")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "home" ? "font-semibold" : ""}`}>🏠 Home</button>
-        <button onClick={() => setActiveTab("dashboard")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "dashboard" ? "font-semibold" : ""}`}>📊 Dashboard</button>
-        <button onClick={() => setActiveTab("config")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "config" ? "font-semibold" : ""}`}>⚙️ Configuración</button>
+        <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Search className="size-5" />
+          Social Listening
+        </h1>
+        <button
+          onClick={() => setActiveTab("home")}
+          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "home" ? "font-semibold" : ""
+          }`}
+        >
+          <Home className="size-4 mr-2 inline" />
+          Home
+        </button>
+        <button
+          onClick={() => setActiveTab("dashboard")}
+          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "dashboard" ? "font-semibold" : ""
+          }`}
+        >
+          <BarChart2 className="size-4 mr-2 inline" />
+          Dashboard
+        </button>
+        <button
+          onClick={() => setActiveTab("config")}
+          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "config" ? "font-semibold" : ""
+          }`}
+        >
+          <Settings className="size-4 mr-2 inline" />
+          Configuración
+        </button>
       </aside>
 
       {/* Main Content */}
