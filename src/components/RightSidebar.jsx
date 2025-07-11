@@ -21,7 +21,7 @@ export default function RightSidebar() {
   return (
     <aside
       ref={sidebarRef}
-      className="w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col h-full mt-6"
+      className="w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col mt-8 rounded-lg self-start"
     >
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
