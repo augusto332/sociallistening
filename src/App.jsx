@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import RightSidebar from "@/components/RightSidebar";
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
@@ -114,6 +115,8 @@ export default function SocialListeningApp() {
           </section>
         )}
       </main>
+      {/* Right Sidebar */}
+      <RightSidebar />
     </div>
   );
 }
