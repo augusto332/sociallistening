@@ -1,12 +1,40 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, FilterX } from "lucide-react";
 
 export default function RightSidebar() {
   const [range, setRange] = useState("");
+  const [search, setSearch] = useState("");
+  const sidebarRef = useRef(null);
+
+  const handleClearFilters = () => {
+    setRange("");
+    const inputs = sidebarRef.current?.querySelectorAll('input[type="checkbox"]');
+    inputs?.forEach((input) => {
+      if (input instanceof HTMLInputElement) {
+        input.checked = false;
+      }
+    });
+  };
 
   return (
-    <aside className="w-64 bg-secondary shadow-md p-6 space-y-6">
+    <aside
+      ref={sidebarRef}
+      className="w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col h-full"
+    >
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>
@@ -54,6 +82,15 @@ export default function RightSidebar() {
           </label>
         </div>
       </div>
+
+      <Button
+        variant="outline"
+        onClick={handleClearFilters}
+        className="mt-auto w-full"
+      >
+        <FilterX className="size-4" />
+        Limpiar filtros
+      </Button>
     </aside>
   );
 }
