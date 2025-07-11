@@ -7,15 +7,20 @@ import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import RightSidebar from "@/components/RightSidebar";
+import { Search, CircleUser } from "lucide-react";
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("home");
+  const [search, setSearch] = useState("");
 
   return (
-    <div className="min-h-screen flex bg-neutral-950 text-gray-100">
+    <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
+      <button className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <CircleUser className="size-7" />
+      </button>
       {/* Sidebar */}
       <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
         <h1 className="text-xl font-bold mb-4">🔍 Social Listening</h1>
@@ -28,6 +33,15 @@ export default function SocialListeningApp() {
       <main className="flex-1 p-8 overflow-y-auto">
         {activeTab === "home" && (
           <section className="max-w-2xl mx-auto">
+            <div className="mb-6 flex justify-center relative">
+              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 w-full max-w-md"
+              />
+            </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
             <div className="flex flex-col gap-6">
               {[...Array(6)].map((_, i) => (
