@@ -18,9 +18,9 @@ export default function SocialListeningApp() {
       {/* Sidebar */}
       <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
         <h1 className="text-xl font-bold mb-4">🔍 Social Listening</h1>
-        <button onClick={() => setActiveTab("home")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "home" ? "bg-gray-200 font-semibold" : ""}`}>🏠 Home</button>
-        <button onClick={() => setActiveTab("dashboard")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "dashboard" ? "bg-gray-200 font-semibold" : ""}`}>📊 Dashboard</button>
-        <button onClick={() => setActiveTab("config")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "config" ? "bg-gray-200 font-semibold" : ""}`}>⚙️ Configuración</button>
+        <button onClick={() => setActiveTab("home")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "home" ? "font-semibold" : ""}`}>🏠 Home</button>
+        <button onClick={() => setActiveTab("dashboard")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "dashboard" ? "font-semibold" : ""}`}>📊 Dashboard</button>
+        <button onClick={() => setActiveTab("config")} className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${activeTab === "config" ? "font-semibold" : ""}`}>⚙️ Configuración</button>
       </aside>
 
       {/* Main Content */}
