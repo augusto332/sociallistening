@@ -112,6 +112,7 @@ export default function SocialListeningApp() {
                 filteredMentions.map((m, i) => (
                   <MentionCard
                     key={`${m.created_at}-${i}`}
+                    mention={m}
                     source={m.platform}
                     username={m.source}
                     timestamp={new Date(m.created_at).toLocaleString()}
