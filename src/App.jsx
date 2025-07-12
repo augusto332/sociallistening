@@ -30,7 +30,7 @@ export default function SocialListeningApp() {
       m.source.toLowerCase().includes(search.toLowerCase())
   );
 
-  const fetchMentions = async (from = 0, to = 9) => {
+  const fetchMentions = async (from = 0, to = 4) => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
       .select("*")
@@ -49,7 +49,7 @@ export default function SocialListeningApp() {
 
   const loadMore = async () => {
     setLoadingMore(true);
-    await fetchMentions(mentions.length, mentions.length + 9);
+    await fetchMentions(mentions.length, mentions.length + 4);
     setLoadingMore(false);
   };
 
@@ -117,6 +117,7 @@ export default function SocialListeningApp() {
                     timestamp={new Date(m.created_at).toLocaleString()}
                     content={m.mention}
                     keyword={m.keyword}
+                    url={m.url}
                   />
                 ))
               ) : (
