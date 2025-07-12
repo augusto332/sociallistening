@@ -14,7 +14,9 @@ import {
   Home,
   BarChart2,
   Settings,
+  Heart,
 } from "lucide-react";
+import { useFavorites } from "@/context/FavoritesContext";
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
@@ -24,6 +26,7 @@ export default function SocialListeningApp() {
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const { favorites } = useFavorites();
   const filteredMentions = mentions.filter(
     (m) =>
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,6 +75,15 @@ export default function SocialListeningApp() {
         >
           <Home className="size-4 mr-2 inline" />
           Home
+        </button>
+        <button
+          onClick={() => setActiveTab("favorites")}
+          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "favorites" ? "font-semibold" : ""
+          }`}
+        >
+          <Heart className="size-4 mr-2 inline" />
+          Favoritos
         </button>
         <button
           onClick={() => setActiveTab("dashboard")}
@@ -135,6 +147,30 @@ export default function SocialListeningApp() {
             >
               {loadingMore ? "Cargando..." : "Ver más"}
             </Button>
+          </section>
+        )}
+
+        {activeTab === "favorites" && (
+          <section className="max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
+            <div className="flex flex-col gap-6">
+              {favorites.length ? (
+                favorites.map((m, i) => (
+                  <MentionCard
+                    key={`${m.created_at}-${i}`}
+                    mention={m}
+                    source={m.platform}
+                    username={m.source}
+                    timestamp={new Date(m.created_at).toLocaleString()}
+                    content={m.mention}
+                    keyword={m.keyword}
+                    url={m.url}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground">No hay favoritos</p>
+              )}
+            </div>
           </section>
         )}
 
