@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { FaTwitter, FaYoutube, FaReddit } from "react-icons/fa";
+import { FaTwitter, FaYoutube, FaReddit, FaHeart, FaRegHeart } from "react-icons/fa";
+import { useFavorites } from "@/context/FavoritesContext";
 
 export default function MentionCard({
+  mention,
   source = "twitter",
   username,
   timestamp,
@@ -17,12 +19,25 @@ export default function MentionCard({
   };
   const Icon = icons[source?.toLowerCase?.()] || FaTwitter;
   const [expanded, setExpanded] = useState(false);
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const favorite = isFavorite(mention);
+
+  const handleFavClick = (e) => {
+    e.stopPropagation();
+    toggleFavorite(mention);
+  };
 
   return (
     <Card
       onClick={() => setExpanded((e) => !e)}
-      className="border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
+      className="relative border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
     >
+      <button
+        onClick={handleFavClick}
+        className="absolute top-2 right-2 text-primary hover:text-primary/80"
+      >
+        {favorite ? <FaHeart /> : <FaRegHeart />}
+      </button>
       <CardContent className="p-6 flex gap-4">
         <div className="w-12 h-12 flex items-center justify-center bg-muted rounded-full shrink-0">
           <Icon className="text-primary size-6" />
