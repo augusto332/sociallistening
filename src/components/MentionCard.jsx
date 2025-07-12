@@ -1,7 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { FaTwitter, FaYoutube, FaReddit } from "react-icons/fa";
 
-export default function MentionCard({ source = "twitter", username, timestamp, content }) {
+export default function MentionCard({
+  source = "twitter",
+  username,
+  timestamp,
+  content,
+  keyword,
+}) {
   const icons = {
     twitter: FaTwitter,
     youtube: FaYoutube,
@@ -20,6 +26,11 @@ export default function MentionCard({ source = "twitter", username, timestamp, c
             <span className="text-xs text-muted-foreground">{timestamp}</span>
           </div>
           <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
+          {keyword && (
+            <span className="inline-block text-xs mt-2 bg-muted text-muted-foreground px-2 py-0.5 rounded">
+              {keyword}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

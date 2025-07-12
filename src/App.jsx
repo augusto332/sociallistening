@@ -23,27 +23,35 @@ export default function SocialListeningApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
   const filteredMentions = mentions.filter(
     (m) =>
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
       m.source.toLowerCase().includes(search.toLowerCase())
   );
 
+  const fetchMentions = async (from = 0, to = 9) => {
+    const { data, error } = await supabase
+      .from("total_mentions_vw")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (error) {
+      console.error("Error fetching mentions", error);
+    } else {
+      setMentions((prev) => [...prev, ...(data || [])]);
+    }
+  };
+
   useEffect(() => {
-    const fetchMentions = async () => {
-      const { data, error } = await supabase
-        .from("total_mentions_vw")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (error) {
-        console.error("Error fetching mentions", error);
-      } else {
-        setMentions(data || []);
-      }
-    };
     fetchMentions();
   }, []);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    await fetchMentions(mentions.length, mentions.length + 9);
+    setLoadingMore(false);
+  };
 
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
@@ -108,6 +116,7 @@ export default function SocialListeningApp() {
                     username={m.source}
                     timestamp={new Date(m.created_at).toLocaleString()}
                     content={m.mention}
+                    keyword={m.keyword}
                   />
                 ))
               ) : (
@@ -116,6 +125,14 @@ export default function SocialListeningApp() {
                 </p>
               )}
             </div>
+            <Button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mx-auto mt-6 block"
+              variant="outline"
+            >
+              {loadingMore ? "Cargando..." : "Ver más"}
+            </Button>
           </section>
         )}
 
