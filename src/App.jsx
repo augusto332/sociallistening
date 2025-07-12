@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import RightSidebar from "@/components/RightSidebar";
+import { supabase } from "@/lib/supabaseClient";
 import {
   Search,
   CircleUser,
@@ -21,6 +22,28 @@ export default function SocialListeningApp() {
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("home");
   const [search, setSearch] = useState("");
+  const [mentions, setMentions] = useState([]);
+  const filteredMentions = mentions.filter(
+    (m) =>
+      m.mention.toLowerCase().includes(search.toLowerCase()) ||
+      m.source.toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    const fetchMentions = async () => {
+      const { data, error } = await supabase
+        .from("total_mentions_vw")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) {
+        console.error("Error fetching mentions", error);
+      } else {
+        setMentions(data || []);
+      }
+    };
+    fetchMentions();
+  }, []);
 
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
@@ -77,15 +100,21 @@ export default function SocialListeningApp() {
             </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
             <div className="flex flex-col gap-6">
-              {[...Array(6)].map((_, i) => (
-                <MentionCard
-                  key={i}
-                  source={i % 2 === 0 ? "twitter" : "youtube"}
-                  username={`usuario_${i + 1}`}
-                  timestamp="Hace 3h"
-                  content={'Contenido de la mención sobre "palabra clave"... #ejemplo'}
-                />
-              ))}
+              {filteredMentions.length ? (
+                filteredMentions.map((m, i) => (
+                  <MentionCard
+                    key={`${m.created_at}-${i}`}
+                    source={m.platform}
+                    username={m.source}
+                    timestamp={new Date(m.created_at).toLocaleString()}
+                    content={m.mention}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  No se encontraron menciones
+                </p>
+              )}
             </div>
           </section>
         )}
