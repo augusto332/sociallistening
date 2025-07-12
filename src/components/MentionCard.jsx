@@ -1,8 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Twitter, Youtube } from "lucide-react";
+import { FaTwitter, FaYoutube, FaReddit } from "react-icons/fa";
 
 export default function MentionCard({ source = "twitter", username, timestamp, content }) {
-  const Icon = source === "youtube" ? Youtube : Twitter;
+  const icons = {
+    twitter: FaTwitter,
+    youtube: FaYoutube,
+    reddit: FaReddit,
+  };
+  const Icon = icons[source?.toLowerCase?.()] || FaTwitter;
   return (
     <Card className="border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg">
       <CardContent className="p-6 flex gap-4">
