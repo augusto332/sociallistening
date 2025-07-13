@@ -5,8 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
 import { FaHeart } from "react-icons/fa";
+import { cn } from "@/lib/utils";
 
-export default function RightSidebar() {
+export default function RightSidebar({ className = "" }) {
   const [range, setRange] = useState("");
   const sidebarRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
@@ -24,7 +25,10 @@ export default function RightSidebar() {
   return (
     <aside
       ref={sidebarRef}
-      className="w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col mt-8 rounded-lg self-start"
+      className={cn(
+        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col rounded-lg self-start",
+        className
+      )}
     >
       <div>
         <p className="font-semibold mb-2">Favoritos</p>
@@ -102,3 +106,4 @@ export default function RightSidebar() {
     </aside>
   );
 }
+

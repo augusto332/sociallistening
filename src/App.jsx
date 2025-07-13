@@ -17,6 +17,8 @@ import {
   Heart,
 } from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
@@ -131,7 +133,7 @@ export default function SocialListeningApp() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
         {activeTab === "home" && (
-          <section className="max-w-2xl mx-auto">
+          <section className="max-w-5xl mx-auto">
             <div className="mb-6 flex justify-center relative">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
@@ -142,34 +144,40 @@ export default function SocialListeningApp() {
               />
             </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
-            <div className="flex flex-col gap-6">
-              {filteredMentions.length ? (
-                filteredMentions.map((m, i) => (
-                  <MentionCard
-                    key={`${m.created_at}-${i}`}
-                    mention={m}
-                    source={m.platform}
-                    username={m.source}
-                    timestamp={new Date(m.created_at).toLocaleString()}
-                    content={m.mention}
-                    keyword={m.keyword}
-                    url={m.url}
-                  />
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground">
-                  No se encontraron menciones
-                </p>
-              )}
+            <div className="flex items-start gap-8">
+              <div className="flex-1 flex flex-col gap-6">
+                {filteredMentions.length ? (
+                  filteredMentions.map((m, i) => (
+                    <MentionCard
+                      key={`${m.created_at}-${i}`}
+                      mention={m}
+                      source={m.platform}
+                      username={m.source}
+                      timestamp={formatDistanceToNow(new Date(m.created_at), {
+                        addSuffix: true,
+                        locale: es,
+                      })}
+                      content={m.mention}
+                      keyword={m.keyword}
+                      url={m.url}
+                    />
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground">
+                    No se encontraron menciones
+                  </p>
+                )}
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="mx-auto mt-6 block"
+                  variant="outline"
+                >
+                  {loadingMore ? "Cargando..." : "Ver más"}
+                </Button>
+              </div>
+              <RightSidebar className="mt-0" />
             </div>
-            <Button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="mx-auto mt-6 block"
-              variant="outline"
-            >
-              {loadingMore ? "Cargando..." : "Ver más"}
-            </Button>
           </section>
         )}
 
@@ -184,7 +192,10 @@ export default function SocialListeningApp() {
                     mention={m}
                     source={m.platform}
                     username={m.source}
-                    timestamp={new Date(m.created_at).toLocaleString()}
+                    timestamp={formatDistanceToNow(new Date(m.created_at), {
+                      addSuffix: true,
+                      locale: es,
+                    })}
                     content={m.mention}
                     keyword={m.keyword}
                     url={m.url}
@@ -269,8 +280,6 @@ export default function SocialListeningApp() {
           </section>
         )}
       </main>
-      {/* Right Sidebar */}
-      <RightSidebar />
     </div>
   );
 }
