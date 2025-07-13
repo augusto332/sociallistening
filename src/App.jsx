@@ -131,9 +131,9 @@ export default function SocialListeningApp() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
-          <section className="max-w-5xl mx-auto">
+          <section>
             <div className="mb-6 flex justify-center relative">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
