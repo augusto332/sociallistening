@@ -26,6 +26,7 @@ export default function SocialListeningApp() {
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter(
     (m) =>
@@ -56,11 +57,42 @@ export default function SocialListeningApp() {
     setLoadingMore(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
-      <button className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+      <button
+        onClick={() => setMenuOpen((o) => !o)}
+        className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+      >
         <CircleUser className="size-7" />
       </button>
+      {menuOpen && (
+        <div className="absolute right-4 top-12 bg-secondary shadow-md rounded p-2 space-y-1">
+          <button
+            onClick={() => {
+              setActiveTab("config");
+              setMenuOpen(false);
+            }}
+            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+          >
+            <Settings className="size-4" />
+            Configuración
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
       {/* Sidebar */}
       <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
         <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -93,15 +125,6 @@ export default function SocialListeningApp() {
         >
           <BarChart2 className="size-4 mr-2 inline" />
           Dashboard
-        </button>
-        <button
-          onClick={() => setActiveTab("config")}
-          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
-            activeTab === "config" ? "font-semibold" : ""
-          }`}
-        >
-          <Settings className="size-4 mr-2 inline" />
-          Configuración
         </button>
       </aside>
 
