@@ -145,7 +145,7 @@ export default function SocialListeningApp() {
             </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
             <div className="flex items-start gap-8">
-              <div className="flex-1 flex flex-col gap-6">
+              <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
                 {filteredMentions.length ? (
                   filteredMentions.map((m, i) => (
                     <MentionCard
