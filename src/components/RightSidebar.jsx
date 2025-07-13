@@ -1,16 +1,13 @@
 import { useRef, useState } from "react";
-import { useFavorites } from "@/context/FavoritesContext";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
-import { FaHeart } from "react-icons/fa";
 import { cn } from "@/lib/utils";
 
 export default function RightSidebar({ className = "" }) {
   const [range, setRange] = useState("");
   const sidebarRef = useRef(null);
-  const { favorites, toggleFavorite } = useFavorites();
 
   const handleClearFilters = () => {
     setRange("");
@@ -30,23 +27,6 @@ export default function RightSidebar({ className = "" }) {
         className
       )}
     >
-      <div>
-        <p className="font-semibold mb-2">Favoritos</p>
-        {favorites.length ? (
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {favorites.map((f) => (
-              <div key={f.created_at} className="text-sm flex items-start gap-2">
-                <span className="flex-1 line-clamp-2">{f.mention}</span>
-                <button onClick={() => toggleFavorite(f)} className="text-primary hover:text-primary/80">
-                  <FaHeart />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">No hay favoritos</p>
-        )}
-      </div>
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>

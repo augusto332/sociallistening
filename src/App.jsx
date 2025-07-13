@@ -131,9 +131,9 @@ export default function SocialListeningApp() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
-          <section className="max-w-5xl mx-auto">
+          <section>
             <div className="mb-6 flex justify-center relative">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
@@ -145,7 +145,7 @@ export default function SocialListeningApp() {
             </div>
             <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
             <div className="flex items-start gap-8">
-              <div className="flex-1 flex flex-col gap-6">
+              <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
                 {filteredMentions.length ? (
                   filteredMentions.map((m, i) => (
                     <MentionCard
