@@ -1,32 +1,41 @@
-import { useRef, useState } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FilterX } from "lucide-react";
+import { FilterX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function RightSidebar({ className = "" }) {
-  const [range, setRange] = useState("");
-  const sidebarRef = useRef(null);
+export default function RightSidebar({
+  className = "",
+  search,
+  onSearchChange,
+  range,
+  setRange,
+  sources,
+  toggleSource,
+  clearFilters,
+}) {
 
   const handleClearFilters = () => {
-    setRange("");
-    const inputs = sidebarRef.current?.querySelectorAll('input[type="checkbox"]');
-    inputs?.forEach((input) => {
-      if (input instanceof HTMLInputElement) {
-        input.checked = false;
-      }
-    });
+    clearFilters();
   };
 
   return (
     <aside
-      ref={sidebarRef}
       className={cn(
         "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col rounded-lg self-start",
         className
       )}
     >
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-9"
+        />
+      </div>
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>
@@ -50,7 +59,11 @@ export default function RightSidebar({ className = "" }) {
             { id: "reddit", label: "Reddit" },
           ].map((s) => (
             <label key={s.id} htmlFor={s.id} className="flex items-center gap-2">
-              <Checkbox id={s.id} />
+              <Checkbox
+                id={s.id}
+                checked={sources.includes(s.id)}
+                onCheckedChange={() => toggleSource(s.id)}
+              />
               <span>{s.label}</span>
             </label>
           ))}
