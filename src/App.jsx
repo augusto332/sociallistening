@@ -220,7 +220,7 @@ export default function SocialListeningApp() {
                 </div>
               </div>
               <RightSidebar
-                className="mt-0"
+                className="mt-4"
                 search={search}
                 onSearchChange={setSearch}
                 range={rangeFilter}
