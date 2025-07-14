@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
@@ -26,7 +26,6 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
-const PAGE_SIZE = 5;
 
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
@@ -35,8 +34,6 @@ export default function SocialListeningApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
@@ -72,14 +69,11 @@ export default function SocialListeningApp() {
     return new Date(a.created_at) - new Date(b.created_at);
   });
 
-  const fetchMentions = async (pageIndex = 0) => {
-    const from = pageIndex * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+  const fetchMentions = async () => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
       .select("*")
-      .order("created_at", { ascending: false })
-      .range(from, to);
+      .order("created_at", { ascending: false });
     if (error) {
       console.error("Error fetching mentions", error);
     } else {
@@ -92,18 +86,8 @@ export default function SocialListeningApp() {
   };
 
   useEffect(() => {
-    fetchMentions(0);
-    setPage(1);
+    fetchMentions();
   }, []);
-
-  const loadMore = async () => {
-    setLoadingMore(true);
-    await fetchMentions(page);
-    setPage((p) => p + 1);
-    setLoadingMore(false);
-  };
-
-
 
   const handleLogout = async () => {
     try {
@@ -134,7 +118,7 @@ export default function SocialListeningApp() {
         <CircleUser className="size-7" />
       </button>
       {menuOpen && (
-        <div className="absolute right-4 top-12 bg-secondary shadow-md rounded p-2 space-y-1">
+        <div className="absolute right-4 top-12 bg-secondary shadow-md rounded p-2 space-y-1 z-50">
           <button
             onClick={() => {
               setActiveTab("config");
@@ -154,7 +138,7 @@ export default function SocialListeningApp() {
         </div>
       )}
       {/* Sidebar */}
-      <aside className="w-64 bg-secondary shadow-md p-6 space-y-4">
+      <aside className="w-64 bg-secondary shadow-md p-6 space-y-4 sticky top-0 h-screen overflow-y-auto">
         <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Search className="size-5" />
           Social Listening
@@ -193,7 +177,7 @@ export default function SocialListeningApp() {
         {activeTab === "home" && (
           <section>
             <div className="w-full">
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-start mb-4">
                 <Tabs value={order} onValueChange={setOrder}>
                   <TabsList>
                     <TabsTrigger value="recent">Más recientes</TabsTrigger>
@@ -224,14 +208,6 @@ export default function SocialListeningApp() {
                       No se encontraron menciones
                     </p>
                   )}
-                  <Button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="mx-auto mt-6 block"
-                    variant="outline"
-                  >
-                    {loadingMore ? "Cargando..." : "Ver más"}
-                  </Button>
                 </div>
                 <RightSidebar
                   className="mt-0 ml-auto"
