@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export default function SocialListeningApp() {
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
+  const loadMoreRef = useRef(null);
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -89,6 +90,20 @@ export default function SocialListeningApp() {
     await fetchMentions(mentions.length, mentions.length + 4);
     setLoadingMore(false);
   };
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [loadingMore, mentions]);
 
   const handleLogout = async () => {
     try {
@@ -209,14 +224,7 @@ export default function SocialListeningApp() {
                       No se encontraron menciones
                     </p>
                   )}
-                  <Button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="mx-auto mt-6 block"
-                    variant="outline"
-                  >
-                    {loadingMore ? "Cargando..." : "Ver más"}
-                  </Button>
+                  <div ref={loadMoreRef} className="h-6" />
                 </div>
               </div>
               <RightSidebar
