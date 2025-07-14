@@ -65,8 +65,6 @@ export default function MentionCard({
                   {keyword}
                 </span>
               )}
-              <p className="text-muted-foreground">Resumen de la mención (dummy).</p>
-              <p className="text-muted-foreground">Análisis de sentimiento (dummy).</p>
             </div>
           )}
         </div>
