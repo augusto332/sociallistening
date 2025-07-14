@@ -50,6 +50,11 @@ export default function MentionCard({
           <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
           {expanded && (
             <div className="mt-2 space-y-1 text-sm">
+              {keyword && (
+                <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+                  {keyword}
+                </span>
+              )}
               {url && (
                 <a
                   href={url}
@@ -60,13 +65,6 @@ export default function MentionCard({
                   {url}
                 </a>
               )}
-              {keyword && (
-                <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
-                  {keyword}
-                </span>
-              )}
-              <p className="text-muted-foreground">Resumen de la mención (dummy).</p>
-              <p className="text-muted-foreground">Análisis de sentimiento (dummy).</p>
             </div>
           )}
         </div>
