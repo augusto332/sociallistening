@@ -73,8 +73,8 @@ export default function SocialListeningApp() {
       console.error("Error fetching mentions", error);
     } else {
       setMentions((prev) => {
-        const existing = new Set(prev.map((m) => m.created_at));
-        const unique = (data || []).filter((m) => !existing.has(m.created_at));
+        const existing = new Set(prev.map((m) => m.url));
+        const unique = (data || []).filter((m) => !existing.has(m.url));
         return [...prev, ...unique];
       });
     }
@@ -190,9 +190,9 @@ export default function SocialListeningApp() {
                 <div className="flex flex-col gap-6">
                   {sortedMentions.length ? (
                     sortedMentions.map((m, i) => (
-                      <MentionCard
-                        key={`${m.created_at}-${i}`}
-                        mention={m}
+                    <MentionCard
+                      key={m.url}
+                      mention={m}
                         source={m.platform}
                         username={m.source}
                         timestamp={formatDistanceToNow(new Date(m.created_at), {
@@ -240,7 +240,7 @@ export default function SocialListeningApp() {
               {favorites.length ? (
                 favorites.map((m, i) => (
                   <MentionCard
-                    key={`${m.created_at}-${i}`}
+                    key={m.url}
                     mention={m}
                     source={m.platform}
                     username={m.source}
