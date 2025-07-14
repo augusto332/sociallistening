@@ -29,12 +29,30 @@ export default function SocialListeningApp() {
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [rangeFilter, setRangeFilter] = useState("");
+  const [sourcesFilter, setSourcesFilter] = useState([]);
   const { favorites } = useFavorites();
-  const filteredMentions = mentions.filter(
-    (m) =>
+  const filteredMentions = mentions.filter((m) => {
+    const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
-      m.source.toLowerCase().includes(search.toLowerCase())
-  );
+      m.source.toLowerCase().includes(search.toLowerCase());
+
+    const matchesSource =
+      sourcesFilter.length === 0 ||
+      sourcesFilter.includes(m.platform?.toLowerCase());
+
+    const matchesRange =
+      !rangeFilter ||
+      (() => {
+        const days = parseInt(rangeFilter, 10);
+        const created = new Date(m.created_at);
+        const now = new Date();
+        const diff = (now - created) / (1000 * 60 * 60 * 24);
+        return diff <= days;
+      })();
+
+    return matchesSearch && matchesSource && matchesRange;
+  });
 
   const fetchMentions = async (from = 0, to = 4) => {
     const { data, error } = await supabase
@@ -65,6 +83,18 @@ export default function SocialListeningApp() {
     } catch (error) {
       console.error("Error signing out", error);
     }
+  };
+
+  const toggleSourceFilter = (id) => {
+    setSourcesFilter((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
+  const clearSidebarFilters = () => {
+    setRangeFilter("");
+    setSourcesFilter([]);
+    setSearch("");
   };
 
   return (
@@ -134,16 +164,7 @@ export default function SocialListeningApp() {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="mb-6 flex justify-center relative">
-              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-full max-w-xl"
-              />
-            </div>
-            <h2 className="text-2xl font-bold mb-4">📡 Menciones recientes</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">📡 Menciones recientes</h2>
             <div className="flex items-start gap-8">
               <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
                 {filteredMentions.length ? (
@@ -176,7 +197,16 @@ export default function SocialListeningApp() {
                   {loadingMore ? "Cargando..." : "Ver más"}
                 </Button>
               </div>
-              <RightSidebar className="mt-0" />
+              <RightSidebar
+                className="mt-0"
+                search={search}
+                onSearchChange={setSearch}
+                range={rangeFilter}
+                setRange={setRangeFilter}
+                sources={sourcesFilter}
+                toggleSource={toggleSourceFilter}
+                clearFilters={clearSidebarFilters}
+              />
             </div>
           </section>
         )}
