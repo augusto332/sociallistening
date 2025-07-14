@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -20,6 +26,8 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
+const PAGE_SIZE = 5;
+
 export default function SocialListeningApp() {
   // State for date range filters in dashboard
   const [startDate, setStartDate] = useState("");
@@ -28,6 +36,7 @@ export default function SocialListeningApp() {
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
@@ -63,7 +72,9 @@ export default function SocialListeningApp() {
     return new Date(a.created_at) - new Date(b.created_at);
   });
 
-  const fetchMentions = async (from = 0, to = 4) => {
+  const fetchMentions = async (pageIndex = 0) => {
+    const from = pageIndex * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from("total_mentions_vw")
       .select("*")
@@ -81,12 +92,14 @@ export default function SocialListeningApp() {
   };
 
   useEffect(() => {
-    fetchMentions();
+    fetchMentions(0);
+    setPage(1);
   }, []);
 
   const loadMore = async () => {
     setLoadingMore(true);
-    await fetchMentions(mentions.length, mentions.length + 4);
+    await fetchMentions(page);
+    setPage((p) => p + 1);
     setLoadingMore(false);
   };
 
@@ -179,7 +192,7 @@ export default function SocialListeningApp() {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="max-w-5xl mx-auto">
+            <div className="w-full">
               <div className="flex justify-center mb-4">
                 <Tabs value={order} onValueChange={setOrder}>
                   <TabsList>
@@ -221,7 +234,7 @@ export default function SocialListeningApp() {
                   </Button>
                 </div>
                 <RightSidebar
-                  className="mt-0"
+                  className="mt-0 ml-auto"
                   search={search}
                   onSearchChange={setSearch}
                   range={rangeFilter}
