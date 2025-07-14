@@ -72,7 +72,11 @@ export default function SocialListeningApp() {
     if (error) {
       console.error("Error fetching mentions", error);
     } else {
-      setMentions((prev) => [...prev, ...(data || [])]);
+      setMentions((prev) => {
+        const existing = new Set(prev.map((m) => m.created_at));
+        const unique = (data || []).filter((m) => !existing.has(m.created_at));
+        return [...prev, ...unique];
+      });
     }
   };
 
@@ -173,45 +177,47 @@ export default function SocialListeningApp() {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="flex justify-center mb-4">
-              <Tabs value={order} onValueChange={setOrder}>
-                <TabsList>
-                  <TabsTrigger value="recent">Más recientes</TabsTrigger>
-                  <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
             <div className="flex items-start gap-8">
-              <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
-                {sortedMentions.length ? (
-                  sortedMentions.map((m, i) => (
-                    <MentionCard
-                      key={`${m.created_at}-${i}`}
-                      mention={m}
-                      source={m.platform}
-                      username={m.source}
-                      timestamp={formatDistanceToNow(new Date(m.created_at), {
-                        addSuffix: true,
-                        locale: es,
-                      })}
-                      content={m.mention}
-                      keyword={m.keyword}
-                      url={m.url}
-                    />
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground">
-                    No se encontraron menciones
-                  </p>
-                )}
-                <Button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="mx-auto mt-6 block"
-                  variant="outline"
-                >
-                  {loadingMore ? "Cargando..." : "Ver más"}
-                </Button>
+              <div className="flex-1 max-w-3xl mx-auto">
+                <div className="flex justify-center mb-4">
+                  <Tabs value={order} onValueChange={setOrder}>
+                    <TabsList>
+                      <TabsTrigger value="recent">Más recientes</TabsTrigger>
+                      <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                <div className="flex flex-col gap-6">
+                  {sortedMentions.length ? (
+                    sortedMentions.map((m, i) => (
+                      <MentionCard
+                        key={`${m.created_at}-${i}`}
+                        mention={m}
+                        source={m.platform}
+                        username={m.source}
+                        timestamp={formatDistanceToNow(new Date(m.created_at), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                        content={m.mention}
+                        keyword={m.keyword}
+                        url={m.url}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground">
+                      No se encontraron menciones
+                    </p>
+                  )}
+                  <Button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="mx-auto mt-6 block"
+                    variant="outline"
+                  >
+                    {loadingMore ? "Cargando..." : "Ver más"}
+                  </Button>
+                </div>
               </div>
               <RightSidebar
                 className="mt-0"
