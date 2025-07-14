@@ -1,35 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import SocialListeningApp from './App';
 import Login from './Login';
 import './index.css';
 import { FavoritesProvider } from './context/FavoritesContext';
-import { supabase } from './lib/supabaseClient';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 function Root() {
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (!session) {
-    return <Login />;
-  }
+  const [loggedIn, setLoggedIn] = useState(false);
 
   return (
     <FavoritesProvider>
-      <SocialListeningApp />
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={<Login onLogin={() => setLoggedIn(true)} />}
+          />
+          <Route
+            path="/home"
+            element={
+              loggedIn ? (
+                <SocialListeningApp onLogout={() => setLoggedIn(false)} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="*"
+            element={<Navigate to={loggedIn ? "/home" : "/login"} replace />}
+          />
+        </Routes>
+      </BrowserRouter>
     </FavoritesProvider>
   );
 }

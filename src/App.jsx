@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 
-export default function SocialListeningApp() {
+export default function SocialListeningApp({ onLogout }) {
   // State for date range filters in dashboard
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -38,6 +39,7 @@ export default function SocialListeningApp() {
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
+  const navigate = useNavigate();
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -89,12 +91,9 @@ export default function SocialListeningApp() {
     fetchMentions();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error("Error signing out", error);
-    }
+  const handleLogout = () => {
+    if (onLogout) onLogout();
+    navigate("/login");
   };
 
   const toggleSourceFilter = (id) => {
