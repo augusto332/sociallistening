@@ -7,16 +7,15 @@ export function FavoritesProvider({ children }) {
 
   const toggleFavorite = (mention) => {
     setFavorites((prev) => {
-      const exists = prev.find((m) => m.created_at === mention.created_at);
+      const exists = prev.find((m) => m.url === mention.url);
       if (exists) {
-        return prev.filter((m) => m.created_at !== mention.created_at);
+        return prev.filter((m) => m.url !== mention.url);
       }
       return [...prev, mention];
     });
   };
 
-  const isFavorite = (mention) =>
-    favorites.some((m) => m.created_at === mention.created_at);
+  const isFavorite = (mention) => favorites.some((m) => m.url === mention.url);
 
   return (
     <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite }}>

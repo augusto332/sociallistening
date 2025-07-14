@@ -69,11 +69,17 @@ export default function SocialListeningApp() {
       .select("*")
       .order("created_at", { ascending: false })
       .range(from, to);
+
     if (error) {
       console.error("Error fetching mentions", error);
-    } else {
-      setMentions((prev) => [...prev, ...(data || [])]);
+      return;
     }
+
+    setMentions((prev) => {
+      const existing = new Set(prev.map((m) => m.url));
+      const newMentions = (data || []).filter((m) => !existing.has(m.url));
+      return [...prev, ...newMentions];
+    });
   };
 
   useEffect(() => {
@@ -184,9 +190,9 @@ export default function SocialListeningApp() {
             <div className="flex items-start gap-8">
               <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
                 {sortedMentions.length ? (
-                  sortedMentions.map((m, i) => (
+                  sortedMentions.map((m) => (
                     <MentionCard
-                      key={`${m.created_at}-${i}`}
+                      key={m.url}
                       mention={m}
                       source={m.platform}
                       username={m.source}
@@ -232,9 +238,9 @@ export default function SocialListeningApp() {
             <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
             <div className="flex flex-col gap-6">
               {favorites.length ? (
-                favorites.map((m, i) => (
+                favorites.map((m) => (
                   <MentionCard
-                    key={`${m.created_at}-${i}`}
+                    key={m.url}
                     mention={m}
                     source={m.platform}
                     username={m.source}
