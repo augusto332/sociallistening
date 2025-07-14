@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,13 @@ export default function SocialListeningApp() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("home");
-  const PAGE_SIZE = 5;
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
-  const loadMoreRef = useRef(null);
-  const mainRef = useRef(null);
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -67,12 +63,12 @@ export default function SocialListeningApp() {
     return new Date(a.created_at) - new Date(b.created_at);
   });
 
-  const fetchMentions = async (from = 0) => {
+  const fetchMentions = async (from = 0, to = 4) => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
       .select("*")
       .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
+      .range(from, to);
     if (error) {
       console.error("Error fetching mentions", error);
     } else {
@@ -81,7 +77,6 @@ export default function SocialListeningApp() {
         const unique = (data || []).filter((m) => !existing.has(m.url));
         return [...prev, ...unique];
       });
-      setHasMore((data || []).length === PAGE_SIZE);
     }
   };
 
@@ -91,23 +86,11 @@ export default function SocialListeningApp() {
 
   const loadMore = async () => {
     setLoadingMore(true);
-    await fetchMentions(mentions.length);
+    await fetchMentions(mentions.length, mentions.length + 4);
     setLoadingMore(false);
   };
 
-  useEffect(() => {
-    if (!loadMoreRef.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingMore && hasMore) {
-          loadMore();
-        }
-      },
-      { root: mainRef.current, rootMargin: '200px' }
-    );
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [loadingMore, mentions, hasMore]);
+
 
   const handleLogout = async () => {
     try {
@@ -193,20 +176,20 @@ export default function SocialListeningApp() {
       </aside>
 
       {/* Main Content */}
-      <main ref={mainRef} className="flex-1 p-8 pr-0 overflow-y-auto">
+      <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="flex items-start gap-8">
-              <div className="flex-1 max-w-3xl mx-auto">
-                <div className="flex justify-center mb-4">
-                  <Tabs value={order} onValueChange={setOrder}>
-                    <TabsList>
-                      <TabsTrigger value="recent">Más recientes</TabsTrigger>
-                      <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
-                <div className="flex flex-col gap-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex justify-center mb-4">
+                <Tabs value={order} onValueChange={setOrder}>
+                  <TabsList>
+                    <TabsTrigger value="recent">Más recientes</TabsTrigger>
+                    <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="flex items-start gap-8">
+                <div className="flex-1 flex flex-col gap-6">
                   {sortedMentions.length ? (
                     sortedMentions.map((m, i) => (
                     <MentionCard
@@ -228,19 +211,26 @@ export default function SocialListeningApp() {
                       No se encontraron menciones
                     </p>
                   )}
-                  <div ref={loadMoreRef} className="h-6" />
+                  <Button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="mx-auto mt-6 block"
+                    variant="outline"
+                  >
+                    {loadingMore ? "Cargando..." : "Ver más"}
+                  </Button>
                 </div>
+                <RightSidebar
+                  className="mt-0"
+                  search={search}
+                  onSearchChange={setSearch}
+                  range={rangeFilter}
+                  setRange={setRangeFilter}
+                  sources={sourcesFilter}
+                  toggleSource={toggleSourceFilter}
+                  clearFilters={clearSidebarFilters}
+                />
               </div>
-              <RightSidebar
-                className="mt-4"
-                search={search}
-                onSearchChange={setSearch}
-                range={rangeFilter}
-                setRange={setRangeFilter}
-                sources={sourcesFilter}
-                toggleSource={toggleSourceFilter}
-                clearFilters={clearSidebarFilters}
-              />
             </div>
           </section>
         )}
