@@ -31,6 +31,7 @@ export default function SocialListeningApp() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
+  const [order, setOrder] = useState("recent");
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -52,6 +53,14 @@ export default function SocialListeningApp() {
       })();
 
     return matchesSearch && matchesSource && matchesRange;
+  });
+
+  const sortedMentions = [...filteredMentions].sort((a, b) => {
+    if (order === "recent") {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    // Fallback sorting for "relevant"
+    return new Date(a.created_at) - new Date(b.created_at);
   });
 
   const fetchMentions = async (from = 0, to = 4) => {
@@ -164,11 +173,18 @@ export default function SocialListeningApp() {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4 text-center">📡 Menciones recientes</h2>
+            <div className="flex justify-center mb-4">
+              <Tabs value={order} onValueChange={setOrder}>
+                <TabsList>
+                  <TabsTrigger value="recent">Más recientes</TabsTrigger>
+                  <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
             <div className="flex items-start gap-8">
               <div className="flex-1 flex flex-col gap-6 max-w-3xl mx-auto">
-                {filteredMentions.length ? (
-                  filteredMentions.map((m, i) => (
+                {sortedMentions.length ? (
+                  sortedMentions.map((m, i) => (
                     <MentionCard
                       key={`${m.created_at}-${i}`}
                       mention={m}
