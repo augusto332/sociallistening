@@ -25,14 +25,17 @@ export default function SocialListeningApp() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("home");
+  const PAGE_SIZE = 5;
   const [search, setSearch] = useState("");
   const [mentions, setMentions] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
   const loadMoreRef = useRef(null);
+  const mainRef = useRef(null);
   const { favorites } = useFavorites();
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -64,12 +67,12 @@ export default function SocialListeningApp() {
     return new Date(a.created_at) - new Date(b.created_at);
   });
 
-  const fetchMentions = async (from = 0, to = 4) => {
+  const fetchMentions = async (from = 0) => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
       .select("*")
       .order("created_at", { ascending: false })
-      .range(from, to);
+      .range(from, from + PAGE_SIZE - 1);
     if (error) {
       console.error("Error fetching mentions", error);
     } else {
@@ -78,6 +81,7 @@ export default function SocialListeningApp() {
         const unique = (data || []).filter((m) => !existing.has(m.url));
         return [...prev, ...unique];
       });
+      setHasMore((data || []).length === PAGE_SIZE);
     }
   };
 
@@ -87,7 +91,7 @@ export default function SocialListeningApp() {
 
   const loadMore = async () => {
     setLoadingMore(true);
-    await fetchMentions(mentions.length, mentions.length + 4);
+    await fetchMentions(mentions.length);
     setLoadingMore(false);
   };
 
@@ -95,15 +99,15 @@ export default function SocialListeningApp() {
     if (!loadMoreRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore) {
+        if (entries[0].isIntersecting && !loadingMore && hasMore) {
           loadMore();
         }
       },
-      { rootMargin: '200px' }
+      { root: mainRef.current, rootMargin: '200px' }
     );
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [loadingMore, mentions]);
+  }, [loadingMore, mentions, hasMore]);
 
   const handleLogout = async () => {
     try {
@@ -189,7 +193,7 @@ export default function SocialListeningApp() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 pr-0 overflow-y-auto">
+      <main ref={mainRef} className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
             <div className="flex items-start gap-8">
