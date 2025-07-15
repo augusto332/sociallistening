@@ -44,6 +44,11 @@ export default function MentionCard({
           <Icon className="text-primary size-6" />
         </div>
         <div className="flex-1 space-y-1">
+          {keyword && (
+            <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+              {keyword}
+            </span>
+          )}
           <div className="flex items-center justify-between">
             <span className="font-semibold text-primary">@{username}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
@@ -57,14 +62,15 @@ export default function MentionCard({
           {expanded && (
             <div className="mt-2 text-sm">
               {url && (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Button
+                  size="sm"
+                  asChild
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Button size="sm">Ir al sitio</Button>
-                </a>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    Ir al sitio
+                  </a>
+                </Button>
               )}
             </div>
           )}
