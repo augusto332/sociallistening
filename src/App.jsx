@@ -181,6 +181,7 @@ export default function SocialListeningApp({ onLogout }) {
                   <TabsList>
                     <TabsTrigger value="recent">Más recientes</TabsTrigger>
                     <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
+                    <TabsTrigger value="popular">Más populares</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>

@@ -45,7 +45,7 @@ export default function MentionCard({
         </div>
         <div className="flex-1 space-y-1">
           {keyword && (
-            <span className="inline-block text-xs bg-muted/50 text-muted-foreground px-2 py-0.5 rounded">
+            <span className="inline-block text-xs bg-white/20 text-muted-foreground px-2 py-0.5 rounded">
               {keyword}
             </span>
           )}
