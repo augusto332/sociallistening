@@ -53,6 +53,11 @@ export default function MentionCard({
             <span className="font-semibold text-primary">@{username}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
           </div>
+          {keyword && (
+            <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+              {keyword}
+            </span>
+          )}
           <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
           {expanded && (
             <div className="mt-2 text-sm">
