@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FaTwitter, FaYoutube, FaReddit, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useFavorites } from "@/context/FavoritesContext";
 
@@ -43,27 +44,28 @@ export default function MentionCard({
           <Icon className="text-primary size-6" />
         </div>
         <div className="flex-1 space-y-1">
+          {keyword && (
+            <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+              {keyword}
+            </span>
+          )}
           <div className="flex items-center justify-between">
             <span className="font-semibold text-primary">@{username}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
           </div>
           <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
           {expanded && (
-            <div className="mt-2 space-y-1 text-sm">
-              {keyword && (
-                <span className="inline-block text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
-                  {keyword}
-                </span>
-              )}
+            <div className="mt-2 text-sm">
               {url && (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline block"
+                <Button
+                  size="sm"
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {url}
-                </a>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    Ir al sitio
+                  </a>
+                </Button>
               )}
             </div>
           )}
