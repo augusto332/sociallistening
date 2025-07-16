@@ -36,6 +36,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [mentions, setMentions] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
   const [hiddenMentions, setHiddenMentions] = useState([]);
@@ -63,7 +65,19 @@ export default function SocialListeningApp({ onLogout }) {
         return diff <= days;
       })();
 
-    return matchesSearch && matchesSource && matchesRange;
+    const matchesStartDate =
+      !startDateFilter || new Date(m.created_at) >= new Date(startDateFilter);
+
+    const matchesEndDate =
+      !endDateFilter || new Date(m.created_at) <= new Date(endDateFilter);
+
+    return (
+      matchesSearch &&
+      matchesSource &&
+      matchesRange &&
+      matchesStartDate &&
+      matchesEndDate
+    );
   });
 
   const sortedMentions = [...filteredMentions].sort((a, b) => {
@@ -111,6 +125,8 @@ export default function SocialListeningApp({ onLogout }) {
 
   const clearSidebarFilters = () => {
     setRangeFilter("");
+    setStartDateFilter("");
+    setEndDateFilter("");
     setSourcesFilter([]);
     setSearch("");
   };
@@ -225,6 +241,10 @@ export default function SocialListeningApp({ onLogout }) {
                   onSearchChange={setSearch}
                   range={rangeFilter}
                   setRange={setRangeFilter}
+                  startDate={startDateFilter}
+                  setStartDate={setStartDateFilter}
+                  endDate={endDateFilter}
+                  setEndDate={setEndDateFilter}
                   sources={sourcesFilter}
                   toggleSource={toggleSourceFilter}
                   clearFilters={clearSidebarFilters}

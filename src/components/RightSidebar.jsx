@@ -11,6 +11,10 @@ export default function RightSidebar({
   onSearchChange,
   range,
   setRange,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   sources,
   toggleSource,
   clearFilters,
@@ -48,6 +52,24 @@ export default function RightSidebar({
             <SelectItem value="30">Últimos 30 días</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          placeholder="Desde"
+          className="w-full"
+        />
+        <span>a</span>
+        <Input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          placeholder="Hasta"
+          className="w-full"
+        />
       </div>
 
       <div>
