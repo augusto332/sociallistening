@@ -27,7 +27,6 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
-
 export default function SocialListeningApp({ onLogout }) {
   // State for date range filters in dashboard
   const [startDate, setStartDate] = useState("");
@@ -39,8 +38,12 @@ export default function SocialListeningApp({ onLogout }) {
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
+  const [hiddenMentions, setHiddenMentions] = useState([]);
   const navigate = useNavigate();
   const { favorites } = useFavorites();
+  const visibleFavorites = favorites.filter(
+    (m) => !hiddenMentions.includes(m.url),
+  );
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,6 +74,10 @@ export default function SocialListeningApp({ onLogout }) {
     return new Date(a.created_at) - new Date(b.created_at);
   });
 
+  const visibleMentions = sortedMentions.filter(
+    (m) => !hiddenMentions.includes(m.url),
+  );
+
   const fetchMentions = async () => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
@@ -98,7 +105,7 @@ export default function SocialListeningApp({ onLogout }) {
 
   const toggleSourceFilter = (id) => {
     setSourcesFilter((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
   };
 
@@ -187,11 +194,11 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
               <div className="flex items-start gap-8">
                 <div className="flex-1 flex flex-col gap-6">
-                  {sortedMentions.length ? (
-                    sortedMentions.map((m, i) => (
-                    <MentionCard
-                      key={m.url}
-                      mention={m}
+                  {visibleMentions.length ? (
+                    visibleMentions.map((m, i) => (
+                      <MentionCard
+                        key={m.url}
+                        mention={m}
                         source={m.platform}
                         username={m.source}
                         timestamp={formatDistanceToNow(new Date(m.created_at), {
@@ -201,6 +208,9 @@ export default function SocialListeningApp({ onLogout }) {
                         content={m.mention}
                         keyword={m.keyword}
                         url={m.url}
+                        onHide={() =>
+                          setHiddenMentions((prev) => [...prev, m.url])
+                        }
                       />
                     ))
                   ) : (
@@ -228,8 +238,8 @@ export default function SocialListeningApp({ onLogout }) {
           <section className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
             <div className="flex flex-col gap-6">
-              {favorites.length ? (
-                favorites.map((m, i) => (
+              {visibleFavorites.length ? (
+                visibleFavorites.map((m, i) => (
                   <MentionCard
                     key={m.url}
                     mention={m}
@@ -242,10 +252,13 @@ export default function SocialListeningApp({ onLogout }) {
                     content={m.mention}
                     keyword={m.keyword}
                     url={m.url}
+                    onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
                   />
                 ))
               ) : (
-                <p className="text-center text-muted-foreground">No hay favoritos</p>
+                <p className="text-center text-muted-foreground">
+                  No hay favoritos
+                </p>
               )}
             </div>
           </section>
@@ -253,7 +266,9 @@ export default function SocialListeningApp({ onLogout }) {
 
         {activeTab === "dashboard" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">📈 Análisis de palabras clave</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              📈 Análisis de palabras clave
+            </h2>
             <div className="flex flex-wrap gap-4 mb-4">
               <Input placeholder="Buscar keyword..." className="w-64" />
               <div className="flex items-center gap-2">
@@ -293,12 +308,16 @@ export default function SocialListeningApp({ onLogout }) {
                 </SelectContent>
               </Select>
             </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="bg-secondary">
-                    <CardContent className="p-4">
-                    <p className="font-semibold">📌 Título de gráfico o insight {i + 1}</p>
-                    <p className="text-sm text-gray-600">Placeholder de gráfico o métrica</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-secondary">
+                  <CardContent className="p-4">
+                    <p className="font-semibold">
+                      📌 Título de gráfico o insight {i + 1}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Placeholder de gráfico o métrica
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -311,12 +330,16 @@ export default function SocialListeningApp({ onLogout }) {
             <h2 className="text-2xl font-bold mb-4">🛠️ Configuración</h2>
             <div className="space-y-4">
               <div>
-                <label className="font-semibold block mb-1">Palabras clave</label>
+                <label className="font-semibold block mb-1">
+                  Palabras clave
+                </label>
                 <Input placeholder="Ej: inteligencia artificial, elecciones, Messi..." />
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="notify" />
-                <label htmlFor="notify">Notificarme cuando haya más de 100 menciones en una hora</label>
+                <label htmlFor="notify">
+                  Notificarme cuando haya más de 100 menciones en una hora
+                </label>
               </div>
               <Button className="mt-4">Guardar configuración</Button>
             </div>
