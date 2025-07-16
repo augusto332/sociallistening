@@ -11,10 +11,6 @@ export default function RightSidebar({
   onSearchChange,
   range,
   setRange,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
   sources,
   toggleSource,
   clearFilters,
@@ -27,7 +23,7 @@ export default function RightSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col rounded-lg self-start sticky top-8 h-[calc(100vh-2rem)]",
+        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-center rounded-lg self-start sticky top-8 h-[calc(100vh-2rem)]",
         className
       )}
     >
@@ -54,23 +50,6 @@ export default function RightSidebar({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          placeholder="Desde"
-          className="w-full"
-        />
-        <span>a</span>
-        <Input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          placeholder="Hasta"
-          className="w-full"
-        />
-      </div>
 
       <div>
         <p className="font-semibold mb-2">Fuentes</p>
