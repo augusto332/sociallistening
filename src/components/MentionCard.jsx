@@ -22,11 +22,12 @@ export default function MentionCard({
   onHide,
 }) {
   const icons = {
-    twitter: FaTwitter,
-    youtube: FaYoutube,
-    reddit: FaReddit,
+    twitter: { Icon: FaTwitter, color: "#1DA1F2" },
+    youtube: { Icon: FaYoutube, color: "#FF0000" },
+    reddit: { Icon: FaReddit, color: "#FF5700" },
   };
-  const Icon = icons[source?.toLowerCase?.()] || FaTwitter;
+  const Icon = icons[source?.toLowerCase?.()]?.Icon || FaTwitter;
+  const iconColor = icons[source?.toLowerCase?.()]?.color || "#1DA1F2";
   const [expanded, setExpanded] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
@@ -93,7 +94,7 @@ export default function MentionCard({
       </button>
       <CardContent className="p-6 flex gap-4">
         <div className="w-12 h-12 flex items-center justify-center bg-muted rounded-full shrink-0">
-          <Icon className="text-primary size-6" />
+          <Icon className="size-6" style={{ color: iconColor }} />
         </div>
         <div className="flex-1 space-y-1">
           {keyword && (
