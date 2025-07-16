@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button";
 import {
   FaTwitter,
   FaYoutube,
-  FaReddit,
+  FaRedditAlien,
   FaHeart,
   FaRegHeart,
   FaTimes,
+  FaArrowUp,
+  FaComment,
+  FaRetweet,
+  FaEye,
+  FaQuoteRight,
 } from "react-icons/fa";
 import { useFavorites } from "@/context/FavoritesContext";
 
@@ -24,10 +29,12 @@ export default function MentionCard({
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
     youtube: { Icon: FaYoutube, color: "#FF0000" },
-    reddit: { Icon: FaReddit, color: "#FF5700" },
+    reddit: { Icon: FaRedditAlien, color: "#FFFFFF", bg: "#FF5700" },
   };
-  const Icon = icons[source?.toLowerCase?.()]?.Icon || FaTwitter;
-  const iconColor = icons[source?.toLowerCase?.()]?.color || "#1DA1F2";
+  const platform = source?.toLowerCase?.();
+  const Icon = icons[platform]?.Icon || FaTwitter;
+  const iconColor = icons[platform]?.color || "#1DA1F2";
+  const iconBg = icons[platform]?.bg;
   const [expanded, setExpanded] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
@@ -38,36 +45,36 @@ export default function MentionCard({
   };
 
   const renderMetrics = () => {
-    const platform = source?.toLowerCase?.();
+    const metrics = [];
     if (platform === "youtube") {
-      return (
-        <>
-          <p>Likes: {mention.likes}</p>
-          <p>Comments: {mention.comments}</p>
-          <p>Views: {mention.views}</p>
-          <p>Snapshot: {mention.snapshot_date}</p>
-        </>
-      );
+      mention.likes && metrics.push({ icon: FaHeart, value: mention.likes });
+      mention.comments && metrics.push({ icon: FaComment, value: mention.comments });
+      mention.views && metrics.push({ icon: FaEye, value: mention.views });
     }
     if (platform === "reddit") {
-      return (
-        <>
-          <p>Likes: {mention.likes}</p>
-          <p>Comments: {mention.comments}</p>
-        </>
-      );
+      mention.likes && metrics.push({ icon: FaArrowUp, value: mention.likes });
+      mention.comments && metrics.push({ icon: FaComment, value: mention.comments });
     }
     if (platform === "twitter") {
-      return (
-        <>
-          <p>Likes: {mention.likes}</p>
-          <p>Retweets: {mention.retweets}</p>
-          <p>Replies: {mention.replies}</p>
-          <p>Quotes: {mention.quotes}</p>
-        </>
-      );
+      mention.likes && metrics.push({ icon: FaHeart, value: mention.likes });
+      mention.retweets && metrics.push({ icon: FaRetweet, value: mention.retweets });
+      mention.replies && metrics.push({ icon: FaComment, value: mention.replies });
+      mention.quotes && metrics.push({ icon: FaQuoteRight, value: mention.quotes });
     }
-    return null;
+    if (!metrics.length) return null;
+    return (
+      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+        {metrics.map((m, idx) => {
+          const MetricIcon = m.icon;
+          return (
+            <span key={idx} className="flex items-center gap-1">
+              <MetricIcon className="size-4" />
+              {m.value}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -93,7 +100,10 @@ export default function MentionCard({
         {favorite ? <FaHeart /> : <FaRegHeart />}
       </button>
       <CardContent className="p-6 flex gap-4">
-        <div className="w-12 h-12 flex items-center justify-center bg-muted rounded-full shrink-0">
+        <div
+          className={`w-12 h-12 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
+          style={iconBg ? { backgroundColor: iconBg } : {}}
+        >
           <Icon className="size-6" style={{ color: iconColor }} />
         </div>
         <div className="flex-1 space-y-1">
@@ -109,9 +119,9 @@ export default function MentionCard({
           <p className="text-base leading-relaxed text-muted-foreground">
             {content}
           </p>
+          {renderMetrics()}
           {expanded && (
             <div className="mt-2 text-sm space-y-1">
-              {renderMetrics()}
               {url && (
                 <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                   <a href={url} target="_blank" rel="noopener noreferrer">
