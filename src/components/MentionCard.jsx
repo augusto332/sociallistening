@@ -35,7 +35,7 @@ export default function MentionCard({
   const Icon = icons[platform]?.Icon || FaTwitter;
   const iconColor = icons[platform]?.color || "#1DA1F2";
   const iconBg = icons[platform]?.bg;
-  const iconSizeClass = platform === "reddit" ? "size-5" : "size-6";
+  const iconSizeClass = "size-7";
   const [expanded, setExpanded] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
@@ -102,7 +102,7 @@ export default function MentionCard({
       </button>
       <CardContent className="p-6 flex gap-4">
         <div
-          className={`w-12 h-12 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
           style={iconBg ? { backgroundColor: iconBg } : {}}
         >
           <Icon className={iconSizeClass} style={{ color: iconColor }} />
