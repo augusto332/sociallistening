@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FaTwitter, FaYoutube, FaReddit, FaHeart, FaRegHeart } from "react-icons/fa";
+import {
+  FaTwitter,
+  FaYoutube,
+  FaReddit,
+  FaHeart,
+  FaRegHeart,
+  FaTimes,
+} from "react-icons/fa";
 import { useFavorites } from "@/context/FavoritesContext";
 
 export default function MentionCard({
@@ -12,6 +19,7 @@ export default function MentionCard({
   content,
   keyword,
   url,
+  onHide,
 }) {
   const icons = {
     twitter: FaTwitter,
@@ -67,8 +75,19 @@ export default function MentionCard({
       className="relative border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
     >
       <button
-        onClick={handleFavClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onHide) onHide();
+        }}
+        title="Marcar como irrelevante"
         className="absolute top-2 right-2 text-primary hover:text-primary/80"
+      >
+        <FaTimes />
+      </button>
+      <button
+        onClick={handleFavClick}
+        title="Agregar a favoritos"
+        className="absolute top-2 right-8 text-primary hover:text-primary/80"
       >
         {favorite ? <FaHeart /> : <FaRegHeart />}
       </button>
@@ -86,16 +105,14 @@ export default function MentionCard({
             <span className="font-semibold text-primary">@{username}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
           </div>
-          <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            {content}
+          </p>
           {expanded && (
             <div className="mt-2 text-sm space-y-1">
               {renderMetrics()}
               {url && (
-                <Button
-                  size="sm"
-                  asChild
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                   <a href={url} target="_blank" rel="noopener noreferrer">
                     Ir al sitio
                   </a>
