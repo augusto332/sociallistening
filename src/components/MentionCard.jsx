@@ -28,6 +28,39 @@ export default function MentionCard({
     toggleFavorite(mention);
   };
 
+  const renderMetrics = () => {
+    const platform = source?.toLowerCase?.();
+    if (platform === "youtube") {
+      return (
+        <>
+          <p>Likes: {mention.likes}</p>
+          <p>Comments: {mention.comments}</p>
+          <p>Views: {mention.views}</p>
+          <p>Snapshot: {mention.snapshot_date}</p>
+        </>
+      );
+    }
+    if (platform === "reddit") {
+      return (
+        <>
+          <p>Likes: {mention.likes}</p>
+          <p>Comments: {mention.comments}</p>
+        </>
+      );
+    }
+    if (platform === "twitter") {
+      return (
+        <>
+          <p>Likes: {mention.likes}</p>
+          <p>Retweets: {mention.retweets}</p>
+          <p>Replies: {mention.replies}</p>
+          <p>Quotes: {mention.quotes}</p>
+        </>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card
       onClick={() => setExpanded((e) => !e)}
@@ -55,7 +88,8 @@ export default function MentionCard({
           </div>
           <p className="text-base leading-relaxed text-muted-foreground">{content}</p>
           {expanded && (
-            <div className="mt-2 text-sm">
+            <div className="mt-2 text-sm space-y-1">
+              {renderMetrics()}
               {url && (
                 <Button
                   size="sm"
