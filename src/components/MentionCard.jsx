@@ -46,31 +46,37 @@ export default function MentionCard({
   };
 
   const renderMetrics = () => {
-    const metrics = [];
-    if (platform === "youtube") {
-      mention.likes && metrics.push({ icon: FaHeart, value: mention.likes });
-      mention.comments && metrics.push({ icon: FaComment, value: mention.comments });
-      mention.views && metrics.push({ icon: FaEye, value: mention.views });
-    }
-    if (platform === "reddit") {
-      mention.likes && metrics.push({ icon: FaArrowUp, value: mention.likes });
-      mention.comments && metrics.push({ icon: FaComment, value: mention.comments });
-    }
-    if (platform === "twitter") {
-      mention.likes && metrics.push({ icon: FaHeart, value: mention.likes });
-      mention.retweets && metrics.push({ icon: FaRetweet, value: mention.retweets });
-      mention.replies && metrics.push({ icon: FaComment, value: mention.replies });
-      mention.quotes && metrics.push({ icon: FaQuoteRight, value: mention.quotes });
-    }
+    const metricMap = {
+      youtube: [
+        { key: "likes", icon: FaHeart },
+        { key: "comments", icon: FaComment },
+        { key: "views", icon: FaEye },
+      ],
+      reddit: [
+        { key: "likes", icon: FaArrowUp },
+        { key: "comments", icon: FaComment },
+      ],
+      twitter: [
+        { key: "likes", icon: FaHeart },
+        { key: "retweets", icon: FaRetweet },
+        { key: "replies", icon: FaComment },
+        { key: "quotes", icon: FaQuoteRight },
+      ],
+    };
+
+    const metrics = metricMap[platform] || [];
+
     if (!metrics.length) return null;
+
     return (
       <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-        {metrics.map((m, idx) => {
+        {metrics.map((m) => {
           const MetricIcon = m.icon;
+          const value = mention[m.key] ?? 0;
           return (
-            <span key={idx} className="flex items-center gap-1">
+            <span key={m.key} className="flex items-center gap-1">
               <MetricIcon className="size-4" />
-              {m.value}
+              {value}
             </span>
           );
         })}
