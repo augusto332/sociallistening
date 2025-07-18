@@ -129,6 +129,10 @@ export default function MentionCard({
           {renderMetrics()}
           {expanded && (
             <div className="mt-2 text-sm space-y-1">
+              <p>
+                Métricas al momento de captura (
+                {new Date(mention.created_at).toLocaleString()}):
+              </p>
               {url && (
                 <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                   <a href={url} target="_blank" rel="noopener noreferrer">
