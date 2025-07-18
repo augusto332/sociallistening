@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import SocialListeningApp from './App';
 import Login from './Login';
+import Register from './Register';
 import './index.css';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ function Root() {
             path="/login"
             element={<Login onLogin={() => setLoggedIn(true)} />}
           />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/home"
             element={
