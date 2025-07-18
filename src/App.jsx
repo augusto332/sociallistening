@@ -114,7 +114,7 @@ export default function SocialListeningApp({ onLogout }) {
   const fetchKeywords = async () => {
     const { data, error } = await supabase
       .from("dim_keywords")
-      .select("keyword, id, created_at")
+      .select("keyword, keyword_id, created_at")
       .eq("active", true)
       .order("created_at", { ascending: false });
     if (error) {
