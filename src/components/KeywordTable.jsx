@@ -20,14 +20,14 @@ export default function KeywordTable({ keywords, onToggle }) {
       </TableHeader>
       <TableBody>
         {keywords.map((k) => (
-          <TableRow key={k.id}>
+          <TableRow key={k.keyword_id}>
             <TableCell className="font-medium">{k.keyword}</TableCell>
             <TableCell>{format(new Date(k.created_at), "dd/MM/yyyy", { locale: es })}</TableCell>
             <TableCell>{k.active ? "Activo" : "Inactivo"}</TableCell>
             <TableCell className="text-right">
               <Switch
                 checked={k.active}
-                onCheckedChange={() => handleToggle(k.id, k.active)}
+                onCheckedChange={() => handleToggle(k.keyword_id, k.active)}
               />
             </TableCell>
           </TableRow>
