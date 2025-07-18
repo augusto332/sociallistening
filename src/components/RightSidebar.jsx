@@ -23,7 +23,7 @@ export default function RightSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-end rounded-lg self-start sticky top-8 h-[calc(100vh-2rem)]",
+        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-start rounded-lg self-start sticky top-8 h-[calc(100vh-2rem)]",
         className
       )}
     >
