@@ -147,7 +147,7 @@ export default function SocialListeningApp({ onLogout }) {
       console.error("Error adding keyword", error);
       setKeywordMessage({
         type: "error",
-        text: "No se pudo agregar la keyword",
+        text: `No se pudo agregar la keyword: ${error?.message || "Error desconocido"}`,
       });
     } else {
       setKeywords((k) => [...data, ...k]);
