@@ -135,7 +135,7 @@ export default function SocialListeningApp({ onLogout }) {
       console.error("Error updating keyword", error);
     } else if (data && data.length) {
       setKeywords((prev) =>
-        prev.map((k) => (k.id === id ? { ...k, active } : k)),
+        prev.map((k) => (k.keyword_id === id ? { ...k, active } : k)),
       );
     }
   };
