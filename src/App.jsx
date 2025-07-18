@@ -116,7 +116,7 @@ export default function SocialListeningApp({ onLogout }) {
   const fetchKeywords = async () => {
     const { data, error } = await supabase
       .from("dim_keywords")
-      .select("keyword, id, created_at, active")
+      .select("keyword, keyword_id, created_at, active")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("Error fetching keywords", error);
@@ -129,7 +129,7 @@ export default function SocialListeningApp({ onLogout }) {
     const { data, error } = await supabase
       .from("dim_keywords")
       .update({ active })
-      .eq("id", id)
+      .eq("keyword_id", id)
       .select();
     if (error) {
       console.error("Error updating keyword", error);
