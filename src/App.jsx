@@ -39,6 +39,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [sourcesFilter, setSourcesFilter] = useState([]);
   const [order, setOrder] = useState("recent");
   const [hiddenMentions, setHiddenMentions] = useState([]);
+  const [keywords, setKeywords] = useState([]);
+  const [newKeyword, setNewKeyword] = useState("");
   const navigate = useNavigate();
   const { favorites } = useFavorites();
   const visibleFavorites = favorites.filter(
@@ -109,8 +111,44 @@ export default function SocialListeningApp({ onLogout }) {
     }
   };
 
+  const fetchKeywords = async () => {
+    const { data, error } = await supabase
+      .from("dim_keywords")
+      .select("keyword, id, created_at")
+      .eq("active", true)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Error fetching keywords", error);
+    } else {
+      setKeywords(data || []);
+    }
+  };
+
+  const addKeyword = async () => {
+    if (!newKeyword.trim()) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const { user } = userData || {};
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("dim_keywords")
+      .insert({
+        keyword: newKeyword,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        active: true,
+      })
+      .select();
+    if (error) {
+      console.error("Error adding keyword", error);
+    } else {
+      setKeywords((k) => [...data, ...k]);
+      setNewKeyword("");
+    }
+  };
+
   useEffect(() => {
     fetchMentions();
+    fetchKeywords();
   }, []);
 
   const handleLogout = async () => {
@@ -345,10 +383,24 @@ export default function SocialListeningApp({ onLogout }) {
             <h2 className="text-2xl font-bold mb-4">🛠️ Configuración</h2>
             <div className="space-y-4">
               <div>
-                <label className="font-semibold block mb-1">
-                  Palabras clave
-                </label>
-                <Input placeholder="Ej: inteligencia artificial, elecciones, Messi..." />
+                <label className="font-semibold block mb-1">Palabras clave activas</label>
+                <ul className="list-disc pl-4 space-y-1 mb-2">
+                  {keywords.length ? (
+                    keywords.map((k) => <li key={k.id}>{k.keyword}</li>)
+                  ) : (
+                    <li className="list-none text-muted-foreground">No hay keywords</li>
+                  )}
+                </ul>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newKeyword}
+                    onChange={(e) => setNewKeyword(e.target.value)}
+                    placeholder="Nueva keyword"
+                  />
+                  <Button type="button" onClick={addKeyword}>
+                    Agregar
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="notify" />
