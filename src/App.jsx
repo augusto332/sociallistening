@@ -43,6 +43,7 @@ export default function SocialListeningApp({ onLogout }) {
   const [keywords, setKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState("");
   const [keywordMessage, setKeywordMessage] = useState(null);
+  const [keywordChanges, setKeywordChanges] = useState({});
   const navigate = useNavigate();
   const { favorites } = useFavorites();
   const visibleFavorites = favorites.filter(
@@ -138,6 +139,21 @@ export default function SocialListeningApp({ onLogout }) {
         prev.map((k) => (k.keyword_id === id ? { ...k, active } : k)),
       );
     }
+  };
+
+  const handleKeywordToggle = (id, active) => {
+    setKeywords((prev) =>
+      prev.map((k) => (k.keyword_id === id ? { ...k, active } : k)),
+    );
+    setKeywordChanges((prev) => ({ ...prev, [id]: active }));
+  };
+
+  const saveKeywordChanges = async () => {
+    for (const [id, active] of Object.entries(keywordChanges)) {
+      // convert id back to number to match DB field type
+      await toggleKeywordActive(Number(id), active);
+    }
+    setKeywordChanges({});
   };
 
   const addKeyword = async () => {
@@ -410,10 +426,17 @@ export default function SocialListeningApp({ onLogout }) {
               <div>
                 <label className="font-semibold block mb-1">Palabras clave</label>
                 {keywords.length ? (
-                  <KeywordTable keywords={keywords} onToggle={toggleKeywordActive} />
+                  <KeywordTable keywords={keywords} onToggle={handleKeywordToggle} />
                 ) : (
                   <p className="text-muted-foreground mb-2">No hay keywords</p>
                 )}
+                <Button
+                  className="mt-2"
+                  onClick={saveKeywordChanges}
+                  disabled={Object.keys(keywordChanges).length === 0}
+                >
+                  Guardar cambios
+                </Button>
                 <div className="flex items-center gap-2 mt-2">
                   <Input
                     value={newKeyword}
