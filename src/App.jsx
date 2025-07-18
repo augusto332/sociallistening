@@ -41,6 +41,7 @@ export default function SocialListeningApp({ onLogout }) {
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState("");
+  const [keywordMessage, setKeywordMessage] = useState(null);
   const navigate = useNavigate();
   const { favorites } = useFavorites();
   const visibleFavorites = favorites.filter(
@@ -126,9 +127,13 @@ export default function SocialListeningApp({ onLogout }) {
 
   const addKeyword = async () => {
     if (!newKeyword.trim()) return;
+    setKeywordMessage(null);
     const { data: userData } = await supabase.auth.getUser();
     const { user } = userData || {};
-    if (!user) return;
+    if (!user) {
+      setKeywordMessage({ type: "error", text: "Debes iniciar sesión" });
+      return;
+    }
     const { data, error } = await supabase
       .from("dim_keywords")
       .insert({
@@ -138,11 +143,16 @@ export default function SocialListeningApp({ onLogout }) {
         active: true,
       })
       .select();
-    if (error) {
+    if (error || !data || data.length === 0) {
       console.error("Error adding keyword", error);
+      setKeywordMessage({
+        type: "error",
+        text: "No se pudo agregar la keyword",
+      });
     } else {
       setKeywords((k) => [...data, ...k]);
       setNewKeyword("");
+      setKeywordMessage({ type: "success", text: "Keyword agregada" });
     }
   };
 
@@ -401,6 +411,17 @@ export default function SocialListeningApp({ onLogout }) {
                     Agregar
                   </Button>
                 </div>
+                {keywordMessage && (
+                  <p
+                    className={`text-sm ${
+                      keywordMessage.type === "error"
+                        ? "text-red-500"
+                        : "text-green-500"
+                    }`}
+                  >
+                    {keywordMessage.text}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="notify" />
