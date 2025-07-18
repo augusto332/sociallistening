@@ -26,6 +26,7 @@ import {
 import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import KeywordTable from "@/components/KeywordTable";
 
 export default function SocialListeningApp({ onLogout }) {
   // State for date range filters in dashboard
@@ -115,13 +116,27 @@ export default function SocialListeningApp({ onLogout }) {
   const fetchKeywords = async () => {
     const { data, error } = await supabase
       .from("dim_keywords")
-      .select("keyword, keyword_id, created_at")
-      .eq("active", true)
+      .select("keyword, id, created_at, active")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("Error fetching keywords", error);
     } else {
       setKeywords(data || []);
+    }
+  };
+
+  const toggleKeywordActive = async (id, active) => {
+    const { data, error } = await supabase
+      .from("dim_keywords")
+      .update({ active })
+      .eq("id", id)
+      .select();
+    if (error) {
+      console.error("Error updating keyword", error);
+    } else if (data && data.length) {
+      setKeywords((prev) =>
+        prev.map((k) => (k.id === id ? { ...k, active } : k)),
+      );
     }
   };
 
@@ -393,15 +408,13 @@ export default function SocialListeningApp({ onLogout }) {
             <h2 className="text-2xl font-bold mb-4">🛠️ Configuración</h2>
             <div className="space-y-4">
               <div>
-                <label className="font-semibold block mb-1">Palabras clave activas</label>
-                <ul className="list-disc pl-4 space-y-1 mb-2">
-                  {keywords.length ? (
-                    keywords.map((k) => <li key={k.id}>{k.keyword}</li>)
-                  ) : (
-                    <li className="list-none text-muted-foreground">No hay keywords</li>
-                  )}
-                </ul>
-                <div className="flex items-center gap-2">
+                <label className="font-semibold block mb-1">Palabras clave</label>
+                {keywords.length ? (
+                  <KeywordTable keywords={keywords} onToggle={toggleKeywordActive} />
+                ) : (
+                  <p className="text-muted-foreground mb-2">No hay keywords</p>
+                )}
+                <div className="flex items-center gap-2 mt-2">
                   <Input
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
@@ -414,9 +427,7 @@ export default function SocialListeningApp({ onLogout }) {
                 {keywordMessage && (
                   <p
                     className={`text-sm ${
-                      keywordMessage.type === "error"
-                        ? "text-red-500"
-                        : "text-green-500"
+                      keywordMessage.type === "error" ? "text-red-500" : "text-green-500"
                     }`}
                   >
                     {keywordMessage.text}
