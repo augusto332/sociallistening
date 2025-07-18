@@ -70,8 +70,23 @@ export default function SocialListeningApp({ onLogout }) {
     if (order === "recent") {
       return new Date(b.created_at) - new Date(a.created_at);
     }
-    // Fallback sorting for "relevant"
-    return new Date(a.created_at) - new Date(b.created_at);
+    if (order === "popular") {
+      const likesDiff = (b.likes ?? 0) - (a.likes ?? 0);
+      if (likesDiff !== 0) return likesDiff;
+
+      const commentsA = a.comments ?? a.replies ?? 0;
+      const commentsB = b.comments ?? b.replies ?? 0;
+      const commentsDiff = commentsB - commentsA;
+      if (commentsDiff !== 0) return commentsDiff;
+
+      const restA =
+        (a.retweets ?? 0) + (a.quotes ?? 0) + (a.views ?? 0);
+      const restB =
+        (b.retweets ?? 0) + (b.quotes ?? 0) + (b.views ?? 0);
+      return restB - restA;
+    }
+
+    return 0;
   });
 
   const visibleMentions = sortedMentions.filter(
@@ -187,7 +202,6 @@ export default function SocialListeningApp({ onLogout }) {
                 <Tabs value={order} onValueChange={setOrder}>
                   <TabsList>
                     <TabsTrigger value="recent">Más recientes</TabsTrigger>
-                    <TabsTrigger value="relevant">Más relevantes</TabsTrigger>
                     <TabsTrigger value="popular">Más populares</TabsTrigger>
                   </TabsList>
                 </Tabs>
