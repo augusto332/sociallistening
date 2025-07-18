@@ -2,15 +2,26 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (onLogin) onLogin();
-    navigate("/home");
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      setError(error.message);
+    } else {
+      if (onLogin) onLogin();
+      navigate("/home");
+    }
   };
 
   return (
@@ -29,6 +40,7 @@ export default function Login({ onLogin }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
         <Button type="submit" className="w-full">
           Iniciar sesión
         </Button>

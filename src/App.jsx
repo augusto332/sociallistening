@@ -113,7 +113,8 @@ export default function SocialListeningApp({ onLogout }) {
     fetchMentions();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     if (onLogout) onLogout();
     navigate("/login");
   };
