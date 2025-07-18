@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -39,6 +45,12 @@ export default function Register() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+        />
+        <Input
+          placeholder="Confirmar contraseña"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
         <Button type="submit" className="w-full">
