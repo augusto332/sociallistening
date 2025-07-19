@@ -235,29 +235,72 @@ export default function SocialListeningApp({ onLogout }) {
     [keywords],
   );
 
+  const stopwords = useMemo(
+    () =>
+      new Set([
+        "de",
+        "la",
+        "que",
+        "y",
+        "el",
+        "en",
+        "no",
+        "se",
+        "con",
+        "los",
+        "del",
+        "un",
+        "es",
+        "por",
+        "las",
+        "para",
+        "lo",
+        "al",
+        "si",
+        "sin",
+        "le",
+        "su",
+        "esta",
+        "hay",
+      ]),
+    [],
+  );
+
+  const normalizeWord = (w) =>
+    w
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
   const wordCloudData = useMemo(() => {
     const relevant = mentions.filter((m) => {
       const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
-      const matchesKeyword = dashboardKeyword === "Palabras Clave" || m.keyword === dashboardKeyword;
+      const matchesKeyword =
+        dashboardKeyword === "Palabras Clave" || m.keyword === dashboardKeyword;
       return isActive && matchesKeyword;
     });
 
     const counts = {};
     for (const m of relevant) {
       const words = m.mention
-        .toLowerCase()
-        .replace(/[^\w\sáéíóúüñ]/g, "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-ZñÑüÜ\s]/g, " ")
         .split(/\s+/)
         .filter(Boolean);
       for (const w of words) {
-        counts[w] = (counts[w] || 0) + 1;
+        const normalized = normalizeWord(w);
+        if (normalized.length < 3) continue;
+        if (stopwords.has(normalized)) continue;
+        counts[normalized] = (counts[normalized] || 0) + 1;
       }
     }
     return Object.entries(counts)
+      .filter(([_, v]) => v >= 2)
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 30);
-  }, [mentions, activeKeywords, dashboardKeyword]);
+  }, [mentions, activeKeywords, dashboardKeyword, stopwords]);
 
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">

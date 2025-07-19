@@ -1,26 +1,25 @@
 import React from "react";
+import ReactWordCloud from "react-d3-cloud";
 
 export default function WordCloud({ words = [] }) {
   if (!words.length) {
     return <p className="text-muted-foreground text-sm">Sin datos</p>;
   }
 
-  const max = Math.max(...words.map((w) => w.value));
+  const fontSizeMapper = (word) => Math.log2(word.value) * 8 + 16;
+  const rotate = () => 0;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {words.map((w, i) => {
-        const size = 0.75 + (w.value / max) * 1.25; // scale
-        return (
-          <span
-            key={i}
-            style={{ fontSize: `${size}rem` }}
-            className="text-primary"
-          >
-            {w.text}
-          </span>
-        );
-      })}
+    <div className="w-full h-64">
+      <ReactWordCloud
+        data={words}
+        width={500}
+        height={250}
+        font="sans-serif"
+        fontSizeMapper={fontSizeMapper}
+        rotate={rotate}
+        padding={1}
+      />
     </div>
   );
 }
