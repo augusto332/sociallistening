@@ -238,7 +238,7 @@ export default function SocialListeningApp({ onLogout }) {
   const wordCloudData = useMemo(() => {
     const relevant = mentions.filter((m) => {
       const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
-      const matchesKeyword = !dashboardKeyword || m.keyword === dashboardKeyword;
+      const matchesKeyword = dashboardKeyword === "Palabras Clave" || m.keyword === dashboardKeyword;
       return isActive && matchesKeyword;
     });
 
@@ -418,7 +418,7 @@ export default function SocialListeningApp({ onLogout }) {
                   <SelectValue placeholder="Todas las keywords" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="Palabras Clave">Palabras Clave</SelectItem>
                   {activeKeywords.map((k) => (
                     <SelectItem key={k.keyword_id} value={k.keyword}>
                       {k.keyword}
