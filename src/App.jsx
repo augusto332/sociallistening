@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
+import WordCloud from "@/components/WordCloud";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +42,7 @@ export default function SocialListeningApp({ onLogout }) {
   const [order, setOrder] = useState("recent");
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
+  const [dashboardKeyword, setDashboardKeyword] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const [addKeywordMessage, setAddKeywordMessage] = useState(null);
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null);
@@ -228,6 +230,35 @@ export default function SocialListeningApp({ onLogout }) {
     setSearch("");
   };
 
+  const activeKeywords = useMemo(
+    () => keywords.filter((k) => k.active),
+    [keywords],
+  );
+
+  const wordCloudData = useMemo(() => {
+    const relevant = mentions.filter((m) => {
+      const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
+      const matchesKeyword = !dashboardKeyword || m.keyword === dashboardKeyword;
+      return isActive && matchesKeyword;
+    });
+
+    const counts = {};
+    for (const m of relevant) {
+      const words = m.mention
+        .toLowerCase()
+        .replace(/[^\w\sáéíóúüñ]/g, "")
+        .split(/\s+/)
+        .filter(Boolean);
+      for (const w of words) {
+        counts[w] = (counts[w] || 0) + 1;
+      }
+    }
+    return Object.entries(counts)
+      .map(([text, value]) => ({ text, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 30);
+  }, [mentions, activeKeywords, dashboardKeyword]);
+
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
       <button
@@ -382,7 +413,19 @@ export default function SocialListeningApp({ onLogout }) {
               📈 Análisis de palabras clave
             </h2>
             <div className="flex flex-wrap gap-4 mb-4">
-              <Input placeholder="Buscar keyword..." className="w-64" />
+              <Select value={dashboardKeyword} onValueChange={setDashboardKeyword}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Todas las keywords" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas</SelectItem>
+                  {activeKeywords.map((k) => (
+                    <SelectItem key={k.keyword_id} value={k.keyword}>
+                      {k.keyword}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex items-center gap-2">
                 <Input
                   type="date"
@@ -410,22 +453,19 @@ export default function SocialListeningApp({ onLogout }) {
                   <SelectItem value="twitter">Twitter</SelectItem>
                 </SelectContent>
               </Select>
-              <Select>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="engagement">Engagement</SelectItem>
-                  <SelectItem value="fecha">Fecha</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
+              <Card className="bg-secondary">
+                <CardContent className="p-4 space-y-2">
+                  <p className="font-semibold">📌 Palabras más mencionadas</p>
+                  <WordCloud words={wordCloudData} />
+                </CardContent>
+              </Card>
+              {[...Array(5)].map((_, i) => (
                 <Card key={i} className="bg-secondary">
                   <CardContent className="p-4">
                     <p className="font-semibold">
-                      📌 Título de gráfico o insight {i + 1}
+                      📌 Título de gráfico o insight {i + 2}
                     </p>
                     <p className="text-sm text-gray-600">
                       Placeholder de gráfico o métrica
