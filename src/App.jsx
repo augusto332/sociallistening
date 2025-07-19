@@ -188,7 +188,7 @@ export default function SocialListeningApp({ onLogout }) {
         keyword: newKeyword,
         user_id: user.id,
         created_at: new Date().toISOString(),
-        active: true,
+        active: false,
       })
       .select();
     if (error || !data || data.length === 0) {
@@ -442,19 +442,7 @@ export default function SocialListeningApp({ onLogout }) {
             <div className="space-y-4">
               <div>
                 <label className="font-semibold block mb-1">Palabras clave</label>
-                {keywords.length ? (
-                  <KeywordTable keywords={keywords} onToggle={handleKeywordToggle} />
-                ) : (
-                  <p className="text-muted-foreground mb-2">No hay keywords</p>
-                )}
-                <Button
-                  className="mt-2"
-                  onClick={saveKeywordChanges}
-                  disabled={Object.keys(keywordChanges).length === 0}
-                >
-                  Guardar cambios
-                </Button>
-                <h3 className="text-lg font-semibold mt-6 mb-2">Agregar nueva keyword</h3>
+                <h3 className="text-lg font-semibold mb-2">Agregar nueva keyword</h3>
                 <div className="flex items-center gap-2">
                   <Input
                     className="w-64"
@@ -475,6 +463,18 @@ export default function SocialListeningApp({ onLogout }) {
                     {keywordMessage.text}
                   </p>
                 )}
+                {keywords.length ? (
+                  <KeywordTable keywords={keywords} onToggle={handleKeywordToggle} />
+                ) : (
+                  <p className="text-muted-foreground mb-2">No hay keywords</p>
+                )}
+                <Button
+                  className="mt-2"
+                  onClick={saveKeywordChanges}
+                  disabled={Object.keys(keywordChanges).length === 0}
+                >
+                  Guardar cambios
+                </Button>
               </div>
             </div>
           </section>
