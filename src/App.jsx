@@ -44,6 +44,7 @@ export default function SocialListeningApp({ onLogout }) {
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [dashboardKeyword, setDashboardKeyword] = useState("");
+  const [dashboardPlatform, setDashboardPlatform] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const [addKeywordMessage, setAddKeywordMessage] = useState(null);
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null);
@@ -276,9 +277,11 @@ export default function SocialListeningApp({ onLogout }) {
   const wordCloudData = useMemo(() => {
     const relevant = mentions.filter((m) => {
       const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
-      const matchesKeyword =
-        dashboardKeyword === "Palabras Clave" || m.keyword === dashboardKeyword;
-      return isActive && matchesKeyword;
+      const matchesKeyword = !dashboardKeyword || m.keyword === dashboardKeyword;
+      const matchesPlatform =
+        !dashboardPlatform ||
+        m.platform?.toLowerCase?.() === dashboardPlatform;
+      return isActive && matchesKeyword && matchesPlatform;
     });
 
     const counts = {};
@@ -301,19 +304,21 @@ export default function SocialListeningApp({ onLogout }) {
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 30);
-  }, [mentions, activeKeywords, dashboardKeyword, stopwords]);
+  }, [mentions, activeKeywords, dashboardKeyword, dashboardPlatform, stopwords]);
 
   const platformCounts = useMemo(() => {
     const counts = {};
     for (const m of mentions) {
+      if (dashboardKeyword && m.keyword !== dashboardKeyword) continue;
       const platform = m.platform?.toLowerCase?.();
       if (!platform) continue;
+      if (dashboardPlatform && platform !== dashboardPlatform) continue;
       counts[platform] = (counts[platform] || 0) + 1;
     }
     return Object.entries(counts)
       .map(([platform, count]) => ({ platform, count }))
       .sort((a, b) => b.count - a.count);
-  }, [mentions]);
+  }, [mentions, dashboardKeyword, dashboardPlatform]);
 
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
@@ -471,10 +476,10 @@ export default function SocialListeningApp({ onLogout }) {
             <div className="flex flex-wrap gap-4 mb-4">
               <Select value={dashboardKeyword} onValueChange={setDashboardKeyword}>
                 <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Todas las keywords" />
+                  <SelectValue placeholder="Seleccionar palabra clave" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Palabras Clave">Palabras Clave</SelectItem>
+                  <SelectItem value="">Seleccionar todas</SelectItem>
                   {activeKeywords.map((k) => (
                     <SelectItem key={k.keyword_id} value={k.keyword}>
                       {k.keyword}
@@ -499,11 +504,15 @@ export default function SocialListeningApp({ onLogout }) {
                   className="w-40"
                 />
               </div>
-              <Select>
+              <Select
+                value={dashboardPlatform}
+                onValueChange={setDashboardPlatform}
+              >
                 <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Plataforma" />
+                  <SelectValue placeholder="Todas las plataformas" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Seleccionar todas</SelectItem>
                   <SelectItem value="youtube">YouTube</SelectItem>
                   <SelectItem value="reddit">Reddit</SelectItem>
                   <SelectItem value="twitter">Twitter</SelectItem>
