@@ -156,7 +156,7 @@ export default function SocialListeningApp({ onLogout }) {
     let errorMsg = "";
     for (const [id, active] of Object.entries(keywordChanges)) {
       // convert id back to number to match DB field type
-      const { error } = await toggleKeywordActive(Number(id), active);
+      const { error } = await toggleKeywordActive(id, active);
       if (error) {
         hasError = true;
         errorMsg = error.message || "Error desconocido";
