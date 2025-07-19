@@ -277,7 +277,7 @@ export default function SocialListeningApp({ onLogout }) {
   const wordCloudData = useMemo(() => {
     const relevant = mentions.filter((m) => {
       const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
-      const matchesKeyword = !dashboardKeyword || m.keyword === dashboardKeyword;
+      const matchesKeyword = dashboardKeyword === "all" || m.keyword === dashboardKeyword;
       const matchesPlatform =
         !dashboardPlatform ||
         m.platform?.toLowerCase?.() === dashboardPlatform;
@@ -479,7 +479,7 @@ export default function SocialListeningApp({ onLogout }) {
                   <SelectValue placeholder="Seleccionar palabra clave" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Seleccionar todas</SelectItem>
+                  <SelectItem value="all">Seleccionar todas</SelectItem>
                   {activeKeywords.map((k) => (
                     <SelectItem key={k.keyword_id} value={k.keyword}>
                       {k.keyword}
@@ -512,7 +512,7 @@ export default function SocialListeningApp({ onLogout }) {
                   <SelectValue placeholder="Todas las plataformas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Seleccionar todas</SelectItem>
+                  <SelectItem value="all">Seleccionar todas</SelectItem>
                   <SelectItem value="youtube">YouTube</SelectItem>
                   <SelectItem value="reddit">Reddit</SelectItem>
                   <SelectItem value="twitter">Twitter</SelectItem>
@@ -520,16 +520,20 @@ export default function SocialListeningApp({ onLogout }) {
               </Select>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="bg-secondary">
-                <CardContent className="p-4 space-y-2">
-                  <p className="font-semibold">📌 Palabras más mencionadas</p>
+              <Card className="bg-secondary h-[400px]">
+                <CardContent className="p-4 space-y-2 h-full flex flex-col">
+                 <p className="font-semibold">📌 Palabras más mencionadas</p>
+                 <div className="flex-1">
                   <WordCloud words={wordCloudData} />
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="bg-secondary">
-                <CardContent className="p-4 space-y-2">
-                  <p className="font-semibold">📌 Menciones por plataforma</p>
-                  <PlatformBarChart data={platformCounts} />
+              <Card className="bg-secondary h-[400px]">
+                <CardContent className="p-4 space-y-2 h-full flex flex-col">
+                 <p className="font-semibold">📌 Menciones por plataforma</p>
+                 <div className="flex-1">
+                   <PlatformBarChart data={platformCounts} />
+                 </div>
                 </CardContent>
               </Card>
               {[...Array(4)].map((_, i) => (

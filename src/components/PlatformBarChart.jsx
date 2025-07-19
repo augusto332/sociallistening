@@ -19,7 +19,7 @@ export default function PlatformBarChart({ data = [] }) {
   }));
 
   return (
-    <div className="w-full h-60">
+    <div className="w-full h-full min-h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={formatted} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
