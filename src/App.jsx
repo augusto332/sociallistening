@@ -42,7 +42,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState("");
-  const [keywordMessage, setKeywordMessage] = useState(null);
+  const [addKeywordMessage, setAddKeywordMessage] = useState(null);
+  const [saveKeywordMessage, setSaveKeywordMessage] = useState(null);
   const [keywordChanges, setKeywordChanges] = useState({});
   const navigate = useNavigate();
   const { favorites } = useFavorites();
@@ -151,7 +152,7 @@ export default function SocialListeningApp({ onLogout }) {
   };
 
   const saveKeywordChanges = async () => {
-    setKeywordMessage(null);
+    setSaveKeywordMessage(null);
     let hasError = false;
     let errorMsg = "";
     for (const [id, active] of Object.entries(keywordChanges)) {
@@ -164,22 +165,22 @@ export default function SocialListeningApp({ onLogout }) {
     }
     setKeywordChanges({});
     if (hasError) {
-      setKeywordMessage({
+      setSaveKeywordMessage({
         type: "error",
         text: `Ocurri\u00f3 un error al guardar los cambios: ${errorMsg}`,
       });
     } else {
-      setKeywordMessage({ type: "success", text: "Cambios guardados" });
+      setSaveKeywordMessage({ type: "success", text: "Cambios guardados" });
     }
   };
 
   const addKeyword = async () => {
     if (!newKeyword.trim()) return;
-    setKeywordMessage(null);
+    setAddKeywordMessage(null);
     const { data: userData } = await supabase.auth.getUser();
     const { user } = userData || {};
     if (!user) {
-      setKeywordMessage({ type: "error", text: "Debes iniciar sesión" });
+      setAddKeywordMessage({ type: "error", text: "Debes iniciar sesión" });
       return;
     }
     const { data, error } = await supabase
@@ -193,14 +194,14 @@ export default function SocialListeningApp({ onLogout }) {
       .select();
     if (error || !data || data.length === 0) {
       console.error("Error adding keyword", error);
-      setKeywordMessage({
+      setAddKeywordMessage({
         type: "error",
         text: `No se pudo agregar la keyword: ${error?.message || "Error desconocido"}`,
       });
     } else {
       setKeywords((k) => [...data, ...k]);
       setNewKeyword("");
-      setKeywordMessage({ type: "success", text: "Keyword agregada" });
+      setAddKeywordMessage({ type: "success", text: "Keyword agregada" });
     }
   };
 
@@ -439,9 +440,8 @@ export default function SocialListeningApp({ onLogout }) {
         {activeTab === "config" && (
           <section>
             <h2 className="text-2xl font-bold mb-4">🛠️ Configuración</h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="font-semibold block mb-1">Palabras clave</label>
                 <h3 className="text-lg font-semibold mb-2">Agregar nueva keyword</h3>
                 <div className="flex items-center gap-2">
                   <Input
@@ -454,15 +454,18 @@ export default function SocialListeningApp({ onLogout }) {
                     Agregar
                   </Button>
                 </div>
-                {keywordMessage && (
+                {addKeywordMessage && (
                   <p
                     className={`text-sm ${
-                      keywordMessage.type === "error" ? "text-red-500" : "text-green-500"
+                      addKeywordMessage.type === "error" ? "text-red-500" : "text-green-500"
                     }`}
                   >
-                    {keywordMessage.text}
+                    {addKeywordMessage.text}
                   </p>
                 )}
+              </div>
+              <div>
+                <label className="font-semibold block mb-2">Palabras clave</label>
                 {keywords.length ? (
                   <KeywordTable keywords={keywords} onToggle={handleKeywordToggle} />
                 ) : (
@@ -475,6 +478,15 @@ export default function SocialListeningApp({ onLogout }) {
                 >
                   Guardar cambios
                 </Button>
+                {saveKeywordMessage && (
+                  <p
+                    className={`text-sm ${
+                      saveKeywordMessage.type === "error" ? "text-red-500" : "text-green-500"
+                    }`}
+                  >
+                    {saveKeywordMessage.text}
+                  </p>
+                )}
               </div>
             </div>
           </section>
