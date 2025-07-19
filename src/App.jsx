@@ -153,16 +153,20 @@ export default function SocialListeningApp({ onLogout }) {
   const saveKeywordChanges = async () => {
     setKeywordMessage(null);
     let hasError = false;
+    let errorMsg = "";
     for (const [id, active] of Object.entries(keywordChanges)) {
       // convert id back to number to match DB field type
       const { error } = await toggleKeywordActive(Number(id), active);
-      if (error) hasError = true;
+      if (error) {
+        hasError = true;
+        errorMsg = error.message || "Error desconocido";
+      }
     }
     setKeywordChanges({});
     if (hasError) {
       setKeywordMessage({
         type: "error",
-        text: "Ocurri\u00f3 un error al guardar los cambios",
+        text: `Ocurri\u00f3 un error al guardar los cambios: ${errorMsg}`,
       });
     } else {
       setKeywordMessage({ type: "success", text: "Cambios guardados" });
@@ -450,8 +454,10 @@ export default function SocialListeningApp({ onLogout }) {
                 >
                   Guardar cambios
                 </Button>
-                <div className="flex items-center gap-2 mt-4">
+                <h3 className="text-lg font-semibold mt-6 mb-2">Agregar nueva keyword</h3>
+                <div className="flex items-center gap-2">
                   <Input
+                    className="w-64"
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
                     placeholder="Nueva keyword"
