@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import WordCloud from "@/components/WordCloud";
+import PlatformBarChart from "@/components/PlatformBarChart";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -302,6 +303,18 @@ export default function SocialListeningApp({ onLogout }) {
       .slice(0, 30);
   }, [mentions, activeKeywords, dashboardKeyword, stopwords]);
 
+  const platformCounts = useMemo(() => {
+    const counts = {};
+    for (const m of mentions) {
+      const platform = m.platform?.toLowerCase?.();
+      if (!platform) continue;
+      counts[platform] = (counts[platform] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([platform, count]) => ({ platform, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [mentions]);
+
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
       <button
@@ -504,11 +517,17 @@ export default function SocialListeningApp({ onLogout }) {
                   <WordCloud words={wordCloudData} />
                 </CardContent>
               </Card>
-              {[...Array(5)].map((_, i) => (
+              <Card className="bg-secondary">
+                <CardContent className="p-4 space-y-2">
+                  <p className="font-semibold">📌 Menciones por plataforma</p>
+                  <PlatformBarChart data={platformCounts} />
+                </CardContent>
+              </Card>
+              {[...Array(4)].map((_, i) => (
                 <Card key={i} className="bg-secondary">
                   <CardContent className="p-4">
                     <p className="font-semibold">
-                      📌 Título de gráfico o insight {i + 2}
+                      📌 Título de gráfico o insight {i + 3}
                     </p>
                     <p className="text-sm text-gray-600">
                       Placeholder de gráfico o métrica
