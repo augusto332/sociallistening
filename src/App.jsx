@@ -127,18 +127,20 @@ export default function SocialListeningApp({ onLogout }) {
   };
 
   const toggleKeywordActive = async (id, active) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("dim_keywords")
-      .update({ active })
-      .eq("keyword_id", id)
-      .select();
+      .update({ active: !!active })
+      .eq("keyword_id", id);
+
     if (error) {
       console.error("Error updating keyword", error);
-    } else if (data && data.length) {
-      setKeywords((prev) =>
-        prev.map((k) => (k.keyword_id === id ? { ...k, active } : k)),
-      );
+      return { error };
     }
+
+    setKeywords((prev) =>
+      prev.map((k) => (k.keyword_id === id ? { ...k, active } : k)),
+    );
+    return { error: null };
   };
 
   const handleKeywordToggle = (id, active) => {
@@ -149,11 +151,22 @@ export default function SocialListeningApp({ onLogout }) {
   };
 
   const saveKeywordChanges = async () => {
+    setKeywordMessage(null);
+    let hasError = false;
     for (const [id, active] of Object.entries(keywordChanges)) {
       // convert id back to number to match DB field type
-      await toggleKeywordActive(Number(id), active);
+      const { error } = await toggleKeywordActive(Number(id), active);
+      if (error) hasError = true;
     }
     setKeywordChanges({});
+    if (hasError) {
+      setKeywordMessage({
+        type: "error",
+        text: "Ocurri\u00f3 un error al guardar los cambios",
+      });
+    } else {
+      setKeywordMessage({ type: "success", text: "Cambios guardados" });
+    }
   };
 
   const addKeyword = async () => {
@@ -437,7 +450,7 @@ export default function SocialListeningApp({ onLogout }) {
                 >
                   Guardar cambios
                 </Button>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-4">
                   <Input
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
@@ -457,13 +470,6 @@ export default function SocialListeningApp({ onLogout }) {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Checkbox id="notify" />
-                <label htmlFor="notify">
-                  Notificarme cuando haya más de 100 menciones en una hora
-                </label>
-              </div>
-              <Button className="mt-4">Guardar configuración</Button>
             </div>
           </section>
         )}
