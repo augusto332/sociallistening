@@ -21,12 +21,12 @@ export default function PlatformBarChart({ data = [] }) {
   return (
     <div className="w-full h-60">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart layout="vertical" data={formatted} margin={{ top: 10, right: 20, bottom: 10, left: 40 }}>
+        <BarChart data={formatted} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-          <XAxis type="number" stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-          <YAxis dataKey="name" type="category" stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
+          <XAxis dataKey="name" stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+          <YAxis stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
           <Tooltip />
-          <Bar dataKey="count" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="count" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
