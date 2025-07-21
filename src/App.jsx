@@ -7,6 +7,7 @@ import MentionCard from "@/components/MentionCard";
 import WordCloud from "@/components/WordCloud";
 import PlatformBarChart from "@/components/PlatformBarChart";
 import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart";
+import MentionsLineChart from "@/components/MentionsLineChart";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
 import RightSidebar from "@/components/RightSidebar";
@@ -348,6 +349,61 @@ export default function SocialListeningApp({ onLogout }) {
       .slice(0, 10);
   }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms]);
 
+  const mentionsOverTime = useMemo(() => {
+    const filtered = mentions.filter((m) => {
+      if (
+        !selectedDashboardKeywords.includes("all") &&
+        !selectedDashboardKeywords.includes(m.keyword)
+      ) {
+        return false;
+      }
+      const platform = m.platform?.toLowerCase?.();
+      if (
+        !selectedDashboardPlatforms.includes("all") &&
+        !selectedDashboardPlatforms.includes(platform)
+      ) {
+        return false;
+      }
+      const created = new Date(m.created_at);
+      if (startDate && created < new Date(startDate)) return false;
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (created > end) return false;
+      }
+      return true;
+    });
+
+    const counts = {};
+    for (const m of filtered) {
+      const day = m.created_at.slice(0, 10);
+      counts[day] = (counts[day] || 0) + 1;
+    }
+
+    const dates = Object.keys(counts).sort();
+    if (!dates.length) return [];
+
+    const start = startDate || dates[0];
+    const end = endDate || dates[dates.length - 1];
+
+    const result = [];
+    let current = new Date(start);
+    const endDt = new Date(end);
+    while (current <= endDt) {
+      const key = current.toISOString().slice(0, 10);
+      result.push({ date: key, count: counts[key] || 0 });
+      current.setDate(current.getDate() + 1);
+    }
+
+    return result;
+  }, [
+    mentions,
+    selectedDashboardKeywords,
+    selectedDashboardPlatforms,
+    startDate,
+    endDate,
+  ]);
+
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
       <button
@@ -553,6 +609,14 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="bg-secondary h-[400px] lg:col-span-3">
+                <CardContent className="p-4 space-y-2 h-full flex flex-col">
+                  <p className="font-semibold">📌 Evolución de menciones</p>
+                  <div className="flex-1">
+                    <MentionsLineChart data={mentionsOverTime} />
+                  </div>
+                </CardContent>
+              </Card>
               <Card className="bg-secondary h-[400px]">
                 <CardContent className="p-4 space-y-2 h-full flex flex-col">
                  <p className="font-semibold">📌 Palabras más mencionadas</p>
