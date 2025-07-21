@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import WordCloud from "@/components/WordCloud";
 import PlatformBarChart from "@/components/PlatformBarChart";
+import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
 import RightSidebar from "@/components/RightSidebar";
@@ -323,6 +324,30 @@ export default function SocialListeningApp({ onLogout }) {
       .sort((a, b) => b.count - a.count);
   }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms]);
 
+  const sourceCounts = useMemo(() => {
+    const counts = {};
+    for (const m of mentions) {
+      if (
+        !selectedDashboardKeywords.includes("all") &&
+        !selectedDashboardKeywords.includes(m.keyword)
+      )
+        continue;
+      const platform = m.platform?.toLowerCase?.();
+      if (
+        !selectedDashboardPlatforms.includes("all") &&
+        !selectedDashboardPlatforms.includes(platform)
+      )
+        continue;
+      const name = m.source;
+      if (!name) continue;
+      counts[name] = (counts[name] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms]);
+
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
       <button
@@ -544,15 +569,21 @@ export default function SocialListeningApp({ onLogout }) {
                  </div>
                 </CardContent>
               </Card>
-              {[...Array(4)].map((_, i) => (
+              <Card className="bg-secondary h-[400px]">
+                <CardContent className="p-4 space-y-2 h-full flex flex-col">
+                  <p className="font-semibold">📌 Usuarios/canales más activos</p>
+                  <div className="flex-1">
+                    <ActiveSourcesBarChart data={sourceCounts} />
+                  </div>
+                </CardContent>
+              </Card>
+              {[...Array(3)].map((_, i) => (
                 <Card key={i} className="bg-secondary">
                   <CardContent className="p-4">
                     <p className="font-semibold">
-                      📌 Título de gráfico o insight {i + 3}
+                      📌 Título de gráfico o insight {i + 4}
                     </p>
-                    <p className="text-sm text-gray-600">
-                      Placeholder de gráfico o métrica
-                    </p>
+                    <p className="text-sm text-gray-600">Placeholder de gráfico o métrica</p>
                   </CardContent>
                 </Card>
               ))}
