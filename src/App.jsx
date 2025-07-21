@@ -609,28 +609,20 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="bg-secondary h-[400px] lg:col-span-3">
+              <Card className="bg-secondary h-[400px]">
                 <CardContent className="p-4 space-y-2 h-full flex flex-col">
-                  <p className="font-semibold">📌 Evolución de menciones</p>
+                  <p className="font-semibold">📌 Palabras más mencionadas</p>
                   <div className="flex-1">
-                    <MentionsLineChart data={mentionsOverTime} />
+                    <WordCloud words={wordCloudData} />
                   </div>
                 </CardContent>
               </Card>
               <Card className="bg-secondary h-[400px]">
                 <CardContent className="p-4 space-y-2 h-full flex flex-col">
-                 <p className="font-semibold">📌 Palabras más mencionadas</p>
-                 <div className="flex-1">
-                  <WordCloud words={wordCloudData} />
+                  <p className="font-semibold">📌 Menciones por plataforma</p>
+                  <div className="flex-1">
+                    <PlatformBarChart data={platformCounts} />
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-secondary h-[400px]">
-                <CardContent className="p-4 space-y-2 h-full flex flex-col">
-                 <p className="font-semibold">📌 Menciones por plataforma</p>
-                 <div className="flex-1">
-                   <PlatformBarChart data={platformCounts} />
-                 </div>
                 </CardContent>
               </Card>
               <Card className="bg-secondary h-[400px]">
@@ -641,16 +633,14 @@ export default function SocialListeningApp({ onLogout }) {
                   </div>
                 </CardContent>
               </Card>
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="bg-secondary">
-                  <CardContent className="p-4">
-                    <p className="font-semibold">
-                      📌 Título de gráfico o insight {i + 4}
-                    </p>
-                    <p className="text-sm text-gray-600">Placeholder de gráfico o métrica</p>
-                  </CardContent>
-                </Card>
-              ))}
+              <Card className="bg-secondary h-[400px] lg:col-span-3">
+                <CardContent className="p-4 space-y-2 h-full flex flex-col">
+                  <p className="font-semibold">📌 Evolución de menciones</p>
+                  <div className="flex-1">
+                    <MentionsLineChart data={mentionsOverTime} />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </section>
         )}
