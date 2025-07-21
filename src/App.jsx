@@ -554,9 +554,6 @@ export default function SocialListeningApp({ onLogout }) {
 
         {activeTab === "dashboard" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">
-              📈 Análisis de palabras clave
-            </h2>
             <div className="flex flex-wrap gap-4 mb-4">
               <div>
                 <p className="text-sm font-medium mb-1">Palabras clave</p>

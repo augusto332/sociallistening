@@ -6,22 +6,27 @@ export default function WordCloud({ words = [] }) {
   const [dimensions, setDimensions] = useState({ width: 700, height: 300 });
 
   useEffect(() => {
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      setDimensions({
-        width: Math.max(300, width),
-        height: Math.max(200, height),
-      });
+  const observer = new ResizeObserver(([entry]) => {
+    const { width, height } = entry.contentRect;
+
+    // Evitar dimensiones incorrectas o muy chicas por glitches temporales
+    if (width < 100 || height < 100) return;
+
+    setDimensions({
+      width: Math.max(300, width),
+      height: Math.max(200, height),
     });
+  });
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+  if (containerRef.current) {
+    observer.observe(containerRef.current);
+  }
 
-    return () => {
-      if (containerRef.current) observer.unobserve(containerRef.current);
-    };
+  return () => {
+    if (containerRef.current) observer.unobserve(containerRef.current);
+  };
   }, []);
+
 
   if (!words.length) {
     return <p className="text-muted-foreground text-sm">Sin datos</p>;
@@ -31,7 +36,7 @@ export default function WordCloud({ words = [] }) {
   const rotate = () => (Math.random() > 0.5 ? 0 : -45);
 
   return (
-    <div ref={containerRef} className="w-full h-96">
+    <div ref={containerRef} className="w-full h-full">
       <ReactWordCloud
         data={words}
         width={dimensions.width}
