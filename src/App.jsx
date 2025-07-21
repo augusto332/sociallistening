@@ -6,15 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import WordCloud from "@/components/WordCloud";
 import PlatformBarChart from "@/components/PlatformBarChart";
-import { Checkbox } from "@/components/ui/checkbox";
+import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -43,8 +36,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [order, setOrder] = useState("recent");
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
-  const [dashboardKeyword, setDashboardKeyword] = useState("");
-  const [dashboardPlatform, setDashboardPlatform] = useState("");
+  const [selectedDashboardKeywords, setSelectedDashboardKeywords] = useState(["all"]);
+  const [selectedDashboardPlatforms, setSelectedDashboardPlatforms] = useState(["all"]);
   const [newKeyword, setNewKeyword] = useState("");
   const [addKeywordMessage, setAddKeywordMessage] = useState(null);
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null);
@@ -277,10 +270,12 @@ export default function SocialListeningApp({ onLogout }) {
   const wordCloudData = useMemo(() => {
     const relevant = mentions.filter((m) => {
       const isActive = activeKeywords.some((k) => k.keyword === m.keyword);
-      const matchesKeyword = dashboardKeyword === "all" || m.keyword === dashboardKeyword;
+      const matchesKeyword =
+        selectedDashboardKeywords.includes("all") ||
+        selectedDashboardKeywords.includes(m.keyword);
       const matchesPlatform =
-        !dashboardPlatform ||
-        m.platform?.toLowerCase?.() === dashboardPlatform;
+        selectedDashboardPlatforms.includes("all") ||
+        selectedDashboardPlatforms.includes(m.platform?.toLowerCase?.());
       return isActive && matchesKeyword && matchesPlatform;
     });
 
@@ -304,21 +299,29 @@ export default function SocialListeningApp({ onLogout }) {
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 30);
-  }, [mentions, activeKeywords, dashboardKeyword, dashboardPlatform, stopwords]);
+  }, [mentions, activeKeywords, selectedDashboardKeywords, selectedDashboardPlatforms, stopwords]);
 
   const platformCounts = useMemo(() => {
     const counts = {};
     for (const m of mentions) {
-      if (dashboardKeyword && m.keyword !== dashboardKeyword) continue;
+      if (
+        !selectedDashboardKeywords.includes("all") &&
+        !selectedDashboardKeywords.includes(m.keyword)
+      )
+        continue;
       const platform = m.platform?.toLowerCase?.();
       if (!platform) continue;
-      if (dashboardPlatform && platform !== dashboardPlatform) continue;
+      if (
+        !selectedDashboardPlatforms.includes("all") &&
+        !selectedDashboardPlatforms.includes(platform)
+      )
+        continue;
       counts[platform] = (counts[platform] || 0) + 1;
     }
     return Object.entries(counts)
       .map(([platform, count]) => ({ platform, count }))
       .sort((a, b) => b.count - a.count);
-  }, [mentions, dashboardKeyword, dashboardPlatform]);
+  }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms]);
 
   return (
     <div className="min-h-screen flex bg-neutral-950 text-gray-100 relative">
@@ -474,50 +477,55 @@ export default function SocialListeningApp({ onLogout }) {
               📈 Análisis de palabras clave
             </h2>
             <div className="flex flex-wrap gap-4 mb-4">
-              <Select value={dashboardKeyword} onValueChange={setDashboardKeyword}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Seleccionar palabra clave" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Seleccionar todas</SelectItem>
-                  {activeKeywords.map((k) => (
-                    <SelectItem key={k.keyword_id} value={k.keyword}>
-                      {k.keyword}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  placeholder="Desde"
-                  className="w-40"
-                />
-                <span>a</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  placeholder="Hasta"
-                  className="w-40"
+              <div>
+                <p className="text-sm font-medium mb-1">Palabras clave</p>
+                <MultiSelect
+                  className="w-64"
+                  options={[
+                    { value: "all", label: "Todas" },
+                    ...activeKeywords.map((k) => ({
+                      value: k.keyword,
+                      label: k.keyword,
+                    })),
+                  ]}
+                  value={selectedDashboardKeywords}
+                  onChange={setSelectedDashboardKeywords}
                 />
               </div>
-              <Select
-                value={dashboardPlatform}
-                onValueChange={setDashboardPlatform}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Todas las plataformas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Seleccionar todas</SelectItem>
-                  <SelectItem value="youtube">YouTube</SelectItem>
-                  <SelectItem value="reddit">Reddit</SelectItem>
-                  <SelectItem value="twitter">Twitter</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <p className="text-sm font-medium mb-1">Rango de fechas</p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    placeholder="Desde"
+                    className="w-40"
+                  />
+                  <span>a</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    placeholder="Hasta"
+                    className="w-40"
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Plataformas</p>
+                <MultiSelect
+                  className="w-40"
+                  options={[
+                    { value: "all", label: "Todas" },
+                    { value: "youtube", label: "YouTube" },
+                    { value: "reddit", label: "Reddit" },
+                    { value: "twitter", label: "Twitter" },
+                  ]}
+                  value={selectedDashboardPlatforms}
+                  onChange={setSelectedDashboardPlatforms}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Card className="bg-secondary h-[400px]">
