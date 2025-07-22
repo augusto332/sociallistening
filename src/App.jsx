@@ -46,7 +46,29 @@ export default function SocialListeningApp({ onLogout }) {
   const [keywordChanges, setKeywordChanges] = useState({});
   const navigate = useNavigate();
   const { favorites } = useFavorites();
-  const visibleFavorites = favorites.filter(
+  const sortedFavorites = [...favorites].sort((a, b) => {
+    if (order === "recent") {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    if (order === "popular") {
+      const likesDiff = (b.likes ?? 0) - (a.likes ?? 0);
+      if (likesDiff !== 0) return likesDiff;
+
+      const commentsA = a.comments ?? a.replies ?? 0;
+      const commentsB = b.comments ?? b.replies ?? 0;
+      const commentsDiff = commentsB - commentsA;
+      if (commentsDiff !== 0) return commentsDiff;
+
+      const restA =
+        (a.retweets ?? 0) + (a.quotes ?? 0) + (a.views ?? 0);
+      const restB =
+        (b.retweets ?? 0) + (b.quotes ?? 0) + (b.views ?? 0);
+      return restB - restA;
+    }
+
+    return 0;
+  });
+  const visibleFavorites = sortedFavorites.filter(
     (m) => !hiddenMentions.includes(m.url),
   );
   const filteredMentions = mentions.filter((m) => {
@@ -523,31 +545,45 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "favorites" && (
-          <section className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
-            <div className="flex flex-col gap-6">
-              {visibleFavorites.length ? (
-                visibleFavorites.map((m, i) => (
-                  <MentionCard
-                    key={m.url}
-                    mention={m}
-                    source={m.platform}
-                    username={m.source}
-                    timestamp={formatDistanceToNow(new Date(m.created_at), {
-                      addSuffix: true,
-                      locale: es,
-                    })}
-                    content={m.mention}
-                    keyword={m.keyword}
-                    url={m.url}
-                    onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
-                  />
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground">
-                  No hay favoritos
-                </p>
-              )}
+          <section>
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
+              <div className="flex justify-start mb-4">
+                <Tabs value={order} onValueChange={setOrder}>
+                  <TabsList>
+                    <TabsTrigger value="recent">Más recientes</TabsTrigger>
+                    <TabsTrigger value="popular">Más populares</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="flex items-start gap-8">
+                <div className="flex-1 flex flex-col gap-6">
+                  {visibleFavorites.length ? (
+                    visibleFavorites.map((m, i) => (
+                      <MentionCard
+                        key={m.url}
+                        mention={m}
+                        source={m.platform}
+                        username={m.source}
+                        timestamp={formatDistanceToNow(new Date(m.created_at), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                        content={m.mention}
+                        keyword={m.keyword}
+                        url={m.url}
+                        onHide={() =>
+                          setHiddenMentions((prev) => [...prev, m.url])
+                        }
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground">
+                      No hay favoritos
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </section>
         )}
