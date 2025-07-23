@@ -527,7 +527,9 @@ export default function SocialListeningApp({ onLogout }) {
                         content={m.mention}
                         keyword={m.keyword}
                         url={m.url}
-                        showDismiss={false}
+                        onHide={() =>
+                          setHiddenMentions((prev) => [...prev, m.url])
+                        }
                       />
                     ))
                   ) : (

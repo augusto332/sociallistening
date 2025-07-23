@@ -105,7 +105,7 @@ export default function MentionCard({
       <button
         onClick={handleFavClick}
         title="Agregar a favoritos"
-        className="absolute top-2 right-8 text-primary hover:text-primary/80"
+        className={`absolute top-2 ${showDismiss ? "right-8" : "right-2"} text-primary hover:text-primary/80`}
       >
         {favorite ? <FaHeart /> : <FaRegHeart />}
       </button>
