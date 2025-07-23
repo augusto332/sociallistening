@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import DatePickerInput from "@/components/DatePickerInput";
 import { Card, CardContent } from "@/components/ui/card";
 import MentionCard from "@/components/MentionCard";
 import WordCloud from "@/components/WordCloud";
@@ -616,18 +617,16 @@ export default function SocialListeningApp({ onLogout }) {
               <div>
                 <p className="text-sm font-medium mb-1">Rango de fechas</p>
                 <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
+                  <DatePickerInput
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={setStartDate}
                     placeholder="Desde"
                     className="w-40"
                   />
                   <span>a</span>
-                  <Input
-                    type="date"
+                  <DatePickerInput
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={setEndDate}
                     placeholder="Hasta"
                     className="w-40"
                   />
@@ -693,7 +692,6 @@ export default function SocialListeningApp({ onLogout }) {
 
         {activeTab === "config" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">🛠️ Configuración</h2>
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Agregar nueva keyword</h3>
