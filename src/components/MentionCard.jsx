@@ -25,6 +25,7 @@ export default function MentionCard({
   keyword,
   url,
   onHide,
+  showDismiss = true,
 }) {
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
@@ -89,16 +90,18 @@ export default function MentionCard({
       onClick={() => setExpanded((e) => !e)}
       className="relative border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
     >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (onHide) onHide();
-        }}
-        title="Marcar como irrelevante"
-        className="absolute top-2 right-2 text-primary hover:text-primary/80"
-      >
-        <FaTimes />
-      </button>
+      {showDismiss && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onHide) onHide();
+          }}
+          title="Marcar como irrelevante"
+          className="absolute top-2 right-2 text-primary hover:text-primary/80"
+        >
+          <FaTimes />
+        </button>
+      )}
       <button
         onClick={handleFavClick}
         title="Agregar a favoritos"

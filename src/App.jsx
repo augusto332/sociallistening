@@ -438,13 +438,13 @@ export default function SocialListeningApp({ onLogout }) {
         <div className="absolute right-4 top-12 bg-secondary shadow-md rounded p-2 space-y-1 z-50">
           <button
             onClick={() => {
-              setActiveTab("config");
+              setActiveTab("account");
               setMenuOpen(false);
             }}
             className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
           >
-            <Settings className="size-4" />
-            Configuración
+            <CircleUser className="size-4" />
+            Mi Cuenta
           </button>
           <button
             onClick={handleLogout}
@@ -455,7 +455,7 @@ export default function SocialListeningApp({ onLogout }) {
         </div>
       )}
       {/* Sidebar */}
-      <aside className="w-64 bg-secondary shadow-md p-6 space-y-4 sticky top-0 h-screen overflow-y-auto">
+      <aside className="w-64 bg-secondary shadow-md p-6 flex flex-col space-y-4 sticky top-0 h-screen overflow-y-auto">
         <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Search className="size-5" />
           Social Listening
@@ -463,16 +463,16 @@ export default function SocialListeningApp({ onLogout }) {
         <button
           onClick={() => setActiveTab("home")}
           className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
-            activeTab === "home" ? "font-semibold" : ""
+            activeTab === "home" ? "font-semibold bg-[#2E2E2E]" : ""
           }`}
         >
           <Home className="size-4 mr-2 inline" />
-          Home
+          Inicio
         </button>
         <button
           onClick={() => setActiveTab("favorites")}
           className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
-            activeTab === "favorites" ? "font-semibold" : ""
+            activeTab === "favorites" ? "font-semibold bg-[#2E2E2E]" : ""
           }`}
         >
           <Heart className="size-4 mr-2 inline" />
@@ -481,11 +481,20 @@ export default function SocialListeningApp({ onLogout }) {
         <button
           onClick={() => setActiveTab("dashboard")}
           className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
-            activeTab === "dashboard" ? "font-semibold" : ""
+            activeTab === "dashboard" ? "font-semibold bg-[#2E2E2E]" : ""
           }`}
         >
           <BarChart2 className="size-4 mr-2 inline" />
           Dashboard
+        </button>
+        <button
+          onClick={() => setActiveTab("config")}
+          className={`mt-auto w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "config" ? "font-semibold bg-[#2E2E2E]" : ""
+          }`}
+        >
+          <Settings className="size-4 mr-2 inline" />
+          Configuración
         </button>
       </aside>
 
@@ -518,9 +527,7 @@ export default function SocialListeningApp({ onLogout }) {
                         content={m.mention}
                         keyword={m.keyword}
                         url={m.url}
-                        onHide={() =>
-                          setHiddenMentions((prev) => [...prev, m.url])
-                        }
+                        showDismiss={false}
                       />
                     ))
                   ) : (
@@ -547,7 +554,7 @@ export default function SocialListeningApp({ onLogout }) {
         {activeTab === "favorites" && (
           <section>
             <div className="w-full">
-              <h2 className="text-2xl font-bold mb-4">❤️ Favoritos</h2>
+              <h2 className="text-2xl font-bold mb-4">Favoritos</h2>
               <div className="flex justify-start mb-4">
                 <Tabs value={order} onValueChange={setOrder}>
                   <TabsList>
@@ -572,9 +579,7 @@ export default function SocialListeningApp({ onLogout }) {
                         content={m.mention}
                         keyword={m.keyword}
                         url={m.url}
-                        onHide={() =>
-                          setHiddenMentions((prev) => [...prev, m.url])
-                        }
+                        showDismiss={false}
                       />
                     ))
                   ) : (
@@ -675,6 +680,12 @@ export default function SocialListeningApp({ onLogout }) {
                 </CardContent>
               </Card>
             </div>
+          </section>
+        )}
+
+        {activeTab === "account" && (
+          <section>
+            <h2 className="text-2xl font-bold mb-4">Mi Cuenta</h2>
           </section>
         )}
 
