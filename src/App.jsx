@@ -597,7 +597,7 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "dashboard" && (
-          <section>
+          <section className="pr-4">
             <div className="flex flex-wrap gap-4 mb-4">
               <div>
                 <p className="text-sm font-medium mb-1">Palabras clave</p>
@@ -691,7 +691,7 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "config" && (
-          <section>
+          <section className="pr-4">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Agregar nueva keyword</h3>
