@@ -8,6 +8,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 export default function MentionsLineChart({ data = [] }) {
   if (!data.length) {
@@ -26,7 +27,7 @@ export default function MentionsLineChart({ data = [] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis dataKey="date" stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
           <YAxis stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-          <Tooltip formatter={(value) => [value, "Menciones"]} labelFormatter={formatDate} />
+          <Tooltip content={<ChartTooltip />} labelFormatter={formatDate} />
           <Line type="monotone" dataKey="count" stroke="#4F46E5" strokeWidth={2} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
