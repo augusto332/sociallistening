@@ -15,19 +15,26 @@ export default function MentionsLineChart({ data = [] }) {
     return <p className="text-muted-foreground text-sm">Sin datos</p>;
   }
 
+  const months = Array.from(new Set(data.map((d) => d.date.slice(0, 7))));
+  const shortRange = months.length <= 2;
+
   const formatDate = (d) => {
     const date = new Date(d);
-    return date.toLocaleDateString();
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  const formatMonth = (d) => {
+  const formatTick = (d) => {
     const date = new Date(d);
-    return date.toLocaleString("default", { month: "short", year: "numeric" });
+    return shortRange
+      ? date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })
+      : date.toLocaleDateString("es-ES", { month: "short", year: "numeric" });
   };
 
-  const monthTicks = Array.from(
-    new Set(data.map((d) => d.date.slice(0, 7)))
-  ).map((m) => `${m}-01`);
+  const monthTicks = months.map((m) => `${m}-01`);
 
   return (
     <div className="w-full h-full min-h-[300px]">
@@ -36,12 +43,12 @@ export default function MentionsLineChart({ data = [] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis
             dataKey="date"
-            ticks={monthTicks}
-            tickFormatter={formatMonth}
+            tickFormatter={formatTick}
             stroke="#9CA3AF"
             tick={{ fontSize: 12 }}
             axisLine={false}
             tickLine={false}
+            {...(!shortRange && { ticks: monthTicks })}
           />
           <YAxis stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip content={<ChartTooltip />} labelFormatter={formatDate} />
