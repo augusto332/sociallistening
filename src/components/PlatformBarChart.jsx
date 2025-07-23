@@ -1,21 +1,23 @@
 import React from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 export default function PlatformBarChart({ data = [] }) {
   if (!data.length) {
     return <p className="text-muted-foreground text-sm">Sin datos</p>;
   }
 
-  const colors = {
-    twitter: "#1DA1F2",
-    youtube: "#FF0000",
-    reddit: "#FF5700",
-  };
-
   const formatted = data.map((d) => ({
     name: d.platform,
     count: d.count,
-    fill: colors[d.platform.toLowerCase()] || "#4F46E5",
   }));
 
   return (
@@ -25,8 +27,8 @@ export default function PlatformBarChart({ data = [] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis dataKey="name" stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
           <YAxis stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-          <Tooltip />
-          <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+          <Tooltip content={<ChartTooltip />} />
+          <Bar dataKey="count" fill="#4F46E5" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

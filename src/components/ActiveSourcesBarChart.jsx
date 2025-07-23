@@ -1,5 +1,14 @@
 import React from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 export default function ActiveSourcesBarChart({ data = [] }) {
   if (!data.length) {
@@ -32,7 +41,7 @@ export default function ActiveSourcesBarChart({ data = [] }) {
             tickLine={false}
             width={100}
           />
-          <Tooltip formatter={(value) => [value, "Menciones"]} />
+          <Tooltip content={<ChartTooltip />} />
           <Bar dataKey="count" fill="#4F46E5" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
