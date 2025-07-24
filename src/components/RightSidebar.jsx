@@ -2,7 +2,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FilterX, Search } from "lucide-react";
+import { FilterX, Search, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function RightSidebar({
@@ -14,6 +14,8 @@ export default function RightSidebar({
   sources,
   toggleSource,
   clearFilters,
+  onlyFavorites,
+  toggleFavorites,
 }) {
 
   const handleClearFilters = () => {
@@ -36,6 +38,14 @@ export default function RightSidebar({
           className="pl-9"
         />
       </div>
+      <Button
+        variant={onlyFavorites ? "default" : "outline"}
+        onClick={toggleFavorites}
+        className="w-full flex items-center gap-2 justify-start"
+      >
+        <Star className="size-4" />
+        Destacados
+      </Button>
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>
