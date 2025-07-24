@@ -5,15 +5,15 @@ import {
   FaTwitter,
   FaYoutube,
   FaRedditAlien,
+  FaEllipsisV,
   FaHeart,
-  FaRegHeart,
-  FaTimes,
   FaArrowUp,
   FaComment,
   FaRetweet,
   FaEye,
   FaQuoteRight,
 } from "react-icons/fa";
+import { Star, X } from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
 
 export default function MentionCard({
@@ -38,6 +38,7 @@ export default function MentionCard({
   const iconBg = icons[platform]?.bg;
   const iconSizeClass = "size-7";
   const [expanded, setExpanded] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
 
@@ -90,25 +91,44 @@ export default function MentionCard({
       onClick={() => setExpanded((e) => !e)}
       className="relative border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
     >
-      {showDismiss && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onHide) onHide();
-          }}
-          title="Marcar como irrelevante"
-          className="absolute top-2 right-2 text-primary hover:text-primary/80"
-        >
-          <FaTimes />
-        </button>
-      )}
       <button
-        onClick={handleFavClick}
-        title="Agregar a favoritos"
-        className={`absolute top-2 ${showDismiss ? "right-8" : "right-2"} text-primary hover:text-primary/80`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOptionsOpen((o) => !o);
+        }}
+        title="Opciones"
+        className="absolute top-2 right-2 text-primary hover:text-primary/80"
       >
-        {favorite ? <FaHeart /> : <FaRegHeart />}
+        <FaEllipsisV />
       </button>
+      {optionsOpen && (
+        <div className="absolute right-2 top-8 bg-secondary shadow-md rounded p-2 space-y-1 z-50">
+          {showDismiss && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOptionsOpen(false);
+                if (onHide) onHide();
+              }}
+              className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+            >
+              <X className="size-4" />
+              Marcar como irrelevante
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setOptionsOpen(false);
+              handleFavClick(e);
+            }}
+            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+          >
+            <Star className="size-4" />
+            Agregar a destacados
+          </button>
+        </div>
+      )}
       <CardContent className="p-6 flex gap-4">
         <div
           className={`w-10 h-10 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}

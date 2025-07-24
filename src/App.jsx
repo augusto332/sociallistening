@@ -19,7 +19,6 @@ import {
   Home,
   BarChart2,
   Settings,
-  Heart,
 } from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
@@ -46,32 +45,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null);
   const [keywordChanges, setKeywordChanges] = useState({});
   const navigate = useNavigate();
-  const { favorites } = useFavorites();
-  const sortedFavorites = [...favorites].sort((a, b) => {
-    if (order === "recent") {
-      return new Date(b.created_at) - new Date(a.created_at);
-    }
-    if (order === "popular") {
-      const likesDiff = (b.likes ?? 0) - (a.likes ?? 0);
-      if (likesDiff !== 0) return likesDiff;
-
-      const commentsA = a.comments ?? a.replies ?? 0;
-      const commentsB = b.comments ?? b.replies ?? 0;
-      const commentsDiff = commentsB - commentsA;
-      if (commentsDiff !== 0) return commentsDiff;
-
-      const restA =
-        (a.retweets ?? 0) + (a.quotes ?? 0) + (a.views ?? 0);
-      const restB =
-        (b.retweets ?? 0) + (b.quotes ?? 0) + (b.views ?? 0);
-      return restB - restA;
-    }
-
-    return 0;
-  });
-  const visibleFavorites = sortedFavorites.filter(
-    (m) => !hiddenMentions.includes(m.url),
-  );
+  const { favorites, isFavorite } = useFavorites();
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -120,6 +95,9 @@ export default function SocialListeningApp({ onLogout }) {
   const visibleMentions = sortedMentions.filter(
     (m) => !hiddenMentions.includes(m.url),
   );
+  const homeMentions = onlyFavorites
+    ? visibleMentions.filter(isFavorite)
+    : visibleMentions;
 
   const fetchMentions = async () => {
     const { data, error } = await supabase
@@ -471,15 +449,6 @@ export default function SocialListeningApp({ onLogout }) {
           Inicio
         </button>
         <button
-          onClick={() => setActiveTab("favorites")}
-          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
-            activeTab === "favorites" ? "font-semibold bg-[#2E2E2E]" : ""
-          }`}
-        >
-          <Heart className="size-4 mr-2 inline" />
-          Favoritos
-        </button>
-        <button
           onClick={() => setActiveTab("dashboard")}
           className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
             activeTab === "dashboard" ? "font-semibold bg-[#2E2E2E]" : ""
@@ -514,8 +483,8 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
               <div className="flex items-start gap-8">
                 <div className="flex-1 flex flex-col gap-6">
-                  {visibleMentions.length ? (
-                    visibleMentions.map((m, i) => (
+                  {homeMentions.length ? (
+                    homeMentions.map((m, i) => (
                       <MentionCard
                         key={m.url}
                         mention={m}
@@ -548,53 +517,14 @@ export default function SocialListeningApp({ onLogout }) {
                   sources={sourcesFilter}
                   toggleSource={toggleSourceFilter}
                   clearFilters={clearSidebarFilters}
+                  onlyFavorites={onlyFavorites}
+                  toggleFavorites={() => setOnlyFavorites((o) => !o)}
                 />
               </div>
             </div>
           </section>
         )}
 
-        {activeTab === "favorites" && (
-          <section>
-            <div className="w-full">
-              <h2 className="text-2xl font-bold mb-4">Favoritos</h2>
-              <div className="flex justify-start mb-4">
-                <Tabs value={order} onValueChange={setOrder}>
-                  <TabsList>
-                    <TabsTrigger value="recent">Más recientes</TabsTrigger>
-                    <TabsTrigger value="popular">Más populares</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              <div className="flex items-start gap-8">
-                <div className="flex-1 flex flex-col gap-6">
-                  {visibleFavorites.length ? (
-                    visibleFavorites.map((m, i) => (
-                      <MentionCard
-                        key={m.url}
-                        mention={m}
-                        source={m.platform}
-                        username={m.source}
-                        timestamp={formatDistanceToNow(new Date(m.created_at), {
-                          addSuffix: true,
-                          locale: es,
-                        })}
-                        content={m.mention}
-                        keyword={m.keyword}
-                        url={m.url}
-                        showDismiss={false}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-center text-muted-foreground">
-                      No hay favoritos
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {activeTab === "dashboard" && (
           <section className="pr-4">
