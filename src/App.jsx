@@ -483,6 +483,15 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
               <div className="flex items-start gap-8">
                 <div className="flex-1 flex flex-col gap-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
                   {homeMentions.length ? (
                     homeMentions.map((m, i) => (
                       <MentionCard
@@ -510,8 +519,6 @@ export default function SocialListeningApp({ onLogout }) {
                 </div>
                 <RightSidebar
                   className="mt-0 ml-auto"
-                  search={search}
-                  onSearchChange={setSearch}
                   range={rangeFilter}
                   setRange={setRangeFilter}
                   sources={sourcesFilter}
