@@ -473,6 +473,15 @@ export default function SocialListeningApp({ onLogout }) {
         {activeTab === "home" && (
           <section>
             <div className="w-full">
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 bg-secondary"
+                />
+              </div>
               <div className="flex justify-start mb-4">
                 <Tabs value={order} onValueChange={setOrder}>
                   <TabsList>
@@ -483,15 +492,6 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
               <div className="flex items-start gap-8">
                 <div className="flex-1 flex flex-col gap-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
                   {homeMentions.length ? (
                     homeMentions.map((m, i) => (
                       <MentionCard
