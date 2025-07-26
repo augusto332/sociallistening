@@ -1,14 +1,11 @@
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FilterX, Search, Star } from "lucide-react";
+import { FilterX, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function RightSidebar({
   className = "",
-  search,
-  onSearchChange,
   range,
   setRange,
   sources,
@@ -29,15 +26,6 @@ export default function RightSidebar({
         className
       )}
     >
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9"
-        />
-      </div>
       <Button
         variant={onlyFavorites ? "default" : "outline"}
         onClick={toggleFavorites}
