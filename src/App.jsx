@@ -472,26 +472,26 @@ export default function SocialListeningApp({ onLogout }) {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="w-full">
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 bg-secondary"
-                />
-              </div>
-              <div className="flex justify-start mb-4">
-                <Tabs value={order} onValueChange={setOrder}>
-                  <TabsList>
-                    <TabsTrigger value="recent">Más recientes</TabsTrigger>
-                    <TabsTrigger value="popular">Más populares</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              <div className="flex items-start gap-8">
-                <div className="flex-1 flex flex-col gap-6">
+            <div className="flex items-start gap-8">
+              <div className="flex-1">
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 bg-secondary"
+                  />
+                </div>
+                <div className="flex justify-start mb-4">
+                  <Tabs value={order} onValueChange={setOrder}>
+                    <TabsList>
+                      <TabsTrigger value="recent">Más recientes</TabsTrigger>
+                      <TabsTrigger value="popular">Más populares</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                <div className="flex flex-col gap-6">
                   {homeMentions.length ? (
                     homeMentions.map((m, i) => (
                       <MentionCard
@@ -517,17 +517,17 @@ export default function SocialListeningApp({ onLogout }) {
                     </p>
                   )}
                 </div>
-                <RightSidebar
-                  className="mt-0 ml-auto"
-                  range={rangeFilter}
-                  setRange={setRangeFilter}
-                  sources={sourcesFilter}
-                  toggleSource={toggleSourceFilter}
-                  clearFilters={clearSidebarFilters}
-                  onlyFavorites={onlyFavorites}
-                  toggleFavorites={() => setOnlyFavorites((o) => !o)}
-                />
               </div>
+              <RightSidebar
+                className="mt-0 ml-auto"
+                range={rangeFilter}
+                setRange={setRangeFilter}
+                sources={sourcesFilter}
+                toggleSource={toggleSourceFilter}
+                clearFilters={clearSidebarFilters}
+                onlyFavorites={onlyFavorites}
+                toggleFavorites={() => setOnlyFavorites((o) => !o)}
+              />
             </div>
           </section>
         )}
