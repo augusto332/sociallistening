@@ -582,7 +582,7 @@ export default function SocialListeningApp({ onLogout }) {
                     )}
                   >
                     <Star className="size-4" />
-                    Ver solo destacados
+                    Destacados
                   </Button>
                 </div>
                 <div className="flex flex-col gap-6">
@@ -725,7 +725,7 @@ export default function SocialListeningApp({ onLogout }) {
         {activeTab === "account" && (
           <section className="pr-4 max-w-lg space-y-8">
             <h2 className="text-2xl font-bold mb-4">Datos de la cuenta</h2>
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
                 <label className="font-semibold block mb-2">Correo electrónico</label>
                 <Input className="bg-secondary" value={accountEmail} readOnly />
