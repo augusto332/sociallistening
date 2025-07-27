@@ -577,7 +577,7 @@ export default function SocialListeningApp({ onLogout }) {
                     className={cn(
                       "flex items-center gap-2 h-9 px-3 py-1 text-sm font-medium rounded-md transition-all",
                       onlyFavorites
-                        ? "bg-accent text-accent-foreground shadow"
+                        ? "bg-gray-100 dark:bg-gray-700 text-accent-foreground shadow"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
