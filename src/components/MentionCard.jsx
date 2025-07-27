@@ -125,7 +125,7 @@ export default function MentionCard({
             className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
           >
             <Star className="size-4" />
-            Agregar a destacados
+            {favorite ? "Remover de destacados" : "Agregar a destacados"}
           </button>
         </div>
       )}
