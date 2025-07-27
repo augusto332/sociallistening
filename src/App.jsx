@@ -50,6 +50,10 @@ export default function SocialListeningApp({ onLogout }) {
   const navigate = useNavigate();
   const { favorites, isFavorite } = useFavorites();
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [accountMessage, setAccountMessage] = useState(null);
+  const [passwordMessage, setPasswordMessage] = useState(null);
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -210,9 +214,45 @@ export default function SocialListeningApp({ onLogout }) {
     }
   };
 
+  const fetchAccount = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      setAccountEmail(user.email || "");
+      setAccountName(user.user_metadata?.display_name || "");
+    }
+  };
+
+  const saveAccount = async () => {
+    setAccountMessage(null);
+    const { error } = await supabase.auth.updateUser({
+      data: { display_name: accountName },
+    });
+    if (error) {
+      setAccountMessage({ type: "error", text: error.message });
+    } else {
+      setAccountMessage({ type: "success", text: "Datos guardados" });
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setPasswordMessage(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(accountEmail);
+    if (error) {
+      setPasswordMessage({ type: "error", text: error.message });
+    } else {
+      setPasswordMessage({
+        type: "success",
+        text: "Revisa tu correo para cambiar la contraseña",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchMentions();
     fetchKeywords();
+    fetchAccount();
   }, []);
 
   const handleLogout = async () => {
@@ -641,8 +681,49 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "account" && (
-          <section>
-            <h2 className="text-2xl font-bold mb-4">Mi Cuenta</h2>
+          <section className="pr-4 max-w-lg space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Datos de la cuenta</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="font-semibold block mb-2">Correo electrónico</label>
+                <Input value={accountEmail} disabled />
+              </div>
+              <div>
+                <label className="font-semibold block mb-2">Nombre de usuario</label>
+                <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+              </div>
+              <div>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="p-0"
+                  onClick={handlePasswordReset}
+                >
+                  Cambiar contraseña
+                </Button>
+                {passwordMessage && (
+                  <p
+                    className={`text-sm ${
+                      passwordMessage.type === "error" ? "text-red-500" : "text-green-500"
+                    }`}
+                  >
+                    {passwordMessage.text}
+                  </p>
+                )}
+              </div>
+              <Button type="button" onClick={saveAccount} className="mt-2">
+                Guardar cambios
+              </Button>
+              {accountMessage && (
+                <p
+                  className={`text-sm ${
+                    accountMessage.type === "error" ? "text-red-500" : "text-green-500"
+                  }`}
+                >
+                  {accountMessage.text}
+                </p>
+              )}
+            </div>
           </section>
         )}
 
