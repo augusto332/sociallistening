@@ -688,35 +688,35 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "account" && (
-          <section className="pr-4 max-w-lg space-y-6">
+          <section className="pr-4 max-w-lg space-y-8">
             <h2 className="text-2xl font-bold mb-4">Datos de la cuenta</h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="font-semibold block mb-2">Correo electrónico</label>
-                <Input value={accountEmail} readOnly />
+                <Input className="bg-secondary" value={accountEmail} readOnly />
               </div>
               <div>
                 <label className="font-semibold block mb-2">Nombre de usuario</label>
-                <Input value={accountName} readOnly />
+                <Input className="bg-secondary" value={accountName} readOnly />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Button
                   type="button"
-                  variant="link"
-                  className="p-0"
                   onClick={togglePasswordFields}
                 >
                   Cambiar contraseña
                 </Button>
                 {showPasswordFields && (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <Input
+                      className="bg-secondary"
                       type="password"
                       placeholder="Contraseña actual"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                     <Input
+                      className="bg-secondary"
                       type="password"
                       placeholder="Nueva contraseña"
                       value={newPassword}
