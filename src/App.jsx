@@ -11,6 +11,7 @@ import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart";
 import MentionsLineChart from "@/components/MentionsLineChart";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -496,9 +497,13 @@ export default function SocialListeningApp({ onLogout }) {
                     </TabsList>
                   </Tabs>
                   <Button
-                    variant={onlyFavorites ? "default" : "outline"}
                     onClick={() => setOnlyFavorites((o) => !o)}
-                    className="flex items-center gap-2"
+                    className={cn(
+                      "flex items-center gap-2 h-9 px-3 py-1 text-sm font-medium rounded-md transition-all",
+                      onlyFavorites
+                        ? "bg-background text-foreground shadow"
+                        : "bg-muted text-muted-foreground"
+                    )}
                   >
                     <Star className="size-4" />
                     Ver solo destacados

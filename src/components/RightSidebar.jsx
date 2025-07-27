@@ -24,14 +24,14 @@ export default function RightSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-start rounded-lg self-start sticky top-24 h-[calc(100vh-6rem)]",
+        "w-64 bg-secondary shadow-md p-6 space-y-4 flex flex-col items-start rounded-lg self-start sticky top-[104px] h-[calc(100vh-6.5rem)]",
         className
       )}
     >
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Seleccionar" />
           </SelectTrigger>
           <SelectContent>
