@@ -19,6 +19,7 @@ import {
   CircleUser,
   Home,
   BarChart2,
+  FileChartLine,
   Settings,
   Star,
 } from "lucide-react";
@@ -530,6 +531,15 @@ export default function SocialListeningApp({ onLogout }) {
           Dashboard
         </button>
         <button
+          onClick={() => setActiveTab("reportes")}
+          className={`w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
+            activeTab === "reportes" ? "font-semibold bg-[#2E2E2E]" : ""
+          }`}
+        >
+          <FileChartLine className="size-4 mr-2 inline" />
+          Reportes
+        </button>
+        <button
           onClick={() => setActiveTab("config")}
           className={`mt-auto w-full text-left p-2 rounded hover:bg-[#2E2E2E] ${
             activeTab === "config" ? "font-semibold bg-[#2E2E2E]" : ""
@@ -703,6 +713,12 @@ export default function SocialListeningApp({ onLogout }) {
                 </CardContent>
               </Card>
             </div>
+          </section>
+        )}
+
+        {activeTab === "reportes" && (
+          <section className="pr-4">
+            <p className="text-muted-foreground">Aún no hay contenido.</p>
           </section>
         )}
 
