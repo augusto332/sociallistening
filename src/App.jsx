@@ -52,6 +52,8 @@ export default function SocialListeningApp({ onLogout }) {
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [accountName, setAccountName] = useState("");
+  const [originalAccountName, setOriginalAccountName] = useState("");
+  const [nameMessage, setNameMessage] = useState(null);
   const [passwordMessage, setPasswordMessage] = useState(null);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -221,8 +223,10 @@ export default function SocialListeningApp({ onLogout }) {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
+      const displayName = user.user_metadata?.display_name || "";
       setAccountEmail(user.email || "");
-      setAccountName(user.user_metadata?.display_name || "");
+      setAccountName(displayName);
+      setOriginalAccountName(displayName);
     }
   };
 
@@ -253,6 +257,19 @@ export default function SocialListeningApp({ onLogout }) {
       setShowPasswordFields(false);
       setCurrentPassword("");
       setNewPassword("");
+    }
+  };
+
+  const handleSaveAccountName = async () => {
+    setNameMessage(null);
+    const { error } = await supabase.auth.updateUser({
+      data: { display_name: accountName },
+    });
+    if (error) {
+      setNameMessage({ type: "error", text: error.message });
+    } else {
+      setNameMessage({ type: "success", text: "Nombre actualizado" });
+      setOriginalAccountName(accountName);
     }
   };
 
@@ -697,7 +714,27 @@ export default function SocialListeningApp({ onLogout }) {
               </div>
               <div>
                 <label className="font-semibold block mb-2">Nombre de usuario</label>
-                <Input className="bg-secondary" value={accountName} readOnly />
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="bg-secondary"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                  />
+                  {accountName !== originalAccountName && (
+                    <Button type="button" onClick={handleSaveAccountName}>
+                      Guardar
+                    </Button>
+                  )}
+                </div>
+                {nameMessage && (
+                  <p
+                    className={`text-sm ${
+                      nameMessage.type === "error" ? "text-red-500" : "text-green-500"
+                    }`}
+                  >
+                    {nameMessage.text}
+                  </p>
+                )}
               </div>
               <div className="space-y-4">
                 <Button
