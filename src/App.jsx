@@ -52,8 +52,10 @@ export default function SocialListeningApp({ onLogout }) {
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [accountName, setAccountName] = useState("");
-  const [accountMessage, setAccountMessage] = useState(null);
   const [passwordMessage, setPasswordMessage] = useState(null);
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -224,28 +226,33 @@ export default function SocialListeningApp({ onLogout }) {
     }
   };
 
-  const saveAccount = async () => {
-    setAccountMessage(null);
-    const { error } = await supabase.auth.updateUser({
-      data: { display_name: accountName },
-    });
-    if (error) {
-      setAccountMessage({ type: "error", text: error.message });
-    } else {
-      setAccountMessage({ type: "success", text: "Datos guardados" });
-    }
+
+
+  const togglePasswordFields = () => {
+    setShowPasswordFields((prev) => !prev);
+    setPasswordMessage(null);
+    setCurrentPassword("");
+    setNewPassword("");
   };
 
-  const handlePasswordReset = async () => {
+  const handleChangePassword = async () => {
     setPasswordMessage(null);
-    const { error } = await supabase.auth.resetPasswordForEmail(accountEmail);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: accountEmail,
+      password: currentPassword,
+    });
+    if (signInError) {
+      setPasswordMessage({ type: "error", text: "Contraseña actual incorrecta" });
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
       setPasswordMessage({ type: "error", text: error.message });
     } else {
-      setPasswordMessage({
-        type: "success",
-        text: "Revisa tu correo para cambiar la contraseña",
-      });
+      setPasswordMessage({ type: "success", text: "Contraseña actualizada" });
+      setShowPasswordFields(false);
+      setCurrentPassword("");
+      setNewPassword("");
     }
   };
 
@@ -686,21 +693,40 @@ export default function SocialListeningApp({ onLogout }) {
             <div className="space-y-4">
               <div>
                 <label className="font-semibold block mb-2">Correo electrónico</label>
-                <Input value={accountEmail} disabled />
+                <Input value={accountEmail} readOnly />
               </div>
               <div>
                 <label className="font-semibold block mb-2">Nombre de usuario</label>
-                <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+                <Input value={accountName} readOnly />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Button
                   type="button"
                   variant="link"
                   className="p-0"
-                  onClick={handlePasswordReset}
+                  onClick={togglePasswordFields}
                 >
                   Cambiar contraseña
                 </Button>
+                {showPasswordFields && (
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder="Contraseña actual"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Nueva contraseña"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <Button type="button" onClick={handleChangePassword}>
+                      Guardar cambios
+                    </Button>
+                  </div>
+                )}
                 {passwordMessage && (
                   <p
                     className={`text-sm ${
@@ -711,18 +737,6 @@ export default function SocialListeningApp({ onLogout }) {
                   </p>
                 )}
               </div>
-              <Button type="button" onClick={saveAccount} className="mt-2">
-                Guardar cambios
-              </Button>
-              {accountMessage && (
-                <p
-                  className={`text-sm ${
-                    accountMessage.type === "error" ? "text-red-500" : "text-green-500"
-                  }`}
-                >
-                  {accountMessage.text}
-                </p>
-              )}
             </div>
           </section>
         )}
