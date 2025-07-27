@@ -19,6 +19,7 @@ import {
   Home,
   BarChart2,
   Settings,
+  Star,
 } from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
@@ -35,6 +36,7 @@ export default function SocialListeningApp({ onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeFilter, setRangeFilter] = useState("");
   const [sourcesFilter, setSourcesFilter] = useState([]);
+  const [keywordsFilter, setKeywordsFilter] = useState(["all"]);
   const [order, setOrder] = useState("recent");
   const [hiddenMentions, setHiddenMentions] = useState([]);
   const [keywords, setKeywords] = useState([]);
@@ -66,7 +68,9 @@ export default function SocialListeningApp({ onLogout }) {
         return diff <= days;
       })();
 
-    return matchesSearch && matchesSource && matchesRange;
+    const matchesKeyword =
+      keywordsFilter.includes("all") || keywordsFilter.includes(m.keyword);
+    return matchesSearch && matchesSource && matchesRange && matchesKeyword;
   });
 
   const sortedMentions = [...filteredMentions].sort((a, b) => {
@@ -226,6 +230,7 @@ export default function SocialListeningApp({ onLogout }) {
     setRangeFilter("");
     setSourcesFilter([]);
     setSearch("");
+    setKeywordsFilter(["all"]);
   };
 
   const activeKeywords = useMemo(
@@ -483,13 +488,21 @@ export default function SocialListeningApp({ onLogout }) {
                     className="pl-9 bg-secondary"
                   />
                 </div>
-                <div className="flex justify-start mb-4">
+                <div className="flex items-center justify-between mb-4">
                   <Tabs value={order} onValueChange={setOrder}>
                     <TabsList>
                       <TabsTrigger value="recent">Más recientes</TabsTrigger>
                       <TabsTrigger value="popular">Más populares</TabsTrigger>
                     </TabsList>
                   </Tabs>
+                  <Button
+                    variant={onlyFavorites ? "default" : "outline"}
+                    onClick={() => setOnlyFavorites((o) => !o)}
+                    className="flex items-center gap-2"
+                  >
+                    <Star className="size-4" />
+                    Ver solo destacados
+                  </Button>
                 </div>
                 <div className="flex flex-col gap-6">
                   {homeMentions.length ? (
@@ -524,9 +537,10 @@ export default function SocialListeningApp({ onLogout }) {
                 setRange={setRangeFilter}
                 sources={sourcesFilter}
                 toggleSource={toggleSourceFilter}
+                keywords={keywordsFilter}
+                setKeywords={setKeywordsFilter}
+                keywordOptions={activeKeywords}
                 clearFilters={clearSidebarFilters}
-                onlyFavorites={onlyFavorites}
-                toggleFavorites={() => setOnlyFavorites((o) => !o)}
               />
             </div>
           </section>

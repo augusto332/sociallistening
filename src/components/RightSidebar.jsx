@@ -1,8 +1,9 @@
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { FilterX, Star } from "lucide-react";
+import { FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MultiSelect from "@/components/MultiSelect";
 
 export default function RightSidebar({
   className = "",
@@ -10,9 +11,10 @@ export default function RightSidebar({
   setRange,
   sources,
   toggleSource,
+  keywords,
+  setKeywords,
+  keywordOptions = [],
   clearFilters,
-  onlyFavorites,
-  toggleFavorites,
 }) {
 
   const handleClearFilters = () => {
@@ -22,18 +24,10 @@ export default function RightSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-start rounded-lg self-start sticky top-8 h-[calc(100vh-2rem)]",
+        "w-64 bg-secondary shadow-md p-6 space-y-6 flex flex-col items-start rounded-lg self-start sticky top-24 h-[calc(100vh-6rem)]",
         className
       )}
     >
-      <Button
-        variant={onlyFavorites ? "default" : "outline"}
-        onClick={toggleFavorites}
-        className="w-full flex items-center gap-2 justify-start"
-      >
-        <Star className="size-4" />
-        Destacados
-      </Button>
       <div>
         <p className="font-semibold mb-2">Rango de tiempo</p>
         <Select value={range} onValueChange={setRange}>
@@ -47,6 +41,21 @@ export default function RightSidebar({
           </SelectContent>
         </Select>
       </div>
+      <div className="border-t border-border/50 w-full" />
+
+      <div>
+        <p className="font-semibold mb-2">Palabras clave</p>
+        <MultiSelect
+          options={[
+            { value: "all", label: "Todas" },
+            ...keywordOptions.map((k) => ({ value: k.keyword, label: k.keyword })),
+          ]}
+          value={keywords}
+          onChange={setKeywords}
+          className="w-full"
+        />
+      </div>
+      <div className="border-t border-border/50 w-full" />
 
 
       <div>
@@ -69,6 +78,8 @@ export default function RightSidebar({
         </div>
       </div>
 
+      <div className="border-t border-border/50 w-full" />
+
       <div>
         <p className="font-semibold mb-2">Sentimiento</p>
         <div className="space-y-2">
@@ -86,6 +97,8 @@ export default function RightSidebar({
           </label>
         </div>
       </div>
+
+      <div className="border-t border-border/50 w-full" />
 
       <Button
         variant="outline"
