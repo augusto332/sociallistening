@@ -478,7 +478,7 @@ export default function SocialListeningApp({ onLogout }) {
       <main className="flex-1 p-8 pr-0 overflow-y-auto">
         {activeTab === "home" && (
           <section>
-            <div className="flex items-start gap-8">
+            <div className="flex items-start gap-8 min-h-screen">
               <div className="flex-1">
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
@@ -501,7 +501,7 @@ export default function SocialListeningApp({ onLogout }) {
                     className={cn(
                       "flex items-center gap-2 h-9 px-3 py-1 text-sm font-medium rounded-md transition-all",
                       onlyFavorites
-                        ? "bg-background text-foreground shadow"
+                        ? "bg-accent text-accent-foreground shadow"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
