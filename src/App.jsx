@@ -359,6 +359,10 @@ export default function SocialListeningApp({ onLogout }) {
     console.log("Download", rep);
   };
 
+  const handleDeleteReport = (index) => {
+    setSavedReports((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const activeKeywords = useMemo(
     () => keywords.filter((k) => k.active),
     [keywords],
@@ -777,7 +781,11 @@ export default function SocialListeningApp({ onLogout }) {
         {activeTab === "reportes" && (
           <section className="pr-4 space-y-6 pb-4">
             <h2 className="text-2xl font-bold mb-4">Mis reportes</h2>
-            <ReportsTable reports={savedReports} onDownload={handleDownloadReport} />
+            <ReportsTable
+              reports={savedReports}
+              onDownload={handleDownloadReport}
+              onDelete={handleDeleteReport}
+            />
             <Button variant="outline" type="button" onClick={() => setShowReportForm((s) => !s)}>
               Crear nuevo reporte
             </Button>
