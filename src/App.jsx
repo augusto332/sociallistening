@@ -11,6 +11,7 @@ import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart";
 import MentionsLineChart from "@/components/MentionsLineChart";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
@@ -59,6 +60,16 @@ export default function SocialListeningApp({ onLogout }) {
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  // State for report filters
+  const [reportStartDate, setReportStartDate] = useState("");
+  const [reportEndDate, setReportEndDate] = useState("");
+  const [reportPlatforms, setReportPlatforms] = useState({
+    youtube: false,
+    reddit: false,
+    twitter: false,
+  });
+  const [includeYoutubeComments, setIncludeYoutubeComments] = useState(false);
+  const [includeRedditComments, setIncludeRedditComments] = useState(false);
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -717,8 +728,87 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "reportes" && (
-          <section className="pr-4">
-            <p className="text-muted-foreground">Aún no hay contenido.</p>
+          <section className="pr-4 max-w-xl space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Generar reporte</h2>
+            <div>
+              <p className="text-sm font-medium mb-1">Plataforma</p>
+              <div className="space-y-2">
+                <label htmlFor="rep-yt" className="flex items-center gap-2">
+                  <Checkbox
+                    id="rep-yt"
+                    checked={reportPlatforms.youtube}
+                    onCheckedChange={() =>
+                      setReportPlatforms((p) => ({ ...p, youtube: !p.youtube }))
+                    }
+                  />
+                  <span>YouTube</span>
+                </label>
+                <label htmlFor="rep-re" className="flex items-center gap-2">
+                  <Checkbox
+                    id="rep-re"
+                    checked={reportPlatforms.reddit}
+                    onCheckedChange={() =>
+                      setReportPlatforms((p) => ({ ...p, reddit: !p.reddit }))
+                    }
+                  />
+                  <span>Reddit</span>
+                </label>
+                <label htmlFor="rep-tw" className="flex items-center gap-2">
+                  <Checkbox
+                    id="rep-tw"
+                    checked={reportPlatforms.twitter}
+                    onCheckedChange={() =>
+                      setReportPlatforms((p) => ({ ...p, twitter: !p.twitter }))
+                    }
+                  />
+                  <span>Twitter</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-1">Rango de fechas</p>
+              <div className="flex items-center gap-2">
+                <DatePickerInput
+                  value={reportStartDate}
+                  onChange={setReportStartDate}
+                  placeholder="Desde"
+                  className="w-40"
+                />
+                <span>a</span>
+                <DatePickerInput
+                  value={reportEndDate}
+                  onChange={setReportEndDate}
+                  placeholder="Hasta"
+                  className="w-40"
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-1">Incluir comentarios</p>
+              <div className="space-y-2">
+                <label htmlFor="rep-inc-yt" className="flex items-center gap-2">
+                  <Checkbox
+                    id="rep-inc-yt"
+                    checked={includeYoutubeComments}
+                    onCheckedChange={() =>
+                      setIncludeYoutubeComments((c) => !c)
+                    }
+                  />
+                  <span>Incluir comentarios de YouTube</span>
+                </label>
+                <label htmlFor="rep-inc-re" className="flex items-center gap-2">
+                  <Checkbox
+                    id="rep-inc-re"
+                    checked={includeRedditComments}
+                    onCheckedChange={() =>
+                      setIncludeRedditComments((c) => !c)
+                    }
+                  />
+                  <span>Incluir comentarios de Reddit</span>
+                </label>
+              </div>
+            </div>
+            <Button type="button">Descargar</Button>
           </section>
         )}
 
