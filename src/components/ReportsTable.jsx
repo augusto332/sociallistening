@@ -17,20 +17,27 @@ export default function ReportsTable({ reports = [], onDownload }) {
         {reports.map((r, idx) => (
           <TableRow key={idx}>
             <TableCell className="font-medium">{r.name}</TableCell>
-            <TableCell>{r.platforms.join(', ') || '-'}</TableCell>
+              <TableCell>
+                {r.platforms
+                  .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+                  .join(', ') || '-'}
+              </TableCell>
             <TableCell>
               {r.datePreset
                 ? `Últimos ${r.datePreset} días`
                 : `${r.startDate || '-'} a ${r.endDate || '-'}`}
             </TableCell>
-            <TableCell>
-              {[
-                r.includeYoutubeComments && 'YouTube',
-                r.includeRedditComments && 'Reddit',
-              ]
-                .filter(Boolean)
-                .join(', ') || 'No'}
-            </TableCell>
+              <TableCell>
+                {(() => {
+                  const platforms = [
+                    r.includeYoutubeComments && 'YouTube',
+                    r.includeRedditComments && 'Reddit',
+                  ].filter(Boolean);
+                  return platforms.length
+                    ? `Si (${platforms.join(', ')})`
+                    : 'No';
+                })()}
+              </TableCell>
             <TableCell className="text-right">
               <Button size="sm" onClick={() => onDownload && onDownload(r)}>
                 Descargar

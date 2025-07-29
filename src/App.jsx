@@ -775,7 +775,7 @@ export default function SocialListeningApp({ onLogout }) {
         )}
 
         {activeTab === "reportes" && (
-          <section className="pr-4 max-w-xl space-y-6">
+          <section className="pr-4 space-y-6 pb-4">
             <h2 className="text-2xl font-bold mb-4">Mis reportes</h2>
             <ReportsTable reports={savedReports} onDownload={handleDownloadReport} />
             <Button variant="outline" type="button" onClick={() => setShowReportForm((s) => !s)}>
