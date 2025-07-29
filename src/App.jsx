@@ -12,6 +12,13 @@ import MentionsLineChart from "@/components/MentionsLineChart";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
@@ -28,6 +35,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import KeywordTable from "@/components/KeywordTable";
+import ReportsTable from "@/components/ReportsTable";
 
 export default function SocialListeningApp({ onLogout }) {
   // State for date range filters in dashboard
@@ -70,6 +78,13 @@ export default function SocialListeningApp({ onLogout }) {
   });
   const [includeYoutubeComments, setIncludeYoutubeComments] = useState(false);
   const [includeRedditComments, setIncludeRedditComments] = useState(false);
+  const [savedReports, setSavedReports] = useState(() => {
+    const stored = localStorage.getItem("savedReports");
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [newReportName, setNewReportName] = useState("");
+  const [reportDateOption, setReportDateOption] = useState("range");
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
       m.mention.toLowerCase().includes(search.toLowerCase()) ||
@@ -293,6 +308,10 @@ export default function SocialListeningApp({ onLogout }) {
     fetchAccount();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("savedReports", JSON.stringify(savedReports));
+  }, [savedReports]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     if (onLogout) onLogout();
@@ -310,6 +329,34 @@ export default function SocialListeningApp({ onLogout }) {
     setSourcesFilter([]);
     setSearch("");
     setKeywordsFilter(["all"]);
+  };
+
+  const handleCreateReport = () => {
+    const platforms = Object.entries(reportPlatforms)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    const newRep = {
+      name: newReportName || `Reporte ${savedReports.length + 1}`,
+      platforms,
+      startDate: reportDateOption === "range" ? reportStartDate : "",
+      endDate: reportDateOption === "range" ? reportEndDate : "",
+      datePreset: reportDateOption !== "range" ? reportDateOption : "",
+      includeYoutubeComments,
+      includeRedditComments,
+    };
+    setSavedReports((prev) => [...prev, newRep]);
+    setNewReportName("");
+    setReportPlatforms({ youtube: false, reddit: false, twitter: false });
+    setReportStartDate("");
+    setReportEndDate("");
+    setReportDateOption("range");
+    setIncludeYoutubeComments(false);
+    setIncludeRedditComments(false);
+    setShowReportForm(false);
+  };
+
+  const handleDownloadReport = (rep) => {
+    console.log("Download", rep);
   };
 
   const activeKeywords = useMemo(
@@ -729,86 +776,117 @@ export default function SocialListeningApp({ onLogout }) {
 
         {activeTab === "reportes" && (
           <section className="pr-4 max-w-xl space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Generar reporte</h2>
-            <div>
-              <p className="text-sm font-medium mb-1">Plataforma</p>
-              <div className="space-y-2">
-                <label htmlFor="rep-yt" className="flex items-center gap-2">
-                  <Checkbox
-                    id="rep-yt"
-                    checked={reportPlatforms.youtube}
-                    onCheckedChange={() =>
-                      setReportPlatforms((p) => ({ ...p, youtube: !p.youtube }))
-                    }
+            <h2 className="text-2xl font-bold mb-4">Mis reportes</h2>
+            <ReportsTable reports={savedReports} onDownload={handleDownloadReport} />
+            <Button variant="outline" type="button" onClick={() => setShowReportForm((s) => !s)}>
+              Crear nuevo reporte
+            </Button>
+            {showReportForm && (
+              <div className="space-y-6">
+                <div>
+                  <p className="text-sm font-medium mb-1">Nombre del reporte</p>
+                  <Input
+                    className="bg-secondary"
+                    value={newReportName}
+                    onChange={(e) => setNewReportName(e.target.value)}
                   />
-                  <span>YouTube</span>
-                </label>
-                <label htmlFor="rep-re" className="flex items-center gap-2">
-                  <Checkbox
-                    id="rep-re"
-                    checked={reportPlatforms.reddit}
-                    onCheckedChange={() =>
-                      setReportPlatforms((p) => ({ ...p, reddit: !p.reddit }))
-                    }
-                  />
-                  <span>Reddit</span>
-                </label>
-                <label htmlFor="rep-tw" className="flex items-center gap-2">
-                  <Checkbox
-                    id="rep-tw"
-                    checked={reportPlatforms.twitter}
-                    onCheckedChange={() =>
-                      setReportPlatforms((p) => ({ ...p, twitter: !p.twitter }))
-                    }
-                  />
-                  <span>Twitter</span>
-                </label>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Plataforma</p>
+                  <div className="space-y-2">
+                    <label htmlFor="rep-yt" className="flex items-center gap-2">
+                      <Checkbox
+                        id="rep-yt"
+                        checked={reportPlatforms.youtube}
+                        onCheckedChange={() =>
+                          setReportPlatforms((p) => ({ ...p, youtube: !p.youtube }))
+                        }
+                      />
+                      <span>YouTube</span>
+                    </label>
+                    <label htmlFor="rep-re" className="flex items-center gap-2">
+                      <Checkbox
+                        id="rep-re"
+                        checked={reportPlatforms.reddit}
+                        onCheckedChange={() =>
+                          setReportPlatforms((p) => ({ ...p, reddit: !p.reddit }))
+                        }
+                      />
+                      <span>Reddit</span>
+                    </label>
+                    <label htmlFor="rep-tw" className="flex items-center gap-2">
+                      <Checkbox
+                        id="rep-tw"
+                        checked={reportPlatforms.twitter}
+                        onCheckedChange={() =>
+                          setReportPlatforms((p) => ({ ...p, twitter: !p.twitter }))
+                        }
+                      />
+                      <span>Twitter</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Rango de fechas</p>
+                  <div className="space-y-2">
+                    <Select value={reportDateOption} onValueChange={setReportDateOption}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="range">Rango personalizado</SelectItem>
+                        <SelectItem value="7">Últimos 7 días</SelectItem>
+                        <SelectItem value="15">Últimos 15 días</SelectItem>
+                        <SelectItem value="30">Últimos 30 días</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {reportDateOption === "range" && (
+                      <div className="flex items-center gap-2">
+                        <DatePickerInput
+                          value={reportStartDate}
+                          onChange={setReportStartDate}
+                          placeholder="Desde"
+                          className="w-40"
+                        />
+                        <span>a</span>
+                        <DatePickerInput
+                          value={reportEndDate}
+                          onChange={setReportEndDate}
+                          placeholder="Hasta"
+                          className="w-40"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Incluir comentarios</p>
+                  <div className="space-y-2">
+                    <label htmlFor="rep-inc-yt" className="flex items-center gap-2">
+                      <Checkbox
+                        id="rep-inc-yt"
+                        checked={includeYoutubeComments}
+                        onCheckedChange={() =>
+                          setIncludeYoutubeComments((c) => !c)
+                        }
+                      />
+                      <span>Incluir comentarios de YouTube</span>
+                    </label>
+                    <label htmlFor="rep-inc-re" className="flex items-center gap-2">
+                      <Checkbox
+                        id="rep-inc-re"
+                        checked={includeRedditComments}
+                        onCheckedChange={() =>
+                          setIncludeRedditComments((c) => !c)
+                        }
+                      />
+                      <span>Incluir comentarios de Reddit</span>
+                    </label>
+                  </div>
+                </div>
+                <Button type="button" onClick={handleCreateReport}>Crear reporte</Button>
               </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Rango de fechas</p>
-              <div className="flex items-center gap-2">
-                <DatePickerInput
-                  value={reportStartDate}
-                  onChange={setReportStartDate}
-                  placeholder="Desde"
-                  className="w-40"
-                />
-                <span>a</span>
-                <DatePickerInput
-                  value={reportEndDate}
-                  onChange={setReportEndDate}
-                  placeholder="Hasta"
-                  className="w-40"
-                />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Incluir comentarios</p>
-              <div className="space-y-2">
-                <label htmlFor="rep-inc-yt" className="flex items-center gap-2">
-                  <Checkbox
-                    id="rep-inc-yt"
-                    checked={includeYoutubeComments}
-                    onCheckedChange={() =>
-                      setIncludeYoutubeComments((c) => !c)
-                    }
-                  />
-                  <span>Incluir comentarios de YouTube</span>
-                </label>
-                <label htmlFor="rep-inc-re" className="flex items-center gap-2">
-                  <Checkbox
-                    id="rep-inc-re"
-                    checked={includeRedditComments}
-                    onCheckedChange={() =>
-                      setIncludeRedditComments((c) => !c)
-                    }
-                  />
-                  <span>Incluir comentarios de Reddit</span>
-                </label>
-              </div>
-            </div>
-            <Button type="button">Descargar</Button>
+            )}
           </section>
         )}
 
