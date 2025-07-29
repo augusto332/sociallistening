@@ -807,7 +807,11 @@ export default function SocialListeningApp({ onLogout }) {
                         id="rep-yt"
                         checked={reportPlatforms.youtube}
                         onCheckedChange={() =>
-                          setReportPlatforms((p) => ({ ...p, youtube: !p.youtube }))
+                          setReportPlatforms((p) => {
+                            const newVal = !p.youtube;
+                            if (!newVal) setIncludeYoutubeComments(false);
+                            return { ...p, youtube: newVal };
+                          })
                         }
                       />
                       <span>YouTube</span>
@@ -817,7 +821,11 @@ export default function SocialListeningApp({ onLogout }) {
                         id="rep-re"
                         checked={reportPlatforms.reddit}
                         onCheckedChange={() =>
-                          setReportPlatforms((p) => ({ ...p, reddit: !p.reddit }))
+                          setReportPlatforms((p) => {
+                            const newVal = !p.reddit;
+                            if (!newVal) setIncludeRedditComments(false);
+                            return { ...p, reddit: newVal };
+                          })
                         }
                       />
                       <span>Reddit</span>
@@ -877,6 +885,7 @@ export default function SocialListeningApp({ onLogout }) {
                         onCheckedChange={() =>
                           setIncludeYoutubeComments((c) => !c)
                         }
+                        disabled={!reportPlatforms.youtube}
                       />
                       <span>Incluir comentarios de YouTube</span>
                     </label>
@@ -887,6 +896,7 @@ export default function SocialListeningApp({ onLogout }) {
                         onCheckedChange={() =>
                           setIncludeRedditComments((c) => !c)
                         }
+                        disabled={!reportPlatforms.reddit}
                       />
                       <span>Incluir comentarios de Reddit</span>
                     </label>
