@@ -1,7 +1,7 @@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-
-export default function ReportsTable({ reports = [], onDownload }) {
+import { X } from "lucide-react";
+export default function ReportsTable({ reports = [], onDownload, onDelete }) {
   return (
     <Table className="bg-secondary rounded-md text-sm">
       <TableHeader>
@@ -11,6 +11,9 @@ export default function ReportsTable({ reports = [], onDownload }) {
           <TableHead>Rango de fechas</TableHead>
           <TableHead>Comentarios</TableHead>
           <TableHead className="text-right">Descargar</TableHead>
+          <TableHead className="text-right">
+            <X className="w-4 h-4 inline" />
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -41,6 +44,15 @@ export default function ReportsTable({ reports = [], onDownload }) {
             <TableCell className="text-right">
               <Button size="sm" onClick={() => onDownload && onDownload(r)}>
                 Descargar
+              </Button>
+            </TableCell>
+            <TableCell className="text-right">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete && onDelete(idx)}
+              >
+                <X className="w-4 h-4" />
               </Button>
             </TableCell>
           </TableRow>
