@@ -10,10 +10,8 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
           <TableHead>Plataformas</TableHead>
           <TableHead>Rango de fechas</TableHead>
           <TableHead>Comentarios</TableHead>
-          <TableHead className="text-right">Descargar</TableHead>
-          <TableHead className="text-right">
-            <X className="w-4 h-4 inline" />
-          </TableHead>
+          <TableHead className="text-right"></TableHead>
+          <TableHead className="text-right"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -32,12 +30,15 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
             </TableCell>
               <TableCell>
                 {(() => {
-                  const platforms = [
+                  const commentPlatforms = [
                     r.includeYoutubeComments && 'YouTube',
                     r.includeRedditComments && 'Reddit',
                   ].filter(Boolean);
-                  return platforms.length
-                    ? `Si (${platforms.join(', ')})`
+                  if (r.platforms.includes('twitter') && commentPlatforms.length === 0) {
+                    return 'N/A';
+                  }
+                  return commentPlatforms.length
+                    ? `Si (${commentPlatforms.join(', ')})`
                     : 'No';
                 })()}
               </TableCell>
