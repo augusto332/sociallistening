@@ -84,6 +84,7 @@ export default function SocialListeningApp({ onLogout }) {
   });
   const [showReportForm, setShowReportForm] = useState(false);
   const [newReportName, setNewReportName] = useState("");
+  const [reportKeywords, setReportKeywords] = useState([]);
   const [reportDateOption, setReportDateOption] = useState("range");
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -338,6 +339,7 @@ export default function SocialListeningApp({ onLogout }) {
     const newRep = {
       name: newReportName || `Reporte ${savedReports.length + 1}`,
       platforms,
+      keywords: reportKeywords,
       startDate: reportDateOption === "range" ? reportStartDate : "",
       endDate: reportDateOption === "range" ? reportEndDate : "",
       datePreset: reportDateOption !== "range" ? reportDateOption : "",
@@ -347,6 +349,7 @@ export default function SocialListeningApp({ onLogout }) {
     setSavedReports((prev) => [...prev, newRep]);
     setNewReportName("");
     setReportPlatforms({ youtube: false, reddit: false, twitter: false });
+    setReportKeywords([]);
     setReportStartDate("");
     setReportEndDate("");
     setReportDateOption("range");
@@ -841,6 +844,18 @@ export default function SocialListeningApp({ onLogout }) {
                       <span>Twitter</span>
                     </label>
                   </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Palabras clave</p>
+                  <MultiSelect
+                    className="w-full"
+                    options={activeKeywords.map((k) => ({
+                      value: k.keyword,
+                      label: k.keyword,
+                    }))}
+                    value={reportKeywords}
+                    onChange={setReportKeywords}
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-medium mb-1">Rango de fechas</p>

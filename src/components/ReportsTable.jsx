@@ -8,6 +8,7 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
         <TableRow>
           <TableHead>Nombre</TableHead>
           <TableHead>Plataformas</TableHead>
+          <TableHead>Palabras clave</TableHead>
           <TableHead>Rango de fechas</TableHead>
           <TableHead>Comentarios</TableHead>
           <TableHead className="text-right"></TableHead>
@@ -18,30 +19,31 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
         {reports.map((r, idx) => (
           <TableRow key={idx}>
             <TableCell className="font-medium">{r.name}</TableCell>
-              <TableCell>
-                {r.platforms
-                  .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-                  .join(', ') || '-'}
-              </TableCell>
+            <TableCell>
+              {r.platforms
+                .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+                .join(', ') || '-'}
+            </TableCell>
+            <TableCell>{r.keywords?.join(', ') || '-'}</TableCell>
             <TableCell>
               {r.datePreset
                 ? `Últimos ${r.datePreset} días`
                 : `${r.startDate || '-'} a ${r.endDate || '-'}`}
             </TableCell>
-              <TableCell>
-                {(() => {
-                  const commentPlatforms = [
-                    r.includeYoutubeComments && 'YouTube',
-                    r.includeRedditComments && 'Reddit',
-                  ].filter(Boolean);
-                  if (r.platforms.includes('twitter') && commentPlatforms.length === 0) {
-                    return 'N/A';
-                  }
-                  return commentPlatforms.length
-                    ? `Si (${commentPlatforms.join(', ')})`
-                    : 'No';
-                })()}
-              </TableCell>
+            <TableCell>
+              {(() => {
+                const commentPlatforms = [
+                  r.includeYoutubeComments && 'YouTube',
+                  r.includeRedditComments && 'Reddit',
+                ].filter(Boolean);
+                if (r.platforms.includes('twitter') && commentPlatforms.length === 0) {
+                  return 'N/A';
+                }
+                return commentPlatforms.length
+                  ? `Si (${commentPlatforms.join(', ')})`
+                  : 'No';
+              })()}
+            </TableCell>
             <TableCell className="text-right">
               <Button size="sm" onClick={() => onDownload && onDownload(r)}>
                 Descargar
