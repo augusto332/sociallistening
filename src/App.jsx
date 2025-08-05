@@ -26,6 +26,7 @@ import {
   Star,
   Bell,
   Plus,
+  Minus,
   TrendingUp,
   Activity,
   MessageSquare,
@@ -784,7 +785,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
               </div>
 
               {/* Filters */}
-              <div className="flex flex-wrap gap-4 mb-8 p-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
+              <div className="relative z-10 flex flex-wrap gap-4 mb-8 p-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
                 <div>
                   <p className="text-sm font-medium mb-2 text-slate-300">Palabras clave</p>
                   <MultiSelect
@@ -895,7 +896,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 onClick={() => setShowReportForm(!showReportForm)}
                 className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                {showReportForm ? (
+                  <Minus className="w-4 h-4 mr-2" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
                 Crear nuevo reporte
               </Button>
 
