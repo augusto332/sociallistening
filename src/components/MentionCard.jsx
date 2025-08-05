@@ -89,7 +89,7 @@ export default function MentionCard({
   return (
     <Card
       onClick={() => setExpanded((e) => !e)}
-      className="relative border-muted bg-secondary hover:bg-secondary/70 transition-colors rounded-lg cursor-pointer"
+      className="relative border-muted bg-card hover:bg-muted transition-colors rounded-lg cursor-pointer"
     >
       <button
         onClick={(e) => {
@@ -102,7 +102,7 @@ export default function MentionCard({
         <FaEllipsisV />
       </button>
       {optionsOpen && (
-        <div className="absolute right-2 top-8 bg-secondary shadow-md rounded p-2 space-y-1 z-50">
+        <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
           {showDismiss && (
             <button
               onClick={(e) => {
@@ -110,7 +110,7 @@ export default function MentionCard({
                 setOptionsOpen(false);
                 if (onHide) onHide();
               }}
-              className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+              className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
             >
               <X className="size-4" />
               Marcar como irrelevante
@@ -122,7 +122,7 @@ export default function MentionCard({
               setOptionsOpen(false);
               handleFavClick(e);
             }}
-            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-[#2E2E2E]"
+            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
           >
             <Star className="size-4" />
             {favorite ? "Remover de destacados" : "Agregar a destacados"}

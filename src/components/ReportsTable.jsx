@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 export default function ReportsTable({ reports = [], onDownload, onDelete }) {
   return (
-    <Table className="bg-secondary rounded-md text-sm">
+    <Table className="bg-card rounded-md text-sm">
       <TableHeader>
         <TableRow>
           <TableHead>Nombre</TableHead>
