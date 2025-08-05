@@ -101,11 +101,10 @@ export default function RightSidebar({
       <div className="border-t border-border/50 w-full" />
 
       <Button
-        variant="outline"
         onClick={handleClearFilters}
-        className="mt-auto self-center"
+        className="mt-auto self-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
       >
-        <FilterX className="size-4" />
+        <FilterX className="w-4 h-4 mr-2" />
         Limpiar filtros
       </Button>
     </aside>
