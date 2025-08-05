@@ -24,7 +24,7 @@ export default function RightSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-secondary shadow-md p-6 space-y-4 flex flex-col items-start rounded-lg self-start sticky top-[104px] h-[calc(100vh-6.5rem)]",
+        "w-64 bg-card shadow-md p-6 space-y-4 flex flex-col items-start rounded-lg self-start sticky top-[104px] h-[calc(100vh-6.5rem)]",
         className
       )}
     >
