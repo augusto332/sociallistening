@@ -10,7 +10,7 @@ export default function KeywordTable({ keywords, onToggle }) {
   }
 
   return (
-    <Table className="bg-card rounded-md text-sm">
+    <Table className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-md text-sm">
       <TableHeader>
         <TableRow>
           <TableHead>Keyword</TableHead>

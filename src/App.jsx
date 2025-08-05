@@ -893,7 +893,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
               <Button
                 variant="outline"
                 onClick={() => setShowReportForm(!showReportForm)}
-                className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Crear nuevo reporte

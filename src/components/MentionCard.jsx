@@ -89,7 +89,7 @@ export default function MentionCard({
   return (
     <Card
       onClick={() => setExpanded((e) => !e)}
-      className="relative border-muted bg-card hover:bg-muted transition-colors rounded-lg cursor-pointer"
+      className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 hover:bg-slate-800/70 transition-colors rounded-lg cursor-pointer"
     >
       <button
         onClick={(e) => {
