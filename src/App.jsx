@@ -628,11 +628,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <div className="flex-1">
                   {/* Search Header */}
                   <div className="mb-8">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
-                      Menciones Recientes
-                    </h1>
-                    <p className="text-slate-400 mb-6">Monitorea las conversaciones sobre tus palabras clave</p>
-
+                    {/* Título y texto descriptivo eliminados */}
                     <div className="relative mb-6">
                       <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <Input
