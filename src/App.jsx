@@ -76,19 +76,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportEndDate, setReportEndDate] = useState("")
   const [reportPlatform, setReportPlatform] = useState("")
   const [includeComments, setIncludeComments] = useState(false)
-  const [savedReports, setSavedReports] = useState(() => {
-    const stored = localStorage.getItem("savedReports")
-    if (!stored) return []
-    try {
-      const parsed = JSON.parse(stored)
-      return parsed.map((r) => ({
-        ...r,
-        keyword: r.keyword || (Array.isArray(r.keywords) ? r.keywords[0] : r.keywords),
-      }))
-    } catch {
-      return []
-    }
-  })
+  const [savedReports, setSavedReports] = useState([])
   const [showReportForm, setShowReportForm] = useState(false)
   const [newReportName, setNewReportName] = useState("")
   const [reportKeyword, setReportKeyword] = useState("")
@@ -299,9 +287,36 @@ export default function ModernSocialListeningApp({ onLogout }) {
     fetchAccount()
   }, [])
 
+  const fetchSavedReports = async () => {
+    const { data: userData } = await supabase.auth.getUser()
+    const { user } = userData || {}
+    if (!user) return
+    const { data, error } = await supabase
+      .from("user_reports_parameters")
+      .select("*")
+      .eq("user_id", user.id)
+    if (error) {
+      console.error("Error fetching reports", error)
+      return
+    }
+    const mapped = (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      platform: r.platform,
+      keyword: keywords.find((k) => k.keyword_id === r.keyword_id)?.keyword || "",
+      startDate: r.isdynamicdate ? "" : r.date_from,
+      endDate: r.isdynamicdate ? "" : r.date_to,
+      datePreset: r.isdynamicdate ? (r.last_x_days ? String(r.last_x_days) : "") : "",
+      includeComments: r.comments,
+    }))
+    setSavedReports(mapped)
+  }
+
   useEffect(() => {
-    localStorage.setItem("savedReports", JSON.stringify(savedReports))
-  }, [savedReports])
+    if (keywords.length) {
+      fetchSavedReports()
+    }
+  }, [keywords])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -320,32 +335,68 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setKeywordsFilter(["all"])
   }
 
-  const handleCreateReport = () => {
-    const newRep = {
+  const handleCreateReport = async () => {
+    const { data: userData } = await supabase.auth.getUser()
+    const { user } = userData || {}
+    if (!user) return
+    const keywordObj = keywords.find((k) => k.keyword === reportKeyword)
+    const isDynamic = reportDateOption !== "range"
+    const insertData = {
       name: newReportName || `Reporte ${savedReports.length + 1}`,
       platform: reportPlatform,
-      keyword: reportKeyword,
-      startDate: reportDateOption === "range" ? reportStartDate : "",
-      endDate: reportDateOption === "range" ? reportEndDate : "",
-      datePreset: reportDateOption !== "range" ? reportDateOption : "",
-      includeComments,
+      keyword_id: keywordObj?.keyword_id || null,
+      isdynamicdate: isDynamic,
+      date_from: isDynamic ? null : reportStartDate || null,
+      date_to: isDynamic ? null : reportEndDate || null,
+      last_x_days: isDynamic ? Number(reportDateOption) : null,
+      comments: includeComments,
+      user_id: user.id,
     }
-    setSavedReports((prev) => [...prev, newRep])
-    setNewReportName("")
-    setReportPlatform("")
-    setReportKeyword("")
-    setReportStartDate("")
-    setReportEndDate("")
-    setReportDateOption("range")
-    setIncludeComments(false)
-    setShowReportForm(false)
+    const { data, error } = await supabase
+      .from("user_reports_parameters")
+      .insert(insertData)
+      .select()
+    if (error) {
+      console.error("Error creating report", error)
+    } else if (data && data.length > 0) {
+      const r = data[0]
+      const newRep = {
+        id: r.id,
+        name: r.name,
+        platform: r.platform,
+        keyword: reportKeyword,
+        startDate: r.isdynamicdate ? "" : r.date_from,
+        endDate: r.isdynamicdate ? "" : r.date_to,
+        datePreset: r.isdynamicdate ? (r.last_x_days ? String(r.last_x_days) : "") : "",
+        includeComments: r.comments,
+      }
+      setSavedReports((prev) => [...prev, newRep])
+      setNewReportName("")
+      setReportPlatform("")
+      setReportKeyword("")
+      setReportStartDate("")
+      setReportEndDate("")
+      setReportDateOption("range")
+      setIncludeComments(false)
+      setShowReportForm(false)
+    }
   }
 
   const handleDownloadReport = (rep) => {
     console.log("Download", rep)
   }
 
-  const handleDeleteReport = (index) => {
+  const handleDeleteReport = async (index) => {
+    const rep = savedReports[index]
+    if (!rep) return
+    const { error } = await supabase
+      .from("user_reports_parameters")
+      .delete()
+      .eq("id", rep.id)
+    if (error) {
+      console.error("Error deleting report", error)
+      return
+    }
     setSavedReports((prev) => prev.filter((_, i) => i !== index))
   }
 
