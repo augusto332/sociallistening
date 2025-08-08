@@ -11,7 +11,6 @@ import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart"
 import MentionsLineChart from "@/components/MentionsLineChart"
 import MultiSelect from "@/components/MultiSelect"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import RightSidebar from "@/components/RightSidebar"
@@ -75,13 +74,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [newPassword, setNewPassword] = useState("")
   const [reportStartDate, setReportStartDate] = useState("")
   const [reportEndDate, setReportEndDate] = useState("")
-  const [reportPlatforms, setReportPlatforms] = useState({
-    youtube: false,
-    reddit: false,
-    twitter: false,
-  })
-  const [includeYoutubeComments, setIncludeYoutubeComments] = useState(false)
-  const [includeRedditComments, setIncludeRedditComments] = useState(false)
+  const [reportPlatform, setReportPlatform] = useState("")
+  const [includeComments, setIncludeComments] = useState(false)
   const [savedReports, setSavedReports] = useState(() => {
     const stored = localStorage.getItem("savedReports")
     return stored ? JSON.parse(stored) : []
@@ -318,28 +312,23 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const handleCreateReport = () => {
-    const platforms = Object.entries(reportPlatforms)
-      .filter(([, v]) => v)
-      .map(([k]) => k)
     const newRep = {
       name: newReportName || `Reporte ${savedReports.length + 1}`,
-      platforms,
+      platform: reportPlatform,
       keywords: reportKeywords,
       startDate: reportDateOption === "range" ? reportStartDate : "",
       endDate: reportDateOption === "range" ? reportEndDate : "",
       datePreset: reportDateOption !== "range" ? reportDateOption : "",
-      includeYoutubeComments,
-      includeRedditComments,
+      includeComments,
     }
     setSavedReports((prev) => [...prev, newRep])
     setNewReportName("")
-    setReportPlatforms({ youtube: false, reddit: false, twitter: false })
+    setReportPlatform("")
     setReportKeywords([])
     setReportStartDate("")
     setReportEndDate("")
     setReportDateOption("range")
-    setIncludeYoutubeComments(false)
-    setIncludeRedditComments(false)
+    setIncludeComments(false)
     setShowReportForm(false)
   }
 
@@ -915,42 +904,25 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-3 text-slate-300">Plataformas</p>
-                    <div className="space-y-3">
-                      <label className="flex items-center gap-3 text-slate-300">
-                        <Checkbox
-                          checked={reportPlatforms.youtube}
-                          onCheckedChange={() =>
-                            setReportPlatforms((p) => {
-                              const newVal = !p.youtube
-                              if (!newVal) setIncludeYoutubeComments(false)
-                              return { ...p, youtube: newVal }
-                            })
-                          }
-                        />
-                        <span>YouTube</span>
-                      </label>
-                      <label className="flex items-center gap-3 text-slate-300">
-                        <Checkbox
-                          checked={reportPlatforms.reddit}
-                          onCheckedChange={() =>
-                            setReportPlatforms((p) => {
-                              const newVal = !p.reddit
-                              if (!newVal) setIncludeRedditComments(false)
-                              return { ...p, reddit: newVal }
-                            })
-                          }
-                        />
-                        <span>Reddit</span>
-                      </label>
-                      <label className="flex items-center gap-3 text-slate-300">
-                        <Checkbox
-                          checked={reportPlatforms.twitter}
-                          onCheckedChange={() => setReportPlatforms((p) => ({ ...p, twitter: !p.twitter }))}
-                        />
-                        <span>Twitter</span>
-                      </label>
-                    </div>
+                    <p className="text-sm font-medium mb-3 text-slate-300">Plataforma</p>
+                    <Select
+                      value={reportPlatform}
+                      onValueChange={(value) => {
+                        setReportPlatform(value)
+                        if (value !== "youtube" && value !== "reddit") {
+                          setIncludeComments(false)
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="youtube">YouTube</SelectItem>
+                        <SelectItem value="reddit">Reddit</SelectItem>
+                        <SelectItem value="twitter">Twitter</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -1002,24 +974,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
                   <div>
                     <p className="text-sm font-medium mb-3 text-slate-300">Incluir comentarios</p>
-                    <div className="space-y-3">
-                      <label className="flex items-center gap-3 text-slate-300">
-                        <Checkbox
-                          checked={includeYoutubeComments}
-                          onCheckedChange={() => setIncludeYoutubeComments(!includeYoutubeComments)}
-                          disabled={!reportPlatforms.youtube}
-                        />
-                        <span>Incluir comentarios de YouTube</span>
-                      </label>
-                      <label className="flex items-center gap-3 text-slate-300">
-                        <Checkbox
-                          checked={includeRedditComments}
-                          onCheckedChange={() => setIncludeRedditComments(!includeRedditComments)}
-                          disabled={!reportPlatforms.reddit}
-                        />
-                        <span>Incluir comentarios de Reddit</span>
-                      </label>
-                    </div>
+                    <Select
+                      value={includeComments ? "si" : "no"}
+                      onValueChange={(val) => setIncludeComments(val === "si")}
+                      disabled={!(reportPlatform === "youtube" || reportPlatform === "reddit")}
+                    >
+                      <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700/50 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="si">Si</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Button
