@@ -78,11 +78,20 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [includeComments, setIncludeComments] = useState(false)
   const [savedReports, setSavedReports] = useState(() => {
     const stored = localStorage.getItem("savedReports")
-    return stored ? JSON.parse(stored) : []
+    if (!stored) return []
+    try {
+      const parsed = JSON.parse(stored)
+      return parsed.map((r) => ({
+        ...r,
+        keyword: r.keyword || (Array.isArray(r.keywords) ? r.keywords[0] : r.keywords),
+      }))
+    } catch {
+      return []
+    }
   })
   const [showReportForm, setShowReportForm] = useState(false)
   const [newReportName, setNewReportName] = useState("")
-  const [reportKeywords, setReportKeywords] = useState([])
+  const [reportKeyword, setReportKeyword] = useState("")
   const [reportDateOption, setReportDateOption] = useState("range")
 
   // All your existing filtering and processing logic remains the same
@@ -315,7 +324,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const newRep = {
       name: newReportName || `Reporte ${savedReports.length + 1}`,
       platform: reportPlatform,
-      keywords: reportKeywords,
+      keyword: reportKeyword,
       startDate: reportDateOption === "range" ? reportStartDate : "",
       endDate: reportDateOption === "range" ? reportEndDate : "",
       datePreset: reportDateOption !== "range" ? reportDateOption : "",
@@ -324,7 +333,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setSavedReports((prev) => [...prev, newRep])
     setNewReportName("")
     setReportPlatform("")
-    setReportKeywords([])
+    setReportKeyword("")
     setReportStartDate("")
     setReportEndDate("")
     setReportDateOption("range")
@@ -926,16 +935,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-2 text-slate-300">Palabras clave</p>
-                    <MultiSelect
-                      className="w-full"
-                      options={activeKeywords.map((k) => ({
-                        value: k.keyword,
-                        label: k.keyword,
-                      }))}
-                      value={reportKeywords}
-                      onChange={setReportKeywords}
-                    />
+                    <p className="text-sm font-medium mb-2 text-slate-300">Palabra clave</p>
+                    <Select value={reportKeyword} onValueChange={setReportKeyword}>
+                      <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeKeywords.map((k) => (
+                          <SelectItem key={k.keyword} value={k.keyword}>
+                            {k.keyword}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

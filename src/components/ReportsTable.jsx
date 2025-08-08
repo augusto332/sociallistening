@@ -8,7 +8,7 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
         <TableRow>
           <TableHead>Nombre</TableHead>
           <TableHead>Plataforma</TableHead>
-          <TableHead>Palabras clave</TableHead>
+          <TableHead>Palabra Clave</TableHead>
           <TableHead>Rango de fechas</TableHead>
           <TableHead>Comentarios</TableHead>
           <TableHead className="text-right"></TableHead>
@@ -26,7 +26,7 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
                     ?.map((p) => p.charAt(0).toUpperCase() + p.slice(1))
                     .join(', ') || '-'}
             </TableCell>
-            <TableCell>{r.keywords?.join(', ') || '-'}</TableCell>
+            <TableCell>{r.keyword || (Array.isArray(r.keywords) ? r.keywords[0] : r.keywords) || '-'}</TableCell>
             <TableCell>
               {r.datePreset
                 ? `Últimos ${r.datePreset} días`
