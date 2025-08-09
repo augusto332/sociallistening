@@ -69,11 +69,12 @@ export default function MentionCard({
     };
 
     const metrics = metricMap[platform] || [];
-
     if (!metrics.length) return null;
 
+    const capturedAt = new Date(mention.created_at).toLocaleString();
+
     return (
-      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
         {metrics.map((m) => {
           const MetricIcon = m.icon;
           const value = mention[m.key] ?? 0;
@@ -84,6 +85,7 @@ export default function MentionCard({
             </span>
           );
         })}
+        <span className="opacity-80">• Capturado el {capturedAt}</span>
       </div>
     );
   };
@@ -155,6 +157,7 @@ export default function MentionCard({
       >
         <FaEllipsisV />
       </button>
+
       {optionsOpen && (
         <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
           {showDismiss && (
@@ -183,6 +186,7 @@ export default function MentionCard({
           </button>
         </div>
       )}
+
       <CardContent className="p-6 flex gap-4">
         <div
           className={`w-10 h-10 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
@@ -190,6 +194,7 @@ export default function MentionCard({
         >
           <Icon className={iconSizeClass} style={{ color: iconColor }} />
         </div>
+
         <div className="flex-1 space-y-1">
           {keyword && (
             <span className="inline-block text-xs bg-white/20 text-muted-foreground px-2 py-0.5 rounded">
@@ -200,23 +205,20 @@ export default function MentionCard({
             <span className="font-semibold text-primary">@{username}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
           </div>
+
           <p className="text-base leading-relaxed text-muted-foreground">
             {content}
           </p>
+
           {expanded ? renderMetrics() : renderTags()}
-          {expanded && (
-            <div className="mt-2 text-sm space-y-1">
-              <p>
-                Métricas al momento de captura (
-                {new Date(mention.created_at).toLocaleString()}):
-              </p>
-              {url && (
-                <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                    Ir al sitio
-                  </a>
-                </Button>
-              )}
+
+          {expanded && url && (
+            <div className="mt-2 text-sm">
+              <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  Ir al sitio
+                </a>
+              </Button>
             </div>
           )}
         </div>
