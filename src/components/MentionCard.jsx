@@ -7,14 +7,17 @@ import {
   FaYoutube,
   FaRedditAlien,
   FaEllipsisV,
-  FaHeart,
-  FaArrowUp,
-  FaComment,
-  FaRetweet,
-  FaEye,
-  FaQuoteRight,
 } from "react-icons/fa";
-import { Star, X } from "lucide-react";
+import {
+  Star,
+  X,
+  Heart,
+  MessageCircle,
+  Eye,
+  ArrowBigUp,
+  Repeat2,
+  Quote,
+} from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
 
 export default function MentionCard({
@@ -52,19 +55,19 @@ export default function MentionCard({
   const renderMetrics = () => {
     const metricMap = {
       youtube: [
-        { key: "likes", icon: FaHeart },
-        { key: "comments", icon: FaComment },
-        { key: "views", icon: FaEye },
+        { key: "likes", icon: Heart },
+        { key: "comments", icon: MessageCircle },
+        { key: "views", icon: Eye },
       ],
       reddit: [
-        { key: "likes", icon: FaArrowUp },
-        { key: "comments", icon: FaComment },
+        { key: "likes", icon: ArrowBigUp },
+        { key: "comments", icon: MessageCircle },
       ],
       twitter: [
-        { key: "likes", icon: FaHeart },
-        { key: "retweets", icon: FaRetweet },
-        { key: "replies", icon: FaComment },
-        { key: "quotes", icon: FaQuoteRight },
+        { key: "likes", icon: Heart },
+        { key: "retweets", icon: Repeat2 },
+        { key: "replies", icon: MessageCircle },
+        { key: "quotes", icon: Quote },
       ],
     };
 
@@ -210,7 +213,8 @@ export default function MentionCard({
             {content}
           </p>
 
-          {expanded ? renderMetrics() : renderTags()}
+          {renderTags()}
+          {expanded && renderMetrics()}
 
           {expanded && url && (
             <div className="mt-2 text-sm">
