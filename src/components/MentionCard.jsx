@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   FaTwitter,
   FaYoutube,
@@ -26,6 +27,7 @@ export default function MentionCard({
   url,
   onHide,
   showDismiss = true,
+  medians = {},
 }) {
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
@@ -80,6 +82,58 @@ export default function MentionCard({
               <MetricIcon className="size-4" />
               {value}
             </span>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const tagTexts = {
+    approval: ["Muy valorado", "Gran aprobación"],
+    reach: ["Muchas visualizaciones", "Gran alcance"],
+    conversation: ["Muchos comentarios", "Generó conversación"],
+  };
+
+  const tagClasses = {
+    approval: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    reach: "bg-green-500/10 text-green-400 border-green-500/20",
+    conversation: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  };
+
+  const renderTags = () => {
+    if (!medians || !medians[platform]) return null;
+    const platformMedians = medians[platform];
+    const tags = [];
+
+    if (platform === "youtube") {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
+      if ((mention.views ?? 0) > (platformMedians.views ?? 0)) tags.push("reach");
+      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation");
+    } else if (platform === "reddit") {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
+      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation");
+    } else {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
+      if ((mention.retweets ?? 0) > (platformMedians.retweets ?? 0)) tags.push("reach");
+      const convo = (mention.replies ?? 0) + (mention.quotes ?? 0);
+      if (convo > (platformMedians.conversation ?? 0)) tags.push("conversation");
+    }
+
+    if (!tags.length) return null;
+
+    return (
+      <div className="flex items-center gap-2 mt-1 flex-wrap">
+        {tags.map((type, i) => {
+          const textOptions = tagTexts[type];
+          const text = textOptions[Math.floor(Math.random() * textOptions.length)];
+          return (
+            <Badge
+              key={i}
+              variant="secondary"
+              className={`${tagClasses[type]} rounded-lg px-3 py-1 text-sm font-semibold`}
+            >
+              {text}
+            </Badge>
           );
         })}
       </div>
@@ -149,7 +203,7 @@ export default function MentionCard({
           <p className="text-base leading-relaxed text-muted-foreground">
             {content}
           </p>
-          {renderMetrics()}
+          {expanded ? renderMetrics() : renderTags()}
           {expanded && (
             <div className="mt-2 text-sm space-y-1">
               <p>
