@@ -127,6 +127,44 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
   const homeMentions = onlyFavorites ? visibleMentions.filter(isFavorite) : visibleMentions
 
+  const metricMedians = useMemo(() => {
+    const medians = { twitter: {}, youtube: {}, reddit: {} }
+    const metricsByPlatform = {
+      twitter: ["likes", "retweets", "conversation"],
+      youtube: ["likes", "views", "comments"],
+      reddit: ["likes", "comments"],
+    }
+
+    const getValue = (m, platform, metric) => {
+      if (platform === "twitter" && metric === "conversation") {
+        return (m.replies ?? 0) + (m.quotes ?? 0)
+      }
+      return m[metric] ?? 0
+    }
+
+    Object.keys(medians).forEach((platform) => {
+      const items = homeMentions.filter(
+        (m) => m.platform?.toLowerCase() === platform,
+      )
+      metricsByPlatform[platform].forEach((metric) => {
+        const values = items
+          .map((m) => getValue(m, platform, metric))
+          .sort((a, b) => a - b)
+        const mid = Math.floor(values.length / 2)
+        let median = 0
+        if (values.length) {
+          median =
+            values.length % 2 !== 0
+              ? values[mid]
+              : (values[mid - 1] + values[mid]) / 2
+        }
+        medians[platform][metric] = median
+      })
+    })
+
+    return medians
+  }, [homeMentions])
+
   // All your existing functions remain the same
   const fetchMentions = async () => {
     const { data, error } = await supabase
@@ -743,6 +781,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             keyword={m.keyword}
                             url={m.url}
                             onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
+                            medians={metricMedians}
                           />
                         </div>
                       ))
