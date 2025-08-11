@@ -420,9 +420,58 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const handleDownloadReport = (rep) => {
-    console.log("Download", rep)
+  const handleDownloadReport = async (rep) => {
+  try {
+    // 1) Tomar el JWT del usuario logueado
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert("Debes iniciar sesión para descargar el reporte.");
+      return;
+    }
+
+    // 2) Invocar la Edge Function con el report_id
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export_reports_to_csv`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ report_id: rep.id }),
+      }
+    );
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || `HTTP ${res.status}`);
+    }
+
+    // 3) Armar el archivo para descarga
+    const blob = await res.blob();
+
+    // intentar usar el filename del header; si no viene, armar uno lindo
+    const disp = res.headers.get("Content-Disposition") || "";
+    const match = /filename="?([^"]+)"?/.exec(disp);
+    const fallbackName = `${(rep.name || "reporte")
+      .replace(/[^\w.-]+/g, "_")
+      .slice(0, 60)}.csv`;
+    const filename = match?.[1] || fallbackName;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    alert(`Error al descargar: ${e?.message || e}`);
   }
+}
+
 
   const handleDeleteReport = async (index) => {
     const rep = savedReports[index]
