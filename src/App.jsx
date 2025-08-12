@@ -34,7 +34,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { useFavorites } from "@/context/FavoritesContext"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import KeywordTable from "@/components/KeywordTable"
 import ReportsTable from "@/components/ReportsTable"
@@ -105,7 +105,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const sortedMentions = [...filteredMentions].sort((a, b) => {
     if (order === "recent") {
-      return new Date(b.created_at) - new Date(a.created_at)
+      const dateA = typeof a.created_at === "string" ? parseISO(a.created_at) : new Date(a.created_at)
+      const dateB = typeof b.created_at === "string" ? parseISO(b.created_at) : new Date(b.created_at)
+      return dateB.getTime() - dateA.getTime()
     }
     if (order === "popular") {
       const likesDiff = (b.likes ?? 0) - (a.likes ?? 0)
