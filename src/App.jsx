@@ -489,6 +489,24 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
 
+  const dashboardFilteredMentions = useMemo(() => {
+    return mentions.filter((m) => {
+      const isActive = activeKeywords.some((k) => k.keyword === m.keyword)
+      if (!isActive) return false
+      if (!selectedDashboardKeywords.includes("all") && !selectedDashboardKeywords.includes(m.keyword)) return false
+      const platform = m.platform?.toLowerCase?.()
+      if (!selectedDashboardPlatforms.includes("all") && !selectedDashboardPlatforms.includes(platform)) return false
+      const created = new Date(m.created_at)
+      if (startDate && created < new Date(startDate)) return false
+      if (endDate) {
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+        if (created > end) return false
+      }
+      return true
+    })
+  }, [mentions, activeKeywords, selectedDashboardKeywords, selectedDashboardPlatforms, startDate, endDate])
+
   const stopwords = useMemo(
     () =>
       new Set([
@@ -527,16 +545,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .toLowerCase()
 
   const wordCloudData = useMemo(() => {
-    const relevant = mentions.filter((m) => {
-      const isActive = activeKeywords.some((k) => k.keyword === m.keyword)
-      const matchesKeyword = selectedDashboardKeywords.includes("all") || selectedDashboardKeywords.includes(m.keyword)
-      const matchesPlatform =
-        selectedDashboardPlatforms.includes("all") || selectedDashboardPlatforms.includes(m.platform?.toLowerCase?.())
-      return isActive && matchesKeyword && matchesPlatform
-    })
-
     const counts = {}
-    for (const m of relevant) {
+    for (const m of dashboardFilteredMentions) {
       const words = m.mention
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
@@ -555,28 +565,23 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 30)
-  }, [mentions, activeKeywords, selectedDashboardKeywords, selectedDashboardPlatforms, stopwords])
+  }, [dashboardFilteredMentions, stopwords])
 
   const platformCounts = useMemo(() => {
     const counts = {}
-    for (const m of mentions) {
-      if (!selectedDashboardKeywords.includes("all") && !selectedDashboardKeywords.includes(m.keyword)) continue
+    for (const m of dashboardFilteredMentions) {
       const platform = m.platform?.toLowerCase?.()
       if (!platform) continue
-      if (!selectedDashboardPlatforms.includes("all") && !selectedDashboardPlatforms.includes(platform)) continue
       counts[platform] = (counts[platform] || 0) + 1
     }
     return Object.entries(counts)
       .map(([platform, count]) => ({ platform, count }))
       .sort((a, b) => b.count - a.count)
-  }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms])
+  }, [dashboardFilteredMentions])
 
   const sourceCounts = useMemo(() => {
     const counts = {}
-    for (const m of mentions) {
-      if (!selectedDashboardKeywords.includes("all") && !selectedDashboardKeywords.includes(m.keyword)) continue
-      const platform = m.platform?.toLowerCase?.()
-      if (!selectedDashboardPlatforms.includes("all") && !selectedDashboardPlatforms.includes(platform)) continue
+    for (const m of dashboardFilteredMentions) {
       const name = m.source
       if (!name) continue
       counts[name] = (counts[name] || 0) + 1
@@ -585,29 +590,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
-  }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms])
+  }, [dashboardFilteredMentions])
 
   const mentionsOverTime = useMemo(() => {
-    const filtered = mentions.filter((m) => {
-      if (!selectedDashboardKeywords.includes("all") && !selectedDashboardKeywords.includes(m.keyword)) {
-        return false
-      }
-      const platform = m.platform?.toLowerCase?.()
-      if (!selectedDashboardPlatforms.includes("all") && !selectedDashboardPlatforms.includes(platform)) {
-        return false
-      }
-      const created = new Date(m.created_at)
-      if (startDate && created < new Date(startDate)) return false
-      if (endDate) {
-        const end = new Date(endDate)
-        end.setHours(23, 59, 59, 999)
-        if (created > end) return false
-      }
-      return true
-    })
-
     const counts = {}
-    for (const m of filtered) {
+    for (const m of dashboardFilteredMentions) {
       const day = m.created_at.slice(0, 10)
       counts[day] = (counts[day] || 0) + 1
     }
@@ -628,12 +615,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
 
     return result
-  }, [mentions, selectedDashboardKeywords, selectedDashboardPlatforms, startDate, endDate])
+  }, [dashboardFilteredMentions, startDate, endDate])
 
   // Get stats for dashboard
-  const totalMentions = mentions.length
-  const activePlatforms = [...new Set(mentions.map((m) => m.platform).filter(Boolean))].length
-  const totalKeywords = activeKeywords.length
+  const totalMentions = dashboardFilteredMentions.length
+  const activePlatforms = [...new Set(dashboardFilteredMentions.map((m) => m.platform).filter(Boolean))].length
+  const activeKeywordCount = [...new Set(dashboardFilteredMentions.map((m) => m.keyword))].length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -864,9 +851,51 @@ export default function ModernSocialListeningApp({ onLogout }) {
               {/* Dashboard Header */}
               <div className="mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
-                  Dashboard Analítico
+                  Dashboard
                 </h1>
-                <p className="text-slate-400 mb-6">Visualiza el rendimiento de tus menciones y palabras clave</p>
+                <p className="text-slate-400 mb-6">Revela tendencias y patrones de tus menciones y palabras clave</p>
+              </div>
+
+              {/* Stats Cards */}
+              {/* Filters */}
+              <div className="relative z-10 flex flex-wrap gap-4 mb-8 p-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Palabras clave</p>
+                  <MultiSelect
+                    className="w-64"
+                    options={[
+                      { value: "all", label: "Todas" },
+                      ...activeKeywords.map((k) => ({
+                        value: k.keyword,
+                        label: k.keyword,
+                      })),
+                    ]}
+                    value={selectedDashboardKeywords}
+                    onChange={setSelectedDashboardKeywords}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Rango de fechas</p>
+                  <div className="flex items-center gap-2">
+                    <DatePickerInput value={startDate} onChange={setStartDate} placeholder="Desde" className="w-40" />
+                    <span className="text-slate-400">a</span>
+                    <DatePickerInput value={endDate} onChange={setEndDate} placeholder="Hasta" className="w-40" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Plataformas</p>
+                  <MultiSelect
+                    className="w-40"
+                    options={[
+                      { value: "all", label: "Todas" },
+                      { value: "youtube", label: "YouTube" },
+                      { value: "reddit", label: "Reddit" },
+                      { value: "twitter", label: "Twitter" },
+                    ]}
+                    value={selectedDashboardPlatforms}
+                    onChange={setSelectedDashboardPlatforms}
+                  />
+                </div>
               </div>
 
               {/* Stats Cards */}
@@ -908,54 +937,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
                         <TrendingUp className="w-6 h-6 text-green-400" />
                       </div>
                       <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                        {totalKeywords} activas
+                        Activas
                       </Badge>
                     </div>
-                    <div className="text-2xl font-bold text-white mb-1">{keywords.length}</div>
-                    <div className="text-sm text-slate-400">Palabras clave</div>
+                    <div className="text-2xl font-bold text-white mb-1">{activeKeywordCount}</div>
+                    <div className="text-sm text-slate-400">Palabras clave activas</div>
                   </CardContent>
                 </Card>
-              </div>
-
-              {/* Filters */}
-              <div className="relative z-10 flex flex-wrap gap-4 mb-8 p-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
-                <div>
-                  <p className="text-sm font-medium mb-2 text-slate-300">Palabras clave</p>
-                  <MultiSelect
-                    className="w-64"
-                    options={[
-                      { value: "all", label: "Todas" },
-                      ...activeKeywords.map((k) => ({
-                        value: k.keyword,
-                        label: k.keyword,
-                      })),
-                    ]}
-                    value={selectedDashboardKeywords}
-                    onChange={setSelectedDashboardKeywords}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-2 text-slate-300">Rango de fechas</p>
-                  <div className="flex items-center gap-2">
-                    <DatePickerInput value={startDate} onChange={setStartDate} placeholder="Desde" className="w-40" />
-                    <span className="text-slate-400">a</span>
-                    <DatePickerInput value={endDate} onChange={setEndDate} placeholder="Hasta" className="w-40" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-2 text-slate-300">Plataformas</p>
-                  <MultiSelect
-                    className="w-40"
-                    options={[
-                      { value: "all", label: "Todas" },
-                      { value: "youtube", label: "YouTube" },
-                      { value: "reddit", label: "Reddit" },
-                      { value: "twitter", label: "Twitter" },
-                    ]}
-                    value={selectedDashboardPlatforms}
-                    onChange={setSelectedDashboardPlatforms}
-                  />
-                </div>
               </div>
 
               {/* Charts Grid */}
