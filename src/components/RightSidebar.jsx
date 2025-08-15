@@ -1,6 +1,7 @@
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MultiSelect from "@/components/MultiSelect";
@@ -21,6 +22,12 @@ export default function RightSidebar({
 
   const handleClearFilters = () => {
     clearFilters();
+  };
+
+  const tagClasses = {
+    approval: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    reach: "bg-green-500/10 text-green-400 border-green-500/20",
+    conversation: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   };
 
   return (
@@ -84,20 +91,24 @@ export default function RightSidebar({
 
       <div>
         <p className="font-semibold mb-2">Etiquetas</p>
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
           {[
             { id: "approval", label: "Muy valorado" },
             { id: "reach", label: "Gran alcance" },
             { id: "conversation", label: "Generó conversación" },
           ].map((t) => (
-            <label key={t.id} htmlFor={t.id} className="flex items-center gap-2">
-              <Checkbox
-                id={t.id}
-                checked={tags.includes(t.id)}
-                onCheckedChange={() => toggleTag(t.id)}
-              />
-              <span>{t.label}</span>
-            </label>
+            <Badge
+              key={t.id}
+              onClick={() => toggleTag(t.id)}
+              className={cn(
+                tagClasses[t.id],
+                "rounded-lg px-3 py-1 text-sm font-semibold cursor-pointer",
+                tags.includes(t.id) ? "" : "opacity-50"
+              )}
+              variant="secondary"
+            >
+              {t.label}
+            </Badge>
           ))}
         </div>
       </div>
