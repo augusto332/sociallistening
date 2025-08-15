@@ -94,9 +94,9 @@ export default function MentionCard({
   };
 
   const tagTexts = {
-    approval: ["Muy valorado", "Gran aprobación"],
-    reach: ["Muchas visualizaciones", "Gran alcance"],
-    conversation: ["Muchos comentarios", "Generó conversación"],
+    approval: "Muy valorado",
+    reach: "Gran alcance",
+    conversation: "Generó conversación",
   };
 
   const tagClasses = {
@@ -128,19 +128,15 @@ export default function MentionCard({
 
     return (
       <div className="flex items-center gap-2 mt-1 flex-wrap">
-        {tags.map((type, i) => {
-          const textOptions = tagTexts[type];
-          const text = textOptions[Math.floor(Math.random() * textOptions.length)];
-          return (
-            <Badge
-              key={i}
-              variant="secondary"
-              className={`${tagClasses[type]} rounded-lg px-3 py-1 text-sm font-semibold`}
-            >
-              {text}
-            </Badge>
-          );
-        })}
+        {tags.map((type, i) => (
+          <Badge
+            key={i}
+            variant="secondary"
+            className={`${tagClasses[type]} rounded-lg px-3 py-1 text-sm font-semibold`}
+          >
+            {tagTexts[type]}
+          </Badge>
+        ))}
       </div>
     );
   };

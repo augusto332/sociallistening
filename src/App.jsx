@@ -52,6 +52,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [rangeFilter, setRangeFilter] = useState("")
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
+  const [tagsFilter, setTagsFilter] = useState([])
   const [order, setOrder] = useState("recent")
   const [hiddenMentions, setHiddenMentions] = useState([])
   const [keywords, setKeywords] = useState([])
@@ -82,6 +83,64 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportKeyword, setReportKeyword] = useState("")
   const [reportDateOption, setReportDateOption] = useState("range")
 
+  const metricMedians = useMemo(() => {
+    const medians = { twitter: {}, youtube: {}, reddit: {} }
+    const metricsByPlatform = {
+      twitter: ["likes", "retweets", "conversation"],
+      youtube: ["likes", "views", "comments"],
+      reddit: ["likes", "comments"],
+    }
+
+    const getValue = (m, platform, metric) => {
+      if (platform === "twitter" && metric === "conversation") {
+        return (m.replies ?? 0) + (m.quotes ?? 0)
+      }
+      return m[metric] ?? 0
+    }
+
+    Object.keys(medians).forEach((platform) => {
+      const items = mentions.filter((m) => m.platform?.toLowerCase() === platform)
+      metricsByPlatform[platform].forEach((metric) => {
+        const values = items
+          .map((m) => getValue(m, platform, metric))
+          .sort((a, b) => a - b)
+        const mid = Math.floor(values.length / 2)
+        let median = 0
+        if (values.length) {
+          median =
+            values.length % 2 !== 0
+              ? values[mid]
+              : (values[mid - 1] + values[mid]) / 2
+        }
+        medians[platform][metric] = median
+      })
+    })
+
+    return medians
+  }, [mentions])
+
+  const getTagsForMention = (mention) => {
+    const platform = mention.platform?.toLowerCase?.()
+    const platformMedians = metricMedians[platform] || {}
+    const tags = []
+
+    if (platform === "youtube") {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
+      if ((mention.views ?? 0) > (platformMedians.views ?? 0)) tags.push("reach")
+      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation")
+    } else if (platform === "reddit") {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
+      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation")
+    } else {
+      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
+      if ((mention.retweets ?? 0) > (platformMedians.retweets ?? 0)) tags.push("reach")
+      const convo = (mention.replies ?? 0) + (mention.quotes ?? 0)
+      if (convo > (platformMedians.conversation ?? 0)) tags.push("conversation")
+    }
+
+    return tags
+  }
+
   // All your existing filtering and processing logic remains the same
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
@@ -100,7 +159,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
       })()
 
     const matchesKeyword = keywordsFilter.includes("all") || keywordsFilter.includes(m.keyword)
-    return matchesSearch && matchesSource && matchesRange && matchesKeyword
+    const mentionTags = getTagsForMention(m)
+    const matchesTag = tagsFilter.length === 0 || tagsFilter.some((t) => mentionTags.includes(t))
+    return matchesSearch && matchesSource && matchesRange && matchesKeyword && matchesTag
   })
 
   const sortedMentions = [...filteredMentions].sort((a, b) => {
@@ -128,44 +189,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
   const homeMentions = onlyFavorites ? visibleMentions.filter(isFavorite) : visibleMentions
-
-  const metricMedians = useMemo(() => {
-    const medians = { twitter: {}, youtube: {}, reddit: {} }
-    const metricsByPlatform = {
-      twitter: ["likes", "retweets", "conversation"],
-      youtube: ["likes", "views", "comments"],
-      reddit: ["likes", "comments"],
-    }
-
-    const getValue = (m, platform, metric) => {
-      if (platform === "twitter" && metric === "conversation") {
-        return (m.replies ?? 0) + (m.quotes ?? 0)
-      }
-      return m[metric] ?? 0
-    }
-
-    Object.keys(medians).forEach((platform) => {
-      const items = homeMentions.filter(
-        (m) => m.platform?.toLowerCase() === platform,
-      )
-      metricsByPlatform[platform].forEach((metric) => {
-        const values = items
-          .map((m) => getValue(m, platform, metric))
-          .sort((a, b) => a - b)
-        const mid = Math.floor(values.length / 2)
-        let median = 0
-        if (values.length) {
-          median =
-            values.length % 2 !== 0
-              ? values[mid]
-              : (values[mid - 1] + values[mid]) / 2
-        }
-        medians[platform][metric] = median
-      })
-    })
-
-    return medians
-  }, [homeMentions])
 
   // All your existing functions remain the same
   const fetchMentions = async () => {
@@ -368,11 +391,16 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setSourcesFilter((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
   }
 
+  const toggleTagFilter = (id) => {
+    setTagsFilter((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+  }
+
   const clearSidebarFilters = () => {
     setRangeFilter("")
     setSourcesFilter([])
     setSearch("")
     setKeywordsFilter(["all"])
+    setTagsFilter([])
   }
 
   const handleCreateReport = async () => {
@@ -842,6 +870,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   keywords={keywordsFilter}
                   setKeywords={setKeywordsFilter}
                   keywordOptions={activeKeywords}
+                  tags={tagsFilter}
+                  toggleTag={toggleTagFilter}
                   clearFilters={clearSidebarFilters}
                 />
               </div>
