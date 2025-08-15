@@ -31,7 +31,7 @@ export default function RightSidebar({
     <aside
       className={cn(
         "w-64 bg-slate-800/50 backdrop-blur-sm border border-slate-700 shadow-md p-6 rounded-lg",
-        "self-start sticky top-[104px] h-[calc(100vh-10rem)]",
+        "self-start sticky top-[104px] h-[calc(100vh-6.5rem)]",
         // Layout: cabecera-scroll + footer fijo
         "flex flex-col overflow-hidden", // <- importante
         className
