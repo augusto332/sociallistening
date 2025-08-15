@@ -14,6 +14,8 @@ export default function RightSidebar({
   keywords,
   setKeywords,
   keywordOptions = [],
+  tags = [],
+  toggleTag,
   clearFilters,
 }) {
 
@@ -81,20 +83,22 @@ export default function RightSidebar({
       <div className="border-t border-border/50 w-full" />
 
       <div>
-        <p className="font-semibold mb-2">Sentimiento</p>
+        <p className="font-semibold mb-2">Etiquetas</p>
         <div className="space-y-2">
-          <label htmlFor="negativo" className="flex items-center gap-2 text-red-500">
-            <Checkbox id="negativo" />
-            <span>Negativo</span>
-          </label>
-          <label htmlFor="neutro" className="flex items-center gap-2 text-gray-300">
-            <Checkbox id="neutro" />
-            <span>Neutro</span>
-          </label>
-          <label htmlFor="positivo" className="flex items-center gap-2 text-green-500">
-            <Checkbox id="positivo" />
-            <span>Positivo</span>
-          </label>
+          {[
+            { id: "approval", label: "Muy valorado" },
+            { id: "reach", label: "Gran alcance" },
+            { id: "conversation", label: "Generó conversación" },
+          ].map((t) => (
+            <label key={t.id} htmlFor={t.id} className="flex items-center gap-2">
+              <Checkbox
+                id={t.id}
+                checked={tags.includes(t.id)}
+                onCheckedChange={() => toggleTag(t.id)}
+              />
+              <span>{t.label}</span>
+            </label>
+          ))}
         </div>
       </div>
 
