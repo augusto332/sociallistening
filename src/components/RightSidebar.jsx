@@ -113,15 +113,17 @@ export default function RightSidebar({
         </div>
       </div>
 
-      <div className="border-t border-border/50 w-full" />
+      <div className="mt-auto w-full flex flex-col">
+        <div className="border-t border-border/50 w-full" />
 
-      <Button
-        onClick={handleClearFilters}
-        className="mt-auto self-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-      >
-        <FilterX className="w-4 h-4 mr-2" />
-        Limpiar filtros
-      </Button>
+        <Button
+          onClick={handleClearFilters}
+          className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+        >
+          <FilterX className="w-4 h-4 mr-2" />
+          Limpiar filtros
+        </Button>
+      </div>
     </aside>
   );
 }
