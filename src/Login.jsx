@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/supabaseClient"
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -17,10 +17,9 @@ export default function Login({ onLogin }) {
       password,
     });
     if (error) {
-      setError(error.message);
+      setError(error.message)
     } else {
-      if (onLogin) onLogin();
-      navigate("/home");
+      navigate("/home")
     }
   };
 
