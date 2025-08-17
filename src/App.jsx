@@ -144,7 +144,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   // All your existing filtering and processing logic remains the same
   const filteredMentions = mentions.filter((m) => {
     const matchesSearch =
-      m.mention.toLowerCase().includes(search.toLowerCase()) || m.source.toLowerCase().includes(search.toLowerCase())
+      m.mention?.toLowerCase?.().includes(search.toLowerCase()) || m.source?.toLowerCase?.().includes(search.toLowerCase())
 
     const matchesSource = sourcesFilter.length === 0 || sourcesFilter.includes(m.platform?.toLowerCase())
 
@@ -154,7 +154,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
         const days = Number.parseInt(rangeFilter, 10)
         const created = new Date(m.created_at)
         const now = new Date()
-        const diff = (now - created) / (1000 * 60 * 60 * 24)
+        const diff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
         return diff <= days
       })()
 
@@ -190,21 +190,66 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
   const homeMentions = onlyFavorites ? visibleMentions.filter(isFavorite) : visibleMentions
 
-  // All your existing functions remain the same
+  // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async () => {
-    const { data, error } = await supabase
+    // 1) Traigo menciones base SIN joins anidados
+    const { data: base, error: errBase } = await supabase
       .from("total_mentions_vw")
-      .select("*, comments:top_3_comments_vw(likes, comment)")
+      .select("*")
       .order("created_at", { ascending: false })
-    if (error) {
-      console.error("Error fetching mentions", error)
-    } else {
-      setMentions((prev) => {
-        const existing = new Set(prev.map((m) => m.url))
-        const unique = (data || []).filter((m) => !existing.has(m.url))
-        return [...prev, ...unique]
-      })
+
+    if (errBase) {
+      console.error("Error fetching mentions (base)", errBase)
+      setMentions([])
+      return
     }
+
+    const rows = base || []
+    if (rows.length === 0) {
+      setMentions([])
+      return
+    }
+
+    // 2) Armo lista de content_id para buscar top comments
+    const contentIds = rows.map((r) => r.content_id).filter(Boolean)
+
+    let topCommentsById = {}
+    try {
+      const { data: tc, error: errTc } = await supabase
+        .from("top_3_comments_vw")
+        .select("content_id, likes, comment")
+        .in("content_id", contentIds)
+
+      if (errTc) {
+        console.error("Error fetching top_3_comments_vw", errTc)
+      } else {
+        topCommentsById = (tc || []).reduce((acc, item) => {
+          const k = item.content_id
+          if (!k) return acc
+          if (!acc[k]) acc[k] = []
+          acc[k].push({ likes: item.likes, comment: item.comment })
+          return acc
+        }, {})
+
+        // Aseguro top 3 por likes
+        for (const k of Object.keys(topCommentsById)) {
+          topCommentsById[k] = topCommentsById[k]
+            .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0))
+            .slice(0, 3)
+        }
+      }
+    } catch (e) {
+      console.error("Top comments fetch blew up", e)
+    }
+
+    // 3) Uno resultados sin pisar la métrica numérica `comments`
+    const enriched = rows.map((r) => ({
+      ...r,
+      top_comments: topCommentsById[r.content_id] || [],
+    }))
+
+    // Nota: reemplazo directo para evitar estados viejos/dedupe que escondan resultados
+    setMentions(enriched)
   }
 
   const fetchKeywords = async () => {
@@ -458,57 +503,45 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const handleDownloadReport = async (rep) => {
-  try {
-    // 1) Tomar el JWT del usuario logueado
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      alert("Debes iniciar sesión para descargar el reporte.");
-      return;
-    }
-
-    // 2) Invocar la Edge Function con el report_id
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export_reports_to_csv`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ report_id: rep.id }),
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Debes iniciar sesión para descargar el reporte.");
+        return;
       }
-    );
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || `HTTP ${res.status}`);
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export_reports_to_csv`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ report_id: rep.id }),
+        }
+      );
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const disp = res.headers.get("Content-Disposition") || "";
+      const match = /filename="?([^"]+)"?/.exec(disp);
+      const fallbackName = `${(rep.name || "reporte").replace(/[^\w.-]+/g, "_").slice(0, 60)}.csv`;
+      const filename = match?.[1] || fallbackName;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert(`Error al descargar: ${e?.message || e}`);
     }
-
-    // 3) Armar el archivo para descarga
-    const blob = await res.blob();
-
-    // intentar usar el filename del header; si no viene, armar uno lindo
-    const disp = res.headers.get("Content-Disposition") || "";
-    const match = /filename="?([^"]+)"?/.exec(disp);
-    const fallbackName = `${(rep.name || "reporte")
-      .replace(/[^\w.-]+/g, "_")
-      .slice(0, 60)}.csv`;
-    const filename = match?.[1] || fallbackName;
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    console.error(e);
-    alert(`Error al descargar: ${e?.message || e}`);
   }
-}
-
 
   const handleDeleteReport = async (index) => {
     const rep = savedReports[index]
@@ -845,7 +878,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <div className="flex-1">
                   {/* Search Header */}
                   <div className="mb-8">
-                    {/* Título y texto descriptivo eliminados */}
                     <div className="relative mb-6">
                       <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <Input
@@ -894,7 +926,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   {/* Mentions Feed */}
                   <div className="space-y-4">
                     {homeMentions.length ? (
-                      homeMentions.map((m, i) => (
+                      homeMentions.map((m) => (
                         <div
                           key={m.url}
                           className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/50 transition-all duration-200"
@@ -944,7 +976,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
           {activeTab === "dashboard" && (
             <section className="p-8">
-              {/* Dashboard Header */}
               <div className="mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
                   Dashboard
@@ -952,8 +983,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <p className="text-slate-400 mb-6">Revela tendencias y patrones de tus menciones y palabras clave</p>
               </div>
 
-              {/* Stats Cards */}
-              {/* Filters */}
               <div className="relative z-10 flex flex-wrap gap-4 mb-8 p-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
                 <div>
                   <p className="text-sm font-medium mb-2 text-slate-300">Palabras clave</p>
@@ -999,59 +1028,57 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 </div>
               </div>
 
-              {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
-                          <MessageSquare className="w-6 h-6 text-blue-400" />
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className="bg-blue-500/10 text-blue-400 border-blue-500/20"
-                          title="En comparación con el mes pasado"
-                        >
-                          {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
-                        </Badge>
+                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-blue-400" />
                       </div>
-                      <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
-                      <div className="text-sm text-slate-400">Total de menciones</div>
-                    </CardContent>
-                  </Card>
+                      <Badge
+                        variant="secondary"
+                        className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+                        title="En comparación con el mes pasado"
+                      >
+                        {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
+                    <div className="text-sm text-slate-400">Total de menciones</div>
+                  </CardContent>
+                </Card>
 
-                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
-                          <Activity className="w-6 h-6 text-purple-400" />
-                        </div>
-                        <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                          {`${totalActivePlatformCount} Activas`}
-                        </Badge>
+                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
+                        <Activity className="w-6 h-6 text-purple-400" />
                       </div>
-                      <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
-                      <div className="text-sm text-slate-400">Plataformas</div>
-                    </CardContent>
-                  </Card>
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                        {`${totalActivePlatformCount} Activas`}
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
+                    <div className="text-sm text-slate-400">Plataformas</div>
+                  </CardContent>
+                </Card>
 
-                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
-                          <TrendingUp className="w-6 h-6 text-green-400" />
-                        </div>
-                        <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                          {`${totalActiveKeywordCount} Activas`}
-                        </Badge>
+                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-green-400" />
                       </div>
-                      <div className="text-2xl font-bold text-white mb-1">{activeKeywordCount}</div>
-                      <div className="text-sm text-slate-400">Palabras clave</div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
+                        {`${activeKeywords.length} Activas`}
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold text-white mb-1">{activeKeywords.length}</div>
+                    <div className="text-sm text-slate-400">Palabras clave</div>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* Charts Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
                   <CardContent className="p-6 space-y-4 h-full flex flex-col">

@@ -42,11 +42,14 @@ export default function MentionCard({
   const iconColor = icons[platform]?.color || "#1DA1F2";
   const iconBg = icons[platform]?.bg;
   const iconSizeClass = "size-7";
+
   const [expanded, setExpanded] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
-  const comments = mention?.comments || [];
+
+  // ✅ top 3 comentarios vienen como array en mention.top_comments
+  const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : [];
 
   const handleFavClick = (e) => {
     e.stopPropagation();
@@ -57,12 +60,12 @@ export default function MentionCard({
     const metricMap = {
       youtube: [
         { key: "likes", icon: Heart },
-        { key: "comments", icon: MessageCircle },
+        { key: "comments", icon: MessageCircle }, // conteo numérico
         { key: "views", icon: Eye },
       ],
       reddit: [
         { key: "likes", icon: ArrowBigUp },
-        { key: "comments", icon: MessageCircle },
+        { key: "comments", icon: MessageCircle }, // conteo numérico
       ],
       twitter: [
         { key: "likes", icon: Heart },
@@ -195,15 +198,15 @@ export default function MentionCard({
           <Icon className={iconSizeClass} style={{ color: iconColor }} />
         </div>
 
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 space-y-1 min-w-0">
           {keyword && (
             <span className="inline-block text-xs bg-white/20 text-muted-foreground px-2 py-0.5 rounded">
               {keyword}
             </span>
           )}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 min-w-0">
             <span className="font-semibold text-primary">@{username}</span>
-            <span className="text-xs text-muted-foreground">{timestamp}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{timestamp}</span>
           </div>
 
           <p className="text-base leading-relaxed text-muted-foreground">
@@ -212,25 +215,50 @@ export default function MentionCard({
 
           {renderTags()}
           {expanded && renderMetrics()}
-          {expanded && comments.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {comments.map((c, i) => {
-                const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart
-                return (
-                  <div key={i} className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-2">{c.comment}</span>
-                    <span className="flex items-center gap-1 shrink-0">
-                      <CommentIcon className="size-4" />
-                      {c.likes}
-                    </span>
-                  </div>
-                )
-              })}
+
+          {/* ================== Comentarios destacados (colapsados con “…”) ================== */}
+          {expanded && topComments.length > 0 && (
+            <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
+              <h4 className="text-sm font-semibold text-primary mb-3">
+                Comentarios destacados
+              </h4>
+
+              <div className="space-y-3">
+                {topComments.map((c, i) => {
+                  const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart;
+                  return (
+                    <div
+                      key={i}
+                      className="min-w-0 w-full p-3 rounded-lg bg-slate-700/40 border border-slate-600
+                                 flex items-center gap-3 text-sm text-muted-foreground"
+                      style={{ minWidth: 0 }}
+                    >
+                      {/* Contenedor del texto: puede encogerse (truco w-0 flex-1) */}
+                      <div className="w-0 flex-1 max-w-full" style={{ minWidth: 0 }}>
+                        {/* Texto: una sola línea con “…” (funciona incluso en flex) */}
+                        <span
+                          className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                          title={c.comment ?? ""}
+                        >
+                          {c.comment ?? "—"}
+                        </span>
+                      </div>
+
+                      {/* Métrica: fijo, no se encoge */}
+                      <span className="flex items-center gap-1 flex-none text-xs font-medium">
+                        <CommentIcon className="size-4" />
+                        {c.likes ?? 0}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
+          {/* ================================================================================ */}
 
           {expanded && url && (
-            <div className="mt-2 text-sm">
+            <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
               <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                 <a href={url} target="_blank" rel="noopener noreferrer">
                   Ir al sitio
