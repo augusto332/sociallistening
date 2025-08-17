@@ -194,7 +194,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const fetchMentions = async () => {
     const { data, error } = await supabase
       .from("total_mentions_vw")
-      .select("*")
+      .select("*, comments:top_3_comments_vw(likes, comment)")
       .order("created_at", { ascending: false })
     if (error) {
       console.error("Error fetching mentions", error)
