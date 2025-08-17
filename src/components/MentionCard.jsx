@@ -46,6 +46,7 @@ export default function MentionCard({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(mention);
+  const comments = mention?.comments || [];
 
   const handleFavClick = (e) => {
     e.stopPropagation();
@@ -211,6 +212,22 @@ export default function MentionCard({
 
           {renderTags()}
           {expanded && renderMetrics()}
+          {expanded && comments.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {comments.map((c, i) => {
+                const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart
+                return (
+                  <div key={i} className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-2">{c.comment}</span>
+                    <span className="flex items-center gap-1 shrink-0">
+                      <CommentIcon className="size-4" />
+                      {c.likes}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {expanded && url && (
             <div className="mt-2 text-sm">
