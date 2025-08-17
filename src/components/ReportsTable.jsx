@@ -18,7 +18,11 @@ export default function ReportsTable({ reports = [], onDownload, onDelete }) {
       <TableBody>
         {reports.map((r, idx) => (
           <TableRow key={idx}>
-            <TableCell className="font-medium">{r.name}</TableCell>
+            <TableCell>
+              <div className="font-medium max-w-[200px] truncate" title={r.name}>
+                {r.name}
+              </div>
+            </TableCell>
             <TableCell>
               {r.platform
                 ? r.platform.charAt(0).toUpperCase() + r.platform.slice(1)

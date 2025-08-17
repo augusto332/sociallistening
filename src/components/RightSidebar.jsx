@@ -49,6 +49,7 @@ export default function RightSidebar({
               <SelectItem value="7">Últimos 7 días</SelectItem>
               <SelectItem value="15">Últimos 15 días</SelectItem>
               <SelectItem value="30">Últimos 30 días</SelectItem>
+              <SelectItem value="60">Últimos 60 días</SelectItem>
             </SelectContent>
           </Select>
         </div>

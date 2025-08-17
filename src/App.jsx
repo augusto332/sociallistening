@@ -50,7 +50,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [rangeFilter, setRangeFilter] = useState("")
+  const [rangeFilter, setRangeFilter] = useState("7")
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
   const [tagsFilter, setTagsFilter] = useState([])
@@ -446,7 +446,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const clearSidebarFilters = () => {
-    setRangeFilter("")
+    setRangeFilter("7")
     setSourcesFilter([])
     setSearch("")
     setKeywordsFilter(["all"])
