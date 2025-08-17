@@ -48,6 +48,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [activeTab, setActiveTab] = useState("home")
   const [search, setSearch] = useState("")
   const [mentions, setMentions] = useState([])
+  const [mentionsLoading, setMentionsLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [rangeFilter, setRangeFilter] = useState("")
   const [sourcesFilter, setSourcesFilter] = useState([])
@@ -192,6 +193,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async () => {
+    setMentionsLoading(true)
     // 1) Traigo menciones base SIN joins anidados
     const { data: base, error: errBase } = await supabase
       .from("total_mentions_vw")
@@ -201,12 +203,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (errBase) {
       console.error("Error fetching mentions (base)", errBase)
       setMentions([])
+      setMentionsLoading(false)
       return
     }
 
     const rows = base || []
     if (rows.length === 0) {
       setMentions([])
+      setMentionsLoading(false)
       return
     }
 
@@ -250,6 +254,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
     // Nota: reemplazo directo para evitar estados viejos/dedupe que escondan resultados
     setMentions(enriched)
+    setMentionsLoading(false)
   }
 
   const fetchKeywords = async () => {
@@ -925,7 +930,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
                   {/* Mentions Feed */}
                   <div className="space-y-4">
-                    {homeMentions.length ? (
+                    {mentionsLoading ? (
+                      <div className="text-center py-12">
+                        <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4 animate-spin" />
+                        <p className="text-slate-400 text-lg">Cargando...</p>
+                      </div>
+                    ) : homeMentions.length ? (
                       homeMentions.map((m) => (
                         <div
                           key={m.url}
@@ -950,7 +960,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     ) : (
                       <div className="text-center py-12">
                         <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                        <p className="text-slate-400 text-lg">No se encontraron menciones</p>
+                        <p className="text-slate-400 text-lg">No se han encontrado menciones</p>
                         <p className="text-slate-500 text-sm">Intenta ajustar tus filtros o palabras clave</p>
                       </div>
                     )}
