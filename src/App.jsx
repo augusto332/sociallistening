@@ -403,6 +403,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setTagsFilter([])
   }
 
+  const clearDashboardFilters = () => {
+    setSelectedDashboardKeywords(["all"])
+    setSelectedDashboardPlatforms(["all"])
+    setStartDate("")
+    setEndDate("")
+  }
+
   const handleCreateReport = async () => {
     const { data: userData } = await supabase.auth.getUser()
     const { user } = userData || {}
@@ -536,6 +543,63 @@ export default function ModernSocialListeningApp({ onLogout }) {
       return true
     })
   }, [mentions, activeKeywords, selectedDashboardKeywords, selectedDashboardPlatforms, startDate, endDate])
+
+  const totalActivePlatformCount = useMemo(() => {
+    const activeMentions = mentions.filter((m) =>
+      activeKeywords.some((k) => k.keyword === m.keyword),
+    )
+    return [
+      ...new Set(activeMentions.map((m) => m.platform).filter(Boolean)),
+    ].length
+  }, [mentions, activeKeywords])
+
+  const totalActiveKeywordCount = activeKeywords.length
+
+  const monthlyMentionStats = useMemo(() => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
+
+    let currentCount = 0
+    let lastCount = 0
+
+    mentions.forEach((m) => {
+      const created = new Date(m.created_at)
+      const platform = m.platform?.toLowerCase?.()
+      if (!activeKeywords.some((k) => k.keyword === m.keyword)) return
+      if (
+        !selectedDashboardKeywords.includes("all") &&
+        !selectedDashboardKeywords.includes(m.keyword)
+      )
+        return
+      if (
+        !selectedDashboardPlatforms.includes("all") &&
+        !selectedDashboardPlatforms.includes(platform)
+      )
+        return
+
+      const month = created.getMonth()
+      const year = created.getFullYear()
+
+      if (month === currentMonth && year === currentYear) currentCount++
+      else if (month === lastMonth && year === lastMonthYear) lastCount++
+    })
+
+    return { currentCount, lastCount }
+  }, [
+    mentions,
+    activeKeywords,
+    selectedDashboardKeywords,
+    selectedDashboardPlatforms,
+  ])
+
+  const mentionGrowth = useMemo(() => {
+    const { currentCount, lastCount } = monthlyMentionStats
+    if (lastCount === 0) return 0
+    return ((currentCount - lastCount) / lastCount) * 100
+  }, [monthlyMentionStats])
 
   const stopwords = useMemo(
     () =>
@@ -928,55 +992,64 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     onChange={setSelectedDashboardPlatforms}
                   />
                 </div>
+                <div className="flex items-end">
+                  <Button variant="outline" onClick={clearDashboardFilters}>
+                    Limpiar filtros
+                  </Button>
+                </div>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
-                        <MessageSquare className="w-6 h-6 text-blue-400" />
+                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
+                          <MessageSquare className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+                          title="En comparación con el mes pasado"
+                        >
+                          {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-                        +12%
-                      </Badge>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
-                    <div className="text-sm text-slate-400">Total de menciones</div>
-                  </CardContent>
-                </Card>
+                      <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
+                      <div className="text-sm text-slate-400">Total de menciones</div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
-                        <Activity className="w-6 h-6 text-purple-400" />
+                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
+                          <Activity className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                          {`${totalActivePlatformCount} Activas`}
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                        Activo
-                      </Badge>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
-                    <div className="text-sm text-slate-400">Plataformas activas</div>
-                  </CardContent>
-                </Card>
+                      <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
+                      <div className="text-sm text-slate-400">Plataformas</div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-green-400" />
+                  <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
+                          <TrendingUp className="w-6 h-6 text-green-400" />
+                        </div>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
+                          {`${totalActiveKeywordCount} Activas`}
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                        Activas
-                      </Badge>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{activeKeywordCount}</div>
-                    <div className="text-sm text-slate-400">Palabras clave activas</div>
-                  </CardContent>
-                </Card>
-              </div>
+                      <div className="text-2xl font-bold text-white mb-1">{activeKeywordCount}</div>
+                      <div className="text-sm text-slate-400">Palabras clave</div>
+                    </CardContent>
+                  </Card>
+                </div>
 
               {/* Charts Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
