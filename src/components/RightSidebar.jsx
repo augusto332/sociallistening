@@ -31,14 +31,12 @@ export default function RightSidebar({
     <aside
       className={cn(
         "w-64 bg-slate-800/50 backdrop-blur-sm border border-slate-700 shadow-md p-6 rounded-lg",
-        "self-start sticky top-[104px] h-[calc(100vh-5.5rem)]",
-        // Layout: cabecera-scroll + footer fijo
-        "flex flex-col overflow-hidden", // <- importante
+        "self-start flex flex-col",
         className
       )}
     >
-      {/* CONTENIDO SCROLLABLE */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+      {/* CONTENIDO */}
+      <div className="space-y-4 pr-1">
         <div>
           <p className="font-semibold mb-2">Rango de tiempo</p>
           <Select value={range} onValueChange={setRange}>
@@ -118,8 +116,8 @@ export default function RightSidebar({
         </div>
       </div>
 
-      {/* FOOTER FIJO DENTRO DEL BORDE */}
-      <div className="pt-4 border-t border-border/50">
+      {/* FOOTER */}
+      <div className="pt-4 border-t border-border/50 mt-4">
         <Button
           onClick={handleClearFilters}
           className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
