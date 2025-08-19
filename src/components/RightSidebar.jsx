@@ -71,21 +71,58 @@ export default function RightSidebar({
 
         <div>
           <p className="font-semibold mb-2">Fuentes</p>
-          <div className="space-y-2">
-            {[
-              { id: "twitter", label: "Twitter" },
-              { id: "youtube", label: "Youtube" },
-              { id: "reddit", label: "Reddit" },
-            ].map((s) => (
-              <label key={s.id} htmlFor={s.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={s.id}
-                  checked={sources.includes(s.id)}
-                  onCheckedChange={() => toggleSource(s.id)}
-                />
-                <span>{s.label}</span>
-              </label>
-            ))}
+          <div className="grid grid-cols-2 gap-x-4">
+            <div className="space-y-2">
+              {[
+                { id: "youtube", label: "YouTube" },
+                { id: "reddit", label: "Reddit" },
+                { id: "twitter", label: "Twitter" },
+                { id: "tiktok", label: "TikTok", disabled: true },
+              ].map((s) => (
+                <label
+                  key={s.id}
+                  htmlFor={s.id}
+                  className={cn(
+                    "flex items-center gap-2",
+                    s.disabled && "opacity-50 cursor-not-allowed"
+                  )}
+                  title={s.disabled ? "No disponibles en versión gratuita" : undefined}
+                >
+                  <Checkbox
+                    id={s.id}
+                    checked={sources.includes(s.id)}
+                    onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
+                    disabled={s.disabled}
+                  />
+                  <span>{s.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {[
+                { id: "instagram", label: "Instagram", disabled: true },
+                { id: "facebook", label: "Facebook", disabled: true },
+                { id: "otros", label: "Otros", disabled: true },
+              ].map((s) => (
+                <label
+                  key={s.id}
+                  htmlFor={s.id}
+                  className={cn(
+                    "flex items-center gap-2",
+                    s.disabled && "opacity-50 cursor-not-allowed"
+                  )}
+                  title={s.disabled ? "No disponibles en versión gratuita" : undefined}
+                >
+                  <Checkbox
+                    id={s.id}
+                    checked={sources.includes(s.id)}
+                    onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
+                    disabled={s.disabled}
+                  />
+                  <span>{s.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
