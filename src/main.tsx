@@ -8,6 +8,7 @@ import { FavoritesProvider } from './context/FavoritesContext'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import OnboardingHome from './OnboardingHome'
 
 function Root() {
   const { session, loading } = useAuth()
@@ -20,14 +21,14 @@ function Root() {
         <Routes>
           <Route
             path="/login"
-            element={session ? <Navigate to="/home" replace /> : <Login />}
+            element={session ? <Navigate to="/app/mentions" replace /> : <Login />}
           />
           <Route
             path="/register"
-            element={session ? <Navigate to="/home" replace /> : <Register />}
+            element={session ? <Navigate to="/app/mentions" replace /> : <Register />}
           />
           <Route
-            path="/home"
+            path="/app/mentions"
             element={
               <ProtectedRoute>
                 <SocialListeningApp />
@@ -35,8 +36,16 @@ function Root() {
             }
           />
           <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <OnboardingHome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="*"
-            element={<Navigate to={session ? '/home' : '/login'} replace />}
+            element={<Navigate to={session ? '/app/mentions' : '/login'} replace />}
           />
         </Routes>
       </BrowserRouter>
