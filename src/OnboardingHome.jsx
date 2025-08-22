@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -21,6 +22,9 @@ import {
   ArrowRight,
   Hash,
   Zap,
+  CircleUser,
+  ChevronDown,
+  LogOut,
 } from "lucide-react"
 
 // REMOVIDO: const inter = Inter({...})
@@ -30,8 +34,17 @@ export default function ModernOnboardingHome() {
   const [newKeyword, setNewKeyword] = useState("")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
+
+  const accountName =
+    user?.user_metadata?.display_name || user?.email || ""
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate("/login")
+  }
 
   const addKeyword = () => {
     const kw = newKeyword.trim()
@@ -70,14 +83,57 @@ export default function ModernOnboardingHome() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-sans`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-sans flex flex-col`}
+    >
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
+      {/* Header with account menu */}
+      <header className="relative z-20 flex justify-end p-4">
+        <div className="relative">
+          <Button
+            variant="ghost"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center gap-2 text-slate-300 hover:text-white"
+          >
+            <Avatar className="w-7 h-7">
+              <AvatarImage src="/placeholder.svg?height=28&width=28" />
+              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs">
+                {accountName ? accountName.charAt(0).toUpperCase() : "U"}
+              </AvatarFallback>
+            </Avatar>
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+
+          {menuOpen && (
+            <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
+              <button
+                onClick={() => {
+                  navigate("/app/mentions?tab=account")
+                  setMenuOpen(false)
+                }}
+                className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+              >
+                <CircleUser className="w-4 h-4" />
+                Mi Cuenta
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="relative z-10 flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-2xl">
           {/* Header */}
           <div className="text-center mb-12">
