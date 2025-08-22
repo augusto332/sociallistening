@@ -45,7 +45,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
   // All your existing state variables remain the same
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
-  const [activeTab, setActiveTab] = useState("home")
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get("tab") || "home"
+  })
   const [search, setSearch] = useState("")
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
