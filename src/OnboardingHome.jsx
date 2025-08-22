@@ -1,6 +1,7 @@
 // REMOVIDO: "use client"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,6 +25,8 @@ import {
   Zap,
   CircleUser,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LogOut,
 } from "lucide-react"
 
@@ -35,6 +38,7 @@ export default function ModernOnboardingHome() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [step, setStep] = useState(0)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -83,9 +87,7 @@ export default function ModernOnboardingHome() {
   }
 
   return (
-    <div
-      className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-sans flex flex-col`}
-    >
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-sans flex flex-col`}>
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -133,176 +135,214 @@ export default function ModernOnboardingHome() {
         </div>
       </header>
 
-      <div className="relative z-10 flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-2xl">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-6">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-4">
-              Bienvenido a Social Listening
-            </h1>
-            <p className="text-xl text-slate-400 max-w-lg mx-auto">
-              Descubre qué se dice sobre tu marca en las redes sociales y mantente al día con las conversaciones
-              importantes.
-            </p>
-          </div>
-
-          {/* Steps Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Hash className="w-6 h-6 text-blue-400" />
+      <div className="relative z-10 flex-1 flex items-center justify-center p-6 overflow-hidden">
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <motion.div
+              key="intro"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 100, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-2xl"
+            >
+              {/* Header */}
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-6">
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="font-semibold text-white mb-2">1. Carga tus keywords</h3>
-                <p className="text-sm text-slate-400">Define las palabras clave que quieres monitorear</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-6 h-6 text-purple-400" />
-                </div>
-                <h3 className="font-semibold text-white mb-2">2. Revisa las menciones</h3>
-                <p className="text-sm text-slate-400">Analiza las menciones en tiempo real</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Bell className="w-6 h-6 text-green-400" />
-                </div>
-                <h3 className="font-semibold text-white mb-2">3. Recibe reportes</h3>
-                <p className="text-sm text-slate-400">Mantente informado sobre menciones importantes</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50">
-            <CardContent className="p-8">
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-white mb-2">Configura tus palabras clave</h2>
-                <p className="text-slate-400">
-                  Agrega las palabras clave que quieres monitorear en redes sociales. Puedes incluir nombres de marca,
-                  productos, competidores o cualquier término relevante.
+                <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-4">
+                  Bienvenido a Social Listening
+                </h1>
+                <p className="text-xl text-slate-400 max-w-lg mx-auto">
+                  Descubre qué se dice sobre tu marca en las redes sociales y mantente al día con las conversaciones importantes.
                 </p>
               </div>
 
-              {/* Add Keyword Input */}
-              <div className="mb-8">
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input
-                      value={newKeyword}
-                      onChange={(e) => setNewKeyword(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Escribe una palabra clave..."
-                      className="pl-11 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-400 focus:border-blue-500/50 focus:ring-blue-500/20 h-12"
-                    />
-                  </div>
-                  <Button
-                    onClick={addKeyword}
-                    disabled={!newKeyword.trim()}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 h-12 px-6"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar
-                  </Button>
-                </div>
-              </div>
-
-              {/* Keywords List */}
-              {keywords.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-blue-400" />
-                    Palabras clave agregadas ({keywords.length})
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {keywords.map((kw) => (
-                      <Badge
-                        key={kw}
-                        variant="secondary"
-                        className="bg-slate-700/50 text-slate-200 border-slate-600/50 hover:bg-slate-700/70 transition-colors px-4 py-2 text-sm"
-                      >
-                        <span className="mr-2">{kw}</span>
-                        <button
-                          onClick={() => removeKeyword(kw)}
-                          className="text-slate-400 hover:text-red-400 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {!saved ? (
-                  <Button
-                    onClick={saveKeywords}
-                    disabled={saving || keywords.length === 0}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 h-12 flex-1"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Guardar y continuar ({keywords.length} keywords)
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      <span className="text-green-400 font-medium">¡Keywords guardadas exitosamente!</span>
+              {/* Steps Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <Hash className="w-6 h-6 text-blue-400" />
                     </div>
-                    <Button
-                      onClick={() => navigate("/app/mentions")}
-                      className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 h-12 w-full"
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Ir al dashboard
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                )}
+                    <h3 className="font-semibold text-white mb-2">1. Carga tus keywords</h3>
+                    <p className="text-sm text-slate-400">Define las palabras clave que quieres monitorear</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">2. Revisa las menciones</h3>
+                    <p className="text-sm text-slate-400">Analiza las menciones en tiempo real</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 hover:bg-slate-800/50 transition-all duration-200">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <Bell className="w-6 h-6 text-green-400" />
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">3. Recibe reportes</h3>
+                    <p className="text-sm text-slate-400">Mantente informado sobre menciones importantes</p>
+                  </CardContent>
+                </Card>
               </div>
+            </motion.div>
+          )}
 
-              {/* Help Text */}
-              {keywords.length === 0 && (
-                <div className="mt-6 p-4 bg-slate-700/30 border border-slate-600/30 rounded-lg">
-                  <p className="text-sm text-slate-400 text-center">
-                    💡 <strong>Tip:</strong> Comienza agregando 3-5 palabras clave relacionadas con tu marca o industria
-                    para obtener mejores resultados.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {step === 1 && (
+            <motion.div
+              key="keywords"
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-2xl"
+            >
+              <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50">
+                <CardContent className="p-8">
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-semibold text-white mb-2">Configura tus palabras clave</h2>
+                    <p className="text-slate-400">
+                      Agrega las palabras clave que quieres monitorear en redes sociales. Puedes incluir nombres de marca, productos, competidores o cualquier término relevante.
+                    </p>
+                  </div>
 
-          {/* Footer */}
-          <div className="text-center mt-8">
-            <p className="text-slate-500 text-sm">
-              ¿Necesitas ayuda? Consulta nuestra{" "}
-              <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">
-                guía de inicio rápido
-              </a>
-            </p>
-          </div>
+                  {/* Add Keyword Input */}
+                  <div className="mb-8">
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          value={newKeyword}
+                          onChange={(e) => setNewKeyword(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Escribe una palabra clave..."
+                          className="pl-11 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-400 focus:border-blue-500/50 focus:ring-blue-500/20 h-12"
+                        />
+                      </div>
+                      <Button
+                        onClick={addKeyword}
+                        disabled={!newKeyword.trim()}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 h-12 px-6"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Agregar
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Keywords List */}
+                  {keywords.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-blue-400" />
+                        Palabras clave agregadas ({keywords.length})
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {keywords.map((kw) => (
+                          <Badge
+                            key={kw}
+                            variant="secondary"
+                            className="bg-slate-700/50 text-slate-200 border-slate-600/50 hover:bg-slate-700/70 transition-colors px-4 py-2 text-sm"
+                          >
+                            <span className="mr-2">{kw}</span>
+                            <button
+                              onClick={() => removeKeyword(kw)}
+                              className="text-slate-400 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {!saved ? (
+                      <Button
+                        onClick={saveKeywords}
+                        disabled={saving || keywords.length === 0}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 h-12 flex-1"
+                      >
+                        {saving ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                            Guardando...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Guardar y continuar ({keywords.length} keywords)
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <span className="text-green-400 font-medium">¡Keywords guardadas exitosamente!</span>
+                        </div>
+                        <Button
+                          onClick={() => navigate("/app/mentions")}
+                          className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 h-12 w-full"
+                        >
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          Ir al dashboard
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Help Text */}
+                  {keywords.length === 0 && (
+                    <div className="mt-6 p-4 bg-slate-700/30 border border-slate-600/30 rounded-lg">
+                      <p className="text-sm text-slate-400 text-center">
+                        💡 <strong>Tip:</strong> Comienza agregando 3-5 palabras clave relacionadas con tu marca o industria para obtener mejores resultados.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Footer */}
+              <div className="text-center mt-8">
+                <p className="text-slate-500 text-sm">
+                  ¿Necesitas ayuda? Consulta nuestra{" "}
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">
+                    guía de inicio rápido
+                  </a>
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {step > 0 && (
+          <button
+            onClick={() => setStep(step - 1)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-white"
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+        )}
+        {step < 1 && (
+          <button
+            onClick={() => setStep(step + 1)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-white"
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+        )}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-400">
+          {step + 1}/2
         </div>
       </div>
     </div>
