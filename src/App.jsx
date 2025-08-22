@@ -957,6 +957,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
                           />
                         </div>
                       ))
+                    ) : mentions.length === 0 ? (
+                      <div className="text-center py-12">
+                        <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                        <p className="text-slate-400 text-lg">Estamos recolectando menciones...</p>
+                        <p className="text-slate-500 text-sm">Aparecerán aquí en breve.</p>
+                      </div>
                     ) : (
                       <div className="text-center py-12">
                         <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
