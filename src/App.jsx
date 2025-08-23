@@ -22,7 +22,6 @@ import {
   BarChart2,
   FileLineChartIcon as FileChartLine,
   Settings,
-  Star,
   CircleHelp,
   Plus,
   Minus,
@@ -69,7 +68,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null)
   const [keywordChanges, setKeywordChanges] = useState({})
   const navigate = useNavigate()
-  const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
   const [originalAccountName, setOriginalAccountName] = useState("")
@@ -193,31 +191,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   })
 
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
-  const homeMentions = onlyFavorites
-    ? visibleMentions.filter(
-        (m) => m.is_highlighted === true || m.is_highlighted === "true",
-      )
-    : visibleMentions
-
-  const toggleHighlight = async (mention) => {
-    const currentHighlight =
-      mention.is_highlighted === true || mention.is_highlighted === "true"
-    const newValue = !currentHighlight
-    try {
-      const { error } = await supabase
-        .from("fact_mentions")
-        .update({ is_highlighted: !!newValue })
-        .eq("content_id", mention.content_id)
-      if (error) throw error
-      setMentions((prev) =>
-        prev.map((m) =>
-          m.content_id === mention.content_id ? { ...m, is_highlighted: newValue } : m
-        )
-      )
-    } catch (err) {
-      console.error("Error updating mention highlight", err)
-    }
-  }
+  const homeMentions = visibleMentions
 
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async () => {
@@ -277,7 +251,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     // 3) Uno resultados sin pisar la métrica numérica `comments`
     const enriched = rows.map((r) => ({
       ...r,
-      is_highlighted: r.is_highlighted === true || r.is_highlighted === "true",
       top_comments: topCommentsById[r.content_id] || [],
     }))
 
@@ -972,19 +945,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       </TabsList>
                     </Tabs>
 
-                    <Button
-                      onClick={() => setOnlyFavorites(!onlyFavorites)}
-                      variant={onlyFavorites ? "default" : "outline"}
-                      className={cn(
-                        "flex items-center gap-2",
-                        onlyFavorites
-                          ? "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                          : "border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50",
-                      )}
-                    >
-                      <Star className="w-4 h-4" />
-                      Destacados
-                    </Button>
                   </div>
 
                   {/* Mentions Feed */}
@@ -1012,7 +972,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             keyword={m.keyword}
                             url={m.url}
                             onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
-                            onToggleHighlight={toggleHighlight}
                             medians={metricMedians}
                           />
                         </div>

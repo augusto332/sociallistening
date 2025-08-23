@@ -10,7 +10,6 @@ import {
   FaEllipsisV,
 } from "react-icons/fa";
 import {
-  Star,
   X,
   Heart,
   MessageCircle,
@@ -28,7 +27,6 @@ export default function MentionCard({
   keyword,
   url,
   onHide,
-  onToggleHighlight,
   showDismiss = true,
   medians = {},
 }) {
@@ -45,18 +43,9 @@ export default function MentionCard({
 
   const [expanded, setExpanded] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const favorite =
-    mention.is_highlighted === true || mention.is_highlighted === "true";
 
   // ✅ top 3 comentarios vienen como array en mention.top_comments
   const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : [];
-
-  const handleFavClick = async (e) => {
-    e.stopPropagation();
-    if (onToggleHighlight) {
-      await onToggleHighlight(mention);
-    }
-  };
 
   const renderMetrics = () => {
     const metricMap = {
@@ -163,10 +152,9 @@ export default function MentionCard({
         <FaEllipsisV />
       </button>
 
-      {optionsOpen && (
+      {optionsOpen && showDismiss && (
         <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
-          {showDismiss && (
-            <button
+          <button
               onClick={async (e) => {
                 e.stopPropagation();
                 setOptionsOpen(false);
@@ -189,18 +177,6 @@ export default function MentionCard({
               <X className="size-4" />
               Marcar como irrelevante
             </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOptionsOpen(false);
-              handleFavClick(e);
-            }}
-            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
-          >
-            <Star className="size-4" />
-            {favorite ? "Remover de destacados" : "Agregar a destacados"}
-          </button>
         </div>
       )}
 
@@ -230,11 +206,11 @@ export default function MentionCard({
           {renderTags()}
           {expanded && renderMetrics()}
 
-          {/* ================== Comentarios destacados (colapsados con “…”) ================== */}
+          {/* ================== Comentarios más populares (colapsados con “…”) ================== */}
           {expanded && topComments.length > 0 && (
             <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
               <h4 className="text-sm font-semibold text-primary mb-3">
-                Comentarios destacados
+                Comentarios más populares
               </h4>
 
               <div className="space-y-3">
