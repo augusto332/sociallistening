@@ -194,15 +194,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
   const homeMentions = onlyFavorites
-    ? visibleMentions.filter((m) => m.is_highlighted)
+    ? visibleMentions.filter(
+        (m) => m.is_highlighted === true || m.is_highlighted === "true",
+      )
     : visibleMentions
 
   const toggleHighlight = async (mention) => {
-    const newValue = !mention.is_highlighted
+    const currentHighlight =
+      mention.is_highlighted === true || mention.is_highlighted === "true"
+    const newValue = !currentHighlight
     try {
       const { error } = await supabase
         .from("fact_mentions")
-        .update({ is_highlighted: newValue })
+        .update({ is_highlighted: !!newValue })
         .eq("content_id", mention.content_id)
       if (error) throw error
       setMentions((prev) =>
@@ -273,6 +277,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     // 3) Uno resultados sin pisar la métrica numérica `comments`
     const enriched = rows.map((r) => ({
       ...r,
+      is_highlighted: r.is_highlighted === true || r.is_highlighted === "true",
       top_comments: topCommentsById[r.content_id] || [],
     }))
 

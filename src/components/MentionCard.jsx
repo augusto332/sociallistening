@@ -45,7 +45,8 @@ export default function MentionCard({
 
   const [expanded, setExpanded] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const favorite = mention.is_highlighted;
+  const favorite =
+    mention.is_highlighted === true || mention.is_highlighted === "true";
 
   // ✅ top 3 comentarios vienen como array en mention.top_comments
   const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : [];
