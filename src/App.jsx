@@ -23,7 +23,7 @@ import {
   FileLineChartIcon as FileChartLine,
   Settings,
   Star,
-  Bell,
+  CircleHelp,
   Plus,
   Minus,
   TrendingUp,
@@ -53,6 +53,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false)
   const [rangeFilter, setRangeFilter] = useState("7")
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
@@ -772,15 +773,43 @@ export default function ModernSocialListeningApp({ onLogout }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative text-slate-300 hover:text-white">
-              <Bell className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
-            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setHelpMenuOpen(!helpMenuOpen)
+                  setMenuOpen(false)
+                }}
+                className="text-slate-300 hover:text-white"
+              >
+                <CircleHelp className="w-4 h-4" />
+              </Button>
+              {helpMenuOpen && (
+                <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
+                  <button
+                    onClick={() => setHelpMenuOpen(false)}
+                    className="w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    Solicitar soporte
+                  </button>
+                  <button
+                    onClick={() => setHelpMenuOpen(false)}
+                    className="w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    Brindar feedback
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="relative">
               <Button
                 variant="ghost"
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => {
+                  setMenuOpen(!menuOpen)
+                  setHelpMenuOpen(false)
+                }}
                 className="flex items-center gap-2 text-slate-300 hover:text-white"
               >
                 <Avatar className="w-7 h-7">
