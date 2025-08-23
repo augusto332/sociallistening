@@ -35,7 +35,6 @@ import {
   Lightbulb,
   Headset,
 } from "lucide-react"
-import { useFavorites } from "@/context/FavoritesContext"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import KeywordTable from "@/components/KeywordTable"
@@ -70,7 +69,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null)
   const [keywordChanges, setKeywordChanges] = useState({})
   const navigate = useNavigate()
-  const { favorites, isFavorite } = useFavorites()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
@@ -195,7 +193,27 @@ export default function ModernSocialListeningApp({ onLogout }) {
   })
 
   const visibleMentions = sortedMentions.filter((m) => !hiddenMentions.includes(m.url))
-  const homeMentions = onlyFavorites ? visibleMentions.filter(isFavorite) : visibleMentions
+  const homeMentions = onlyFavorites
+    ? visibleMentions.filter((m) => m.is_highlighted)
+    : visibleMentions
+
+  const toggleHighlight = async (mention) => {
+    const newValue = !mention.is_highlighted
+    try {
+      const { error } = await supabase
+        .from("fact_mentions")
+        .update({ is_highlighted: newValue })
+        .eq("content_id", mention.content_id)
+      if (error) throw error
+      setMentions((prev) =>
+        prev.map((m) =>
+          m.content_id === mention.content_id ? { ...m, is_highlighted: newValue } : m
+        )
+      )
+    } catch (err) {
+      console.error("Error updating mention highlight", err)
+    }
+  }
 
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async () => {
@@ -989,6 +1007,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             keyword={m.keyword}
                             url={m.url}
                             onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
+                            onToggleHighlight={toggleHighlight}
                             medians={metricMedians}
                           />
                         </div>

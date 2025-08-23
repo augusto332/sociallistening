@@ -19,8 +19,6 @@ import {
   Repeat2,
   Quote,
 } from "lucide-react";
-import { useFavorites } from "@/context/FavoritesContext";
-
 export default function MentionCard({
   mention,
   source = "twitter",
@@ -30,6 +28,7 @@ export default function MentionCard({
   keyword,
   url,
   onHide,
+  onToggleHighlight,
   showDismiss = true,
   medians = {},
 }) {
@@ -46,15 +45,16 @@ export default function MentionCard({
 
   const [expanded, setExpanded] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const favorite = isFavorite(mention);
+  const favorite = mention.is_highlighted;
 
   // ✅ top 3 comentarios vienen como array en mention.top_comments
   const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : [];
 
-  const handleFavClick = (e) => {
+  const handleFavClick = async (e) => {
     e.stopPropagation();
-    toggleFavorite(mention);
+    if (onToggleHighlight) {
+      await onToggleHighlight(mention);
+    }
   };
 
   const renderMetrics = () => {
