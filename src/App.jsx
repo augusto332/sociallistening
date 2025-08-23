@@ -997,7 +997,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     ) : homeMentions.length ? (
                       homeMentions.map((m) => (
                         <div
-                          key={m.url}
+                          key={m.mention_id}
                           className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/50 transition-all duration-200"
                         >
                           <MentionCard
