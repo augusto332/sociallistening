@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabaseClient";
 import {
   FaTwitter,
   FaYoutube,
@@ -165,10 +166,22 @@ export default function MentionCard({
         <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
           {showDismiss && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
                 setOptionsOpen(false);
-                if (onHide) onHide();
+                const confirmed = window.confirm(
+                  "¿Estás seguro de que deseas marcar esta mención como irrelevante? Las menciones irrelevantes ya no se mostrarán."
+                );
+                if (!confirmed) return;
+                try {
+                  await supabase
+                    .from("fact_mentions")
+                    .update({ is_relevant: false })
+                    .eq("content_id", mention.content_id);
+                  if (onHide) onHide();
+                } catch (error) {
+                  console.error("Error updating mention relevance", error);
+                }
               }}
               className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
             >
