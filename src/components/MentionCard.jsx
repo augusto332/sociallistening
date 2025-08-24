@@ -19,6 +19,7 @@ import {
   Repeat2,
   Quote,
 } from "lucide-react";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 export default function MentionCard({
   mention,
   source = "twitter",
@@ -148,20 +149,25 @@ export default function MentionCard({
   };
 
   return (
-    <Card
-      onClick={() => setExpanded((e) => !e)}
-      className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 hover:bg-slate-800/70 transition-colors rounded-lg cursor-pointer"
-    >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setOptionsOpen((o) => !o);
-        }}
-        title="Opciones"
-        className="absolute top-2 right-2 text-primary hover:text-primary/80"
+    <TooltipProvider>
+      <Card
+        onClick={() => setExpanded((e) => !e)}
+        className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 hover:bg-slate-800/70 transition-colors rounded-lg cursor-pointer"
       >
-        <FaEllipsisV />
-      </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOptionsOpen((o) => !o);
+              }}
+              className="absolute top-2 right-2 text-primary hover:text-primary/80"
+            >
+              <FaEllipsisV />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Opciones</TooltipContent>
+        </Tooltip>
 
       {optionsOpen && (
         <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
@@ -250,12 +256,16 @@ export default function MentionCard({
                       {/* Contenedor del texto: puede encogerse (truco w-0 flex-1) */}
                       <div className="w-0 flex-1 max-w-full" style={{ minWidth: 0 }}>
                         {/* Texto: una sola línea con “…” (funciona incluso en flex) */}
-                        <span
-                          className="block overflow-hidden text-ellipsis whitespace-nowrap"
-                          title={c.comment ?? ""}
-                        >
-                          {c.comment ?? "—"}
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                              {c.comment ?? "—"}
+                            </span>
+                          </TooltipTrigger>
+                          {c.comment && (
+                            <TooltipContent>{c.comment}</TooltipContent>
+                          )}
+                        </Tooltip>
                       </div>
 
                       {/* Métrica: fijo, no se encoge */}
@@ -283,5 +293,6 @@ export default function MentionCard({
         </div>
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }
