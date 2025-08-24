@@ -11,6 +11,7 @@ import {
   Edit,
   Copy,
 } from "lucide-react"
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
 export default function ModernReportsTable({ reports = [], onDownload, onDelete, onView, onEdit, onDuplicate }) {
   const [hoveredRow, setHoveredRow] = useState(null)
@@ -115,9 +116,16 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
               >
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
-                    <div className="font-medium text-white max-w-[200px] truncate" title={report.name}>
-                      {report.name}
-                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="font-medium text-white max-w-[200px] truncate">
+                            {report.name}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>{report.name}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <div className="text-xs text-slate-500">Creado {new Date().toLocaleDateString()}</div>
                   </div>
                 </td>

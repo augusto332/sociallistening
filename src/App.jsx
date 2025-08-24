@@ -38,6 +38,7 @@ import {
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import KeywordTable from "@/components/KeywordTable"
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import ReportsTable from "@/components/ReportsTable"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -1111,13 +1112,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
                         <MessageSquare className="w-6 h-6 text-blue-400" />
                       </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-500/10 text-blue-400 border-blue-500/20"
-                        title="En comparación con el mes pasado"
-                      >
-                        {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
-                      </Badge>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="secondary"
+                              className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            >
+                              {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>En comparación con el mes pasado</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
                     <div className="text-sm text-slate-400">Total de menciones</div>

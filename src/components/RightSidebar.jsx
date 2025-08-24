@@ -2,6 +2,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MultiSelect from "@/components/MultiSelect";
@@ -28,13 +29,14 @@ export default function RightSidebar({
   };
 
   return (
-    <aside
-      className={cn(
-        "w-64 bg-slate-800/50 backdrop-blur-sm border border-slate-700 shadow-md p-6 rounded-lg",
-        "self-start flex flex-col",
-        className
-      )}
-    >
+    <TooltipProvider>
+      <aside
+        className={cn(
+          "w-64 bg-slate-800/50 backdrop-blur-sm border border-slate-700 shadow-md p-6 rounded-lg",
+          "self-start flex flex-col",
+          className
+        )}
+      >
       {/* CONTENIDO */}
       <div className="space-y-4 pr-1">
         <div>
@@ -79,23 +81,28 @@ export default function RightSidebar({
                 { id: "twitter", label: "Twitter" },
                 { id: "tiktok", label: "TikTok", disabled: true },
               ].map((s) => (
-                <label
-                  key={s.id}
-                  htmlFor={s.id}
-                  className={cn(
-                    "flex items-center gap-2",
-                    s.disabled && "opacity-50 cursor-not-allowed"
+                <Tooltip key={s.id}>
+                  <TooltipTrigger asChild>
+                    <label
+                      htmlFor={s.id}
+                      className={cn(
+                        "flex items-center gap-2",
+                        s.disabled && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <Checkbox
+                        id={s.id}
+                        checked={sources.includes(s.id)}
+                        onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
+                        disabled={s.disabled}
+                      />
+                      <span>{s.label}</span>
+                    </label>
+                  </TooltipTrigger>
+                  {s.disabled && (
+                    <TooltipContent>No disponibles en versión gratuita</TooltipContent>
                   )}
-                  title={s.disabled ? "No disponibles en versión gratuita" : undefined}
-                >
-                  <Checkbox
-                    id={s.id}
-                    checked={sources.includes(s.id)}
-                    onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                    disabled={s.disabled}
-                  />
-                  <span>{s.label}</span>
-                </label>
+                </Tooltip>
               ))}
             </div>
             <div className="space-y-2">
@@ -104,23 +111,28 @@ export default function RightSidebar({
                 { id: "facebook", label: "Facebook", disabled: true },
                 { id: "otros", label: "Otros", disabled: true },
               ].map((s) => (
-                <label
-                  key={s.id}
-                  htmlFor={s.id}
-                  className={cn(
-                    "flex items-center gap-2",
-                    s.disabled && "opacity-50 cursor-not-allowed"
+                <Tooltip key={s.id}>
+                  <TooltipTrigger asChild>
+                    <label
+                      htmlFor={s.id}
+                      className={cn(
+                        "flex items-center gap-2",
+                        s.disabled && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <Checkbox
+                        id={s.id}
+                        checked={sources.includes(s.id)}
+                        onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
+                        disabled={s.disabled}
+                      />
+                      <span>{s.label}</span>
+                    </label>
+                  </TooltipTrigger>
+                  {s.disabled && (
+                    <TooltipContent>No disponibles en versión gratuita</TooltipContent>
                   )}
-                  title={s.disabled ? "No disponibles en versión gratuita" : undefined}
-                >
-                  <Checkbox
-                    id={s.id}
-                    checked={sources.includes(s.id)}
-                    onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                    disabled={s.disabled}
-                  />
-                  <span>{s.label}</span>
-                </label>
+                </Tooltip>
               ))}
             </div>
           </div>
@@ -163,6 +175,7 @@ export default function RightSidebar({
           Limpiar filtros
         </Button>
       </div>
-    </aside>
+      </aside>
+    </TooltipProvider>
   );
 }
