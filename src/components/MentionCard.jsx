@@ -256,16 +256,12 @@ export default function MentionCard({
                       {/* Contenedor del texto: puede encogerse (truco w-0 flex-1) */}
                       <div className="w-0 flex-1 max-w-full" style={{ minWidth: 0 }}>
                         {/* Texto: una sola línea con “…” (funciona incluso en flex) */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                              {c.comment ?? "—"}
-                            </span>
-                          </TooltipTrigger>
-                          {c.comment && (
-                            <TooltipContent>{c.comment}</TooltipContent>
-                          )}
-                        </Tooltip>
+                        <span
+                          className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                          title={c.comment ?? undefined}
+                        >
+                          {c.comment ?? "—"}
+                        </span>
                       </div>
 
                       {/* Métrica: fijo, no se encoge */}
