@@ -43,6 +43,88 @@ import ReportsTable from "@/components/ReportsTable"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 
+// ===== Helpers for time buckets and engagement metrics =====
+// Hours elapsed since a given ISO date
+const hoursSince = (dateStr) => {
+  const created = new Date(dateStr)
+  return (Date.now() - created.getTime()) / (1000 * 60 * 60)
+}
+
+// Bucketize mentions by age for cohort stats
+const getAgeBucket = (hours) => {
+  if (hours < 6) return "0-6h"
+  if (hours < 24) return "6-24h"
+  if (hours < 72) return "1-3d"
+  return ">3d"
+}
+
+// Conversation count for Twitter (replies + quotes)
+const convoCount = (m) => (m.replies ?? 0) + (m.quotes ?? 0)
+
+// Engagement Rate per platform
+const ER = (m) => {
+  const likes = m.likes ?? 0
+  const comments = m.comments ?? 0
+  const views = m.views ?? 0
+  const retweets = m.retweets ?? 0
+  const platform = m.platform?.toLowerCase?.()
+  if (platform === "youtube") return likes + 2 * comments + 0.5 * views
+  if (platform === "reddit") return likes + 2 * comments
+  // twitter
+  return likes + 2 * convoCount(m) + 2 * retweets
+}
+
+// Normalize ER by time since creation
+const ERperHour = (m) => ER(m) / Math.max(1 / 12, hoursSince(m.created_at))
+
+// Robust statistics helpers
+const median = (arr) => {
+  if (!arr.length) return 0
+  const sorted = [...arr].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
+
+const mad = (arr, med) => {
+  if (!arr.length) return 0
+  const deviations = arr.map((v) => Math.abs(v - med))
+  return median(deviations)
+}
+
+const percentile = (arr, p) => {
+  if (!arr.length) return 0
+  const sorted = [...arr].sort((a, b) => a - b)
+  const idx = (p / 100) * (sorted.length - 1)
+  const lower = Math.floor(idx)
+  const upper = Math.ceil(idx)
+  if (lower === upper) return sorted[lower]
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (idx - lower)
+}
+
+// z-score with percentile fallback
+const zScore = (value, stats = {}) => {
+  const { med = 0, mad: m = 0, p80 = 0, p90 = 0 } = stats
+  if (m > 0) return (value - med) / (1.4826 * m)
+  if (p90 > p80) return (value - p80) / (p90 - p80)
+  return 0
+}
+
+// Absolute minimums per platform to avoid noise
+const passMinAbs = (m) => {
+  const platform = m.platform?.toLowerCase?.()
+  if (platform === "youtube") {
+    return (m.likes ?? 0) >= 10 || (m.views ?? 0) >= 500 || (m.comments ?? 0) >= 3
+  }
+  if (platform === "reddit") {
+    return (m.likes ?? 0) >= 5 || (m.comments ?? 0) >= 3
+  }
+  if (platform === "twitter") {
+    const convo = convoCount(m)
+    return (m.likes ?? 0) >= 5 || (m.retweets ?? 0) >= 2 || convo >= 2
+  }
+  return false
+}
+
 export default function ModernSocialListeningApp({ onLogout }) {
   // All your existing state variables remain the same
   const [startDate, setStartDate] = useState("")
@@ -89,59 +171,99 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportKeyword, setReportKeyword] = useState("")
   const [reportDateOption, setReportDateOption] = useState("range")
 
-  const metricMedians = useMemo(() => {
-    const medians = { twitter: {}, youtube: {}, reddit: {} }
-    const metricsByPlatform = {
-      twitter: ["likes", "retweets", "conversation"],
-      youtube: ["likes", "views", "comments"],
-      reddit: ["likes", "comments"],
+  // Cohort statistics for robust ER comparison
+  const cohortStats = useMemo(() => {
+    const cohorts = {}
+    const add = (platform, bucket, er, erph) => {
+      if (!cohorts[platform]) cohorts[platform] = {}
+      if (!cohorts[platform][bucket]) cohorts[platform][bucket] = { ers: [], ersPH: [] }
+      cohorts[platform][bucket].ers.push(er)
+      cohorts[platform][bucket].ersPH.push(erph)
     }
 
-    const getValue = (m, platform, metric) => {
-      if (platform === "twitter" && metric === "conversation") {
-        return (m.replies ?? 0) + (m.quotes ?? 0)
-      }
-      return m[metric] ?? 0
-    }
-
-    Object.keys(medians).forEach((platform) => {
-      const items = mentions.filter((m) => m.platform?.toLowerCase() === platform)
-      metricsByPlatform[platform].forEach((metric) => {
-        const values = items
-          .map((m) => getValue(m, platform, metric))
-          .sort((a, b) => a - b)
-        const mid = Math.floor(values.length / 2)
-        let median = 0
-        if (values.length) {
-          median =
-            values.length % 2 !== 0
-              ? values[mid]
-              : (values[mid - 1] + values[mid]) / 2
-        }
-        medians[platform][metric] = median
-      })
+    mentions.forEach((m) => {
+      const platform = m.platform?.toLowerCase?.()
+      if (!platform) return
+      const hrs = hoursSince(m.created_at)
+      const bucket = getAgeBucket(hrs)
+      const er = ER(m)
+      const erph = ERperHour(m)
+      add(platform, bucket, er, erph)
     })
 
-    return medians
+    const stats = {}
+    Object.entries(cohorts).forEach(([plat, buckets]) => {
+      stats[plat] = {}
+      Object.entries(buckets).forEach(([bucket, data]) => {
+        const med = median(data.ers)
+        const madVal = mad(data.ers, med)
+        const p80 = percentile(data.ers, 80)
+        const p90 = percentile(data.ers, 90)
+        const medPH = median(data.ersPH)
+        const madPH = mad(data.ersPH, medPH)
+        const p80PH = percentile(data.ersPH, 80)
+        const p90PH = percentile(data.ersPH, 90)
+        stats[plat][bucket] = {
+          med,
+          mad: madVal,
+          p80,
+          p90,
+          medPH,
+          madPH,
+          p80PH,
+          p90PH,
+        }
+      })
+    })
+    return stats
   }, [mentions])
 
   const getTagsForMention = (mention) => {
     const platform = mention.platform?.toLowerCase?.()
-    const platformMedians = metricMedians[platform] || {}
+    const hrs = hoursSince(mention.created_at)
+    const bucket = getAgeBucket(hrs)
+    const stats = cohortStats[platform]?.[bucket] || {}
+    const er = ER(mention)
+    const erph = ERperHour(mention)
+    const zER = zScore(er, stats)
+    const zERph = zScore(erph, {
+      med: stats.medPH,
+      mad: stats.madPH,
+      p80: stats.p80PH,
+      p90: stats.p90PH,
+    })
     const tags = []
+    if (!passMinAbs(mention)) return tags
 
-    if (platform === "youtube") {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
-      if ((mention.views ?? 0) > (platformMedians.views ?? 0)) tags.push("reach")
-      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation")
-    } else if (platform === "reddit") {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
-      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation")
-    } else {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval")
-      if ((mention.retweets ?? 0) > (platformMedians.retweets ?? 0)) tags.push("reach")
-      const convo = (mention.replies ?? 0) + (mention.quotes ?? 0)
-      if (convo > (platformMedians.conversation ?? 0)) tags.push("conversation")
+    // Approval based on likes component
+    const likeMin = platform === "youtube" ? 10 : 5
+    if ((mention.likes ?? 0) >= likeMin && (zER >= 1.5 || er >= (stats.p90 ?? Infinity))) {
+      tags.push("approval")
+    }
+
+    // Reach based on views (YT) or retweets (TW)
+    if (
+      platform === "youtube" &&
+      (mention.views ?? 0) >= 500 &&
+      (zER >= 1.5 || er >= (stats.p90 ?? Infinity))
+    ) {
+      tags.push("reach")
+    }
+    if (
+      platform === "twitter" &&
+      (mention.retweets ?? 0) >= 2 &&
+      (zER >= 1.5 || er >= (stats.p90 ?? Infinity))
+    ) {
+      tags.push("reach")
+    }
+
+    // Conversation intensity using ER per hour
+    const convMetric = platform === "twitter" ? convoCount(mention) : mention.comments ?? 0
+    if (
+      convMetric >= 3 &&
+      (zERph >= 1.5 || erph >= (stats.p90PH ?? Infinity))
+    ) {
+      tags.push("conversation")
     }
 
     return tags
@@ -177,17 +299,15 @@ export default function ModernSocialListeningApp({ onLogout }) {
       return dateB.getTime() - dateA.getTime()
     }
     if (order === "popular") {
-      const likesDiff = (b.likes ?? 0) - (a.likes ?? 0)
-      if (likesDiff !== 0) return likesDiff
+      const erDiff = ER(b) - ER(a)
+      if (erDiff !== 0) return erDiff
 
-      const commentsA = a.comments ?? a.replies ?? 0
-      const commentsB = b.comments ?? b.replies ?? 0
-      const commentsDiff = commentsB - commentsA
-      if (commentsDiff !== 0) return commentsDiff
+      const erHourDiff = ERperHour(b) - ERperHour(a)
+      if (erHourDiff !== 0) return erHourDiff
 
-      const restA = (a.retweets ?? 0) + (a.quotes ?? 0) + (a.views ?? 0)
-      const restB = (b.retweets ?? 0) + (b.quotes ?? 0) + (b.views ?? 0)
-      return restB - restA
+      const convoA = (a.comments ?? 0) + convoCount(a)
+      const convoB = (b.comments ?? 0) + convoCount(b)
+      return convoB - convoA
     }
 
     return 0
@@ -1014,7 +1134,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             url={m.url}
                             onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
                             onToggleHighlight={toggleHighlight}
-                            medians={metricMedians}
+                            tags={getTagsForMention(m)}
                           />
                         </div>
                       ))
