@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -39,6 +40,8 @@ export default function ModernOnboardingHome() {
   const [saved, setSaved] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [step, setStep] = useState(0)
+  const [languages, setLanguages] = useState([])
+  const [savingLanguages, setSavingLanguages] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -66,6 +69,19 @@ export default function ModernOnboardingHome() {
 
   const removeKeyword = (kw) => {
     setKeywords(keywords.filter((k) => k !== kw))
+  }
+
+  const toggleLanguage = (lang) => {
+    setLanguages((prev) =>
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+    )
+  }
+
+  const saveLanguages = async () => {
+    if (!languages.length) return
+    setSavingLanguages(true)
+    setSavingLanguages(false)
+    navigate("/app/mentions")
   }
 
   const saveKeywords = async () => {
@@ -290,11 +306,10 @@ export default function ModernOnboardingHome() {
                           <span className="text-green-400 font-medium">¡Keywords guardadas exitosamente!</span>
                         </div>
                         <Button
-                          onClick={() => navigate("/app/mentions")}
+                          onClick={() => setStep(2)}
                           className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 h-12 w-full"
                         >
-                          <TrendingUp className="w-4 h-4 mr-2" />
-                          Ir al dashboard
+                          Continuar
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                       </div>
@@ -323,6 +338,75 @@ export default function ModernOnboardingHome() {
               </div>
             </motion.div>
           )}
+          {step === 2 && (
+            <motion.div
+              key="languages"
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-2xl"
+            >
+              <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50">
+                <CardContent className="p-8">
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-semibold text-white mb-2">Selecciona los idiomas</h2>
+                    <p className="text-slate-400">Elige los idiomas en los que deseas monitorear las menciones.</p>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    {[{ id: "es", label: "Español" }, { id: "en", label: "Inglés" }].map((lang) => (
+                      <label key={lang.id} htmlFor={lang.id} className="flex items-center gap-2">
+                        <Checkbox
+                          id={lang.id}
+                          checked={languages.includes(lang.id)}
+                          onCheckedChange={() => toggleLanguage(lang.id)}
+                        />
+                        <span className="text-white">{lang.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button
+                      onClick={saveLanguages}
+                      disabled={savingLanguages || languages.length === 0}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 h-12 flex-1"
+                    >
+                      {savingLanguages ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Guardar y continuar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {languages.length === 0 && (
+                    <div className="mt-6 p-4 bg-slate-700/30 border border-slate-600/30 rounded-lg">
+                      <p className="text-sm text-slate-400 text-center">
+                        💡 <strong>Tip:</strong> Puedes seleccionar más de un idioma.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="text-center mt-8">
+                <p className="text-slate-500 text-sm">
+                  ¿Necesitas algún idioma adicional? {" "}
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">
+                    Contáctanos
+                  </a>
+                </p>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {step > 0 && (
@@ -333,16 +417,21 @@ export default function ModernOnboardingHome() {
             <ChevronLeft className="w-8 h-8" />
           </button>
         )}
-        {step < 1 && (
+        {step < 2 && (
           <button
-            onClick={() => setStep(step + 1)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-white"
+            onClick={() => {
+              if (step === 1 && !saved) return
+              setStep(step + 1)
+            }}
+            className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-white ${
+              step === 1 && !saved ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             <ChevronRight className="w-8 h-8" />
           </button>
         )}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-400">
-          {step + 1}/2
+          {step + 1}/3
         </div>
       </div>
     </div>
