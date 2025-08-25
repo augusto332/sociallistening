@@ -31,7 +31,7 @@ export default function MentionCard({
   onHide,
   onToggleHighlight,
   showDismiss = true,
-  medians = {},
+  tags = [], // precomputed tags
 }) {
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
@@ -113,26 +113,7 @@ export default function MentionCard({
   };
 
   const renderTags = () => {
-    if (!medians || !medians[platform]) return null;
-    const platformMedians = medians[platform];
-    const tags = [];
-
-    if (platform === "youtube") {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
-      if ((mention.views ?? 0) > (platformMedians.views ?? 0)) tags.push("reach");
-      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation");
-    } else if (platform === "reddit") {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
-      if ((mention.comments ?? 0) > (platformMedians.comments ?? 0)) tags.push("conversation");
-    } else {
-      if ((mention.likes ?? 0) > (platformMedians.likes ?? 0)) tags.push("approval");
-      if ((mention.retweets ?? 0) > (platformMedians.retweets ?? 0)) tags.push("reach");
-      const convo = (mention.replies ?? 0) + (mention.quotes ?? 0);
-      if (convo > (platformMedians.conversation ?? 0)) tags.push("conversation");
-    }
-
     if (!tags.length) return null;
-
     return (
       <div className="flex items-center gap-2 mt-1 flex-wrap">
         {tags.map((type, i) => (
