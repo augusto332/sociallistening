@@ -373,7 +373,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     try {
       const { data: tc, error: errTc } = await supabase
         .from("top_3_comments_vw")
-        .select("content_id, likes, comment")
+        .select("content_id, comment_likes, comment")
         .in("content_id", contentIds)
 
       if (errTc) {
@@ -383,14 +383,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
           const k = item.content_id
           if (!k) return acc
           if (!acc[k]) acc[k] = []
-          acc[k].push({ likes: item.likes, comment: item.comment })
+          acc[k].push({ comment_likes: item.comment_likes, comment: item.comment })
           return acc
         }, {})
 
         // Aseguro top 3 por likes
         for (const k of Object.keys(topCommentsById)) {
           topCommentsById[k] = topCommentsById[k]
-            .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0))
+            .sort((a, b) => (b.comment_likes ?? 0) - (a.comment_likes ?? 0))
             .slice(0, 3)
         }
       }
