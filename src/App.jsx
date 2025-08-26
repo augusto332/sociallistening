@@ -387,11 +387,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
           return acc
         }, {})
 
-        // Aseguro top 3 por likes
+        // Ordeno por likes para garantizar el orden
         for (const k of Object.keys(topCommentsById)) {
-          topCommentsById[k] = topCommentsById[k]
-            .sort((a, b) => (b.comment_likes ?? 0) - (a.comment_likes ?? 0))
-            .slice(0, 3)
+          topCommentsById[k] = topCommentsById[k].sort(
+            (a, b) => (b.comment_likes ?? 0) - (a.comment_likes ?? 0)
+          );
         }
       }
     } catch (e) {
