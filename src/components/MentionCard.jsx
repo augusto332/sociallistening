@@ -248,7 +248,7 @@ export default function MentionCard({
                       {/* Métrica: fijo, no se encoge */}
                       <span className="flex items-center gap-1 flex-none text-xs font-medium">
                         <CommentIcon className="size-4" />
-                        {c.likes ?? 0}
+                        {c.comment_likes ?? 0}
                       </span>
                     </div>
                   );
