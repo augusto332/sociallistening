@@ -34,8 +34,9 @@ export default function MultiSelect({ options = [], value = [], onChange, placeh
     } else {
       newVal.push(val);
     }
+    const hasAllOption = options.some((o) => o.value === "all");
     const nonAllOptions = options.filter((o) => o.value !== "all").map((o) => o.value);
-    if (newVal.length === nonAllOptions.length) {
+    if (hasAllOption && newVal.length === nonAllOptions.length) {
       newVal = ["all"];
     }
     onChange(newVal);
