@@ -80,8 +80,17 @@ export default function ModernOnboardingHome() {
   const saveLanguages = async () => {
     if (!languages.length) return
     setSavingLanguages(true)
+    const { error } = await supabase
+      .from("dim_keywords")
+      .update({ language_codes: languages })
+      .eq("user_id", user.id)
+      .in("keyword", keywords)
     setSavingLanguages(false)
-    navigate("/app/mentions")
+    if (!error) {
+      navigate("/app/mentions")
+    } else {
+      console.error("Error saving languages", error)
+    }
   }
 
   const saveKeywords = async () => {

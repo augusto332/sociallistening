@@ -151,6 +151,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [addKeywordMessage, setAddKeywordMessage] = useState(null)
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null)
   const [keywordChanges, setKeywordChanges] = useState({})
+  const [showKeywordLangs, setShowKeywordLangs] = useState(false)
+  const [newKeywordLangs, setNewKeywordLangs] = useState([])
+  const [pendingKeyword, setPendingKeyword] = useState("")
   const navigate = useNavigate()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [accountEmail, setAccountEmail] = useState("")
@@ -411,7 +414,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const { data, error } = await supabase
       .from("dim_keywords")
       .select(
-        "keyword, keyword_id, created_at, active, last_processed_at_yt, last_processed_at_rd, last_processed_at_tw",
+        "keyword, keyword_id, created_at, active, language_codes, last_processed_at_yt, last_processed_at_rd, last_processed_at_tw",
       )
       .order("created_at", { ascending: false })
     if (error) {
@@ -460,8 +463,16 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const addKeyword = async () => {
+  const openKeywordLangSelector = () => {
     if (!newKeyword.trim()) return
+    setPendingKeyword(newKeyword.trim())
+    setShowKeywordLangs(true)
+    setNewKeywordLangs([])
+    setAddKeywordMessage(null)
+  }
+
+  const saveNewKeyword = async () => {
+    if (!pendingKeyword.trim() || newKeywordLangs.length === 0) return
     setAddKeywordMessage(null)
     const { data: userData } = await supabase.auth.getUser()
     const { user } = userData || {}
@@ -472,10 +483,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const { data, error } = await supabase
       .from("dim_keywords")
       .insert({
-        keyword: newKeyword,
+        keyword: pendingKeyword,
         user_id: user.id,
         created_at: new Date().toISOString(),
         active: false,
+        language_codes: newKeywordLangs,
       })
       .select()
     if (error || !data || data.length === 0) {
@@ -487,6 +499,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
     } else {
       setKeywords((k) => [...data, ...k])
       setNewKeyword("")
+      setPendingKeyword("")
+      setNewKeywordLangs([])
+      setShowKeywordLangs(false)
       setAddKeywordMessage({ type: "success", text: "Keyword agregada" })
     }
   }
@@ -1588,13 +1603,41 @@ export default function ModernSocialListeningApp({ onLogout }) {
                         placeholder="Nueva keyword"
                       />
                       <Button
-                        onClick={addKeyword}
+                        onClick={openKeywordLangSelector}
                         className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Agregar
                       </Button>
                     </div>
+                    {showKeywordLangs && (
+                      <div className="flex items-center gap-3 mt-4">
+                        <MultiSelect
+                          options={[{ label: "Español", value: "es" }, { label: "Inglés", value: "en" }]}
+                          value={newKeywordLangs}
+                          onChange={setNewKeywordLangs}
+                          placeholder="Selecciona idiomas"
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={saveNewKeyword}
+                          disabled={newKeywordLangs.length === 0}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                        >
+                          Guardar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowKeywordLangs(false)
+                            setNewKeywordLangs([])
+                          }}
+                          className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-transparent"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    )}
                     {addKeywordMessage && (
                       <p
                         className={`text-sm ${addKeywordMessage.type === "error" ? "text-red-400" : "text-green-400"}`}
