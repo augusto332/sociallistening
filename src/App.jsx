@@ -348,7 +348,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setMentionsLoading(true)
     // 1) Traigo menciones base SIN joins anidados
     const { data: base, error: errBase } = await supabase
-      .from("total_mentions_vw")
+      .from("mentions_display_vw")
       .select("*")
       .order("created_at", { ascending: false })
 
