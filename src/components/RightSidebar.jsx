@@ -49,7 +49,6 @@ export default function RightSidebar({
               <SelectItem value="7">Últimos 7 días</SelectItem>
               <SelectItem value="15">Últimos 15 días</SelectItem>
               <SelectItem value="30">Últimos 30 días</SelectItem>
-              <SelectItem value="60">Últimos 60 días</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -78,7 +77,7 @@ export default function RightSidebar({
               {[
                 { id: "youtube", label: "YouTube" },
                 { id: "reddit", label: "Reddit" },
-                { id: "twitter", label: "Twitter" },
+                { id: "twitter", label: "Twitter", disabled: true },
                 { id: "tiktok", label: "TikTok", disabled: true },
               ].map((s) => (
                 <Tooltip key={s.id}>
