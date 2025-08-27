@@ -73,8 +73,8 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
   }
 
   return (
-    <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700/50 bg-slate-800/50">
@@ -103,7 +103,7 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                 </div>
               </th>
               <th className="text-left p-4 text-slate-300 font-medium">Comentarios</th>
-              <th className="text-right p-4 text-slate-300 font-medium">Acciones</th>
+              <th className="text-right p-4 text-slate-300 font-medium"></th>
             </tr>
           </thead>
           <tbody>
@@ -186,7 +186,7 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                       </button>
 
                       {openDropdown === idx && (
-                        <div className="absolute right-0 top-8 z-10 w-48 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl">
+                        <div className="absolute right-0 top-8 z-50 w-48 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl">
                           {onView && (
                             <button
                               onClick={() => {
