@@ -47,7 +47,7 @@ export default function MultiSelect({ options = [], value = [], onChange, placeh
     : value.join(", ") || placeholder;
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("relative", open && "z-50", className)}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
