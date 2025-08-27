@@ -344,11 +344,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
-  const fetchMentions = async () => {
+  const fetchMentions = async (view = "mentions_display_vw") => {
     setMentionsLoading(true)
     // 1) Traigo menciones base SIN joins anidados
     const { data: base, error: errBase } = await supabase
-      .from("mentions_display_vw")
+      .from(view)
       .select("*")
       .order("created_at", { ascending: false })
 
@@ -560,10 +560,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   useEffect(() => {
-    fetchMentions()
     fetchKeywords()
     fetchAccount()
   }, [])
+
+  useEffect(() => {
+    const view =
+      activeTab === "dashboard"
+        ? "total_mentions_vw"
+        : onlyFavorites
+          ? "total_mentions_highlighted_vw"
+          : "mentions_display_vw"
+    fetchMentions(view)
+  }, [activeTab, onlyFavorites])
 
   const fetchSavedReports = async () => {
     const { data: userData } = await supabase.auth.getUser()
