@@ -42,6 +42,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import ReportsTable from "@/components/ReportsTable"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // ===== Helpers for time buckets and engagement metrics =====
 // Hours elapsed since a given ISO date
@@ -347,6 +348,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async (view = "mentions_display_vw") => {
+    setMentions([]);
     setMentionsLoading(true)
     const cacheEntry = mentionsCacheRef.current[view]
     if (cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_TTL) {
@@ -1144,11 +1146,21 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   {/* Mentions Feed */}
                   <div className="space-y-4">
                     {mentionsLoading ? (
-                      <div className="text-center py-12">
-                        <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4 animate-spin" />
-                        <p className="text-slate-400 text-lg">Cargando...</p>
-                      </div>
-                    ) : homeMentions.length ? (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6"
+          >
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : homeMentions.length ? (
                       homeMentions.map((m) => (
                         <div
                           key={m.mention_id}
