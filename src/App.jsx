@@ -34,6 +34,7 @@ import {
   LogOut,
   Lightbulb,
   Headset,
+  Loader2,
 } from "lucide-react"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -1270,112 +1271,120 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
-                        <MessageSquare className="w-6 h-6 text-blue-400" />
-                      </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant="secondary"
-                              className="bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            >
-                              {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>En comparación con el mes pasado</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
-                    <div className="text-sm text-slate-400">Total de menciones</div>
-                  </CardContent>
-                </Card>
+              {mentionsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
+                            <MessageSquare className="w-6 h-6 text-blue-400" />
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                >
+                                  {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>En comparación con el mes pasado</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
+                        <div className="text-sm text-slate-400">Total de menciones</div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
-                        <Activity className="w-6 h-6 text-purple-400" />
-                      </div>
-                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                        {`${totalActivePlatformCount} Activas`}
-                      </Badge>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
-                    <div className="text-sm text-slate-400">Plataformas</div>
-                  </CardContent>
-                </Card>
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
+                            <Activity className="w-6 h-6 text-purple-400" />
+                          </div>
+                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                            {`${totalActivePlatformCount} Activas`}
+                          </Badge>
+                        </div>
+                        <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
+                        <div className="text-sm text-slate-400">Plataformas</div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-green-400" />
-                      </div>
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                        {`${activeKeywords.length} Activas`}
-                      </Badge>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">{activeKeywords.length}</div>
-                    <div className="text-sm text-slate-400">Palabras clave</div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="w-6 h-6 text-green-400" />
+                          </div>
+                          <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
+                            {`${activeKeywords.length} Activas`}
+                          </Badge>
+                        </div>
+                        <div className="text-2xl font-bold text-white mb-1">{activeKeywords.length}</div>
+                        <div className="text-sm text-slate-400">Palabras clave</div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
-                  <CardContent className="p-6 space-y-4 h-full flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <p className="font-semibold text-white">Palabras más mencionadas</p>
-                    </div>
-                    <div className="flex-1">
-                      <WordCloud words={wordCloudData} />
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
+                      <CardContent className="p-6 space-y-4 h-full flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <p className="font-semibold text-white">Palabras más mencionadas</p>
+                        </div>
+                        <div className="flex-1">
+                          <WordCloud words={wordCloudData} />
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
-                  <CardContent className="p-6 space-y-4 h-full flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <p className="font-semibold text-white">Menciones por plataforma</p>
-                    </div>
-                    <div className="flex-1">
-                      <PlatformBarChart data={platformCounts} />
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
+                      <CardContent className="p-6 space-y-4 h-full flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <p className="font-semibold text-white">Menciones por plataforma</p>
+                        </div>
+                        <div className="flex-1">
+                          <PlatformBarChart data={platformCounts} />
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
-                  <CardContent className="p-6 space-y-4 h-full flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <p className="font-semibold text-white">Usuarios más activos</p>
-                    </div>
-                    <div className="flex-1">
-                      <ActiveSourcesBarChart data={sourceCounts} />
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
+                      <CardContent className="p-6 space-y-4 h-full flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <p className="font-semibold text-white">Usuarios más activos</p>
+                        </div>
+                        <div className="flex-1">
+                          <ActiveSourcesBarChart data={sourceCounts} />
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px] lg:col-span-3">
-                  <CardContent className="p-6 space-y-4 h-full flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <p className="font-semibold text-white">Evolución de menciones</p>
-                    </div>
-                    <div className="flex-1">
-                      <MentionsLineChart data={mentionsOverTime} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px] lg:col-span-3">
+                      <CardContent className="p-6 space-y-4 h-full flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <p className="font-semibold text-white">Evolución de menciones</p>
+                        </div>
+                        <div className="flex-1">
+                          <MentionsLineChart data={mentionsOverTime} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
