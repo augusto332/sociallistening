@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
+import ReactDOM from "react-dom"
 import {
   Download,
   Trash2,
@@ -16,6 +17,29 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 export default function ModernReportsTable({ reports = [], onDownload, onDelete, onView, onEdit, onDuplicate }) {
   const [hoveredRow, setHoveredRow] = useState(null)
   const [openDropdown, setOpenDropdown] = useState(null)
+  const [openUp, setOpenUp] = useState(false)
+  const [dropdownRect, setDropdownRect] = useState(null)
+  const dropdownRefs = useRef([])
+
+  const closeDropdown = () => {
+    setOpenDropdown(null)
+    setDropdownRect(null)
+  }
+
+  const toggleDropdown = (idx) => {
+    if (openDropdown === idx) {
+      closeDropdown()
+      return
+    }
+    const ref = dropdownRefs.current[idx]
+    if (ref) {
+      const rect = ref.getBoundingClientRect()
+      setDropdownRect(rect)
+      const menuHeight = 200
+      setOpenUp(rect.bottom + menuHeight > window.innerHeight)
+    }
+    setOpenDropdown(idx)
+  }
 
   const getPlatformColor = (platform) => {
     const colors = {
@@ -177,65 +201,82 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                       Descargar
                     </button>
 
-                    <div className="relative">
+                    <div className="relative" ref={(el) => (dropdownRefs.current[idx] = el)}>
                       <button
-                        onClick={() => setOpenDropdown(openDropdown === idx ? null : idx)}
+                        onClick={() => toggleDropdown(idx)}
                         className="inline-flex items-center p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200"
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
 
-                      {openDropdown === idx && (
-                        <div className="absolute right-0 top-8 z-50 w-48 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl">
-                          {onView && (
-                            <button
-                              onClick={() => {
-                                onView(report, idx)
-                                setOpenDropdown(null)
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Ver detalles
-                            </button>
-                          )}
-                          {onEdit && (
-                            <button
-                              onClick={() => {
-                                onEdit(report, idx)
-                                setOpenDropdown(null)
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </button>
-                          )}
-                          {onDuplicate && (
-                            <button
-                              onClick={() => {
-                                onDuplicate(report, idx)
-                                setOpenDropdown(null)
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Duplicar
-                            </button>
-                          )}
-                          <div className="border-t border-slate-700/50 my-1"></div>
-                          <button
-                            onClick={() => {
-                              onDelete && onDelete(idx)
-                              setOpenDropdown(null)
+                      {openDropdown === idx &&
+                        dropdownRect &&
+                        ReactDOM.createPortal(
+                          <div
+                            className="fixed z-50"
+                            style={{
+                              top: dropdownRect.top,
+                              left: dropdownRect.left,
+                              width: dropdownRect.width,
+                              height: dropdownRect.height,
                             }}
-                            className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Eliminar
-                          </button>
-                        </div>
-                      )}
+                            <div
+                              className={`absolute right-0 w-48 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl ${
+                                openUp ? "bottom-full mb-2" : "top-full mt-2"
+                              }`}
+                            >
+                              {onView && (
+                                <button
+                                  onClick={() => {
+                                    onView(report, idx)
+                                    closeDropdown()
+                                  }}
+                                  className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver detalles
+                                </button>
+                              )}
+                              {onEdit && (
+                                <button
+                                  onClick={() => {
+                                    onEdit(report, idx)
+                                    closeDropdown()
+                                  }}
+                                  className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar
+                                </button>
+                              )}
+                              {onDuplicate && (
+                                <button
+                                  onClick={() => {
+                                    onDuplicate(report, idx)
+                                    closeDropdown()
+                                  }}
+                                  className="flex items-center w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                                >
+                                  <Copy className="w-4 h-4 mr-2" />
+                                  Duplicar
+                                </button>
+                              )}
+                              <div className="border-t border-slate-700/50 my-1"></div>
+                              <button
+                                onClick={() => {
+                                  onDelete && onDelete(idx)
+                                  closeDropdown()
+                                }}
+                                className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Eliminar
+                              </button>
+                            </div>
+                          </div>,
+                          document.body,
+                        )}
                     </div>
                   </div>
                 </td>
