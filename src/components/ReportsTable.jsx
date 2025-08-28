@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import ReactDOM from "react-dom"
 import {
   Download,
@@ -20,6 +20,7 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
   const [openUp, setOpenUp] = useState(false)
   const [dropdownRect, setDropdownRect] = useState(null)
   const dropdownRefs = useRef([])
+  const dropdownMenuRef = useRef(null)
 
   const closeDropdown = () => {
     setOpenDropdown(null)
@@ -85,6 +86,35 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
     }
     return report.keywords || "Sin definir"
   }
+
+  useEffect(() => {
+    if (openDropdown !== null) {
+      const handleMouseDown = (e) => {
+        if (
+          dropdownMenuRef.current &&
+          !dropdownMenuRef.current.contains(e.target) &&
+          dropdownRefs.current[openDropdown] &&
+          !dropdownRefs.current[openDropdown].contains(e.target)
+        ) {
+          closeDropdown()
+        }
+      }
+
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") {
+          closeDropdown()
+        }
+      }
+
+      document.addEventListener("mousedown", handleMouseDown)
+      document.addEventListener("keydown", handleKeyDown)
+
+      return () => {
+        document.removeEventListener("mousedown", handleMouseDown)
+        document.removeEventListener("keydown", handleKeyDown)
+      }
+    }
+  }, [openDropdown])
 
   if (reports.length === 0) {
     return (
@@ -222,6 +252,7 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                             }}
                           >
                             <div
+                              ref={dropdownMenuRef}
                               className={`absolute right-0 w-48 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl ${
                                 openUp ? "bottom-full mb-2" : "top-full mt-2"
                               }`}
