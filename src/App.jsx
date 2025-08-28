@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -136,6 +136,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [search, setSearch] = useState("")
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
+  const mentionsCacheRef = useRef({})
+  const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
   const [rangeFilter, setRangeFilter] = useState("7")
@@ -346,6 +348,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
   // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
   const fetchMentions = async (view = "mentions_display_vw") => {
     setMentionsLoading(true)
+    const cacheEntry = mentionsCacheRef.current[view]
+    if (cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_TTL) {
+      setMentions(cacheEntry.data)
+      setMentionsLoading(false)
+      return
+    }
     // 1) Traigo menciones base SIN joins anidados
     const { data: base, error: errBase } = await supabase
       .from(view)
@@ -404,6 +412,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       is_highlighted: r.is_highlighted === true || r.is_highlighted === "true",
       top_comments: topCommentsById[r.content_id] || [],
     }))
+    mentionsCacheRef.current[view] = { data: enriched, timestamp: Date.now() }
 
     // Nota: reemplazo directo para evitar estados viejos/dedupe que escondan resultados
     setMentions(enriched)
