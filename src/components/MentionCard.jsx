@@ -20,6 +20,8 @@ import {
   Quote,
 } from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import he from "he";
+
 export default function MentionCard({
   mention,
   source = "twitter",
@@ -63,12 +65,12 @@ export default function MentionCard({
     const metricMap = {
       youtube: [
         { key: "likes", icon: Heart },
-        { key: "comments", icon: MessageCircle }, // conteo numérico
+        { key: "comments", icon: MessageCircle },
         { key: "views", icon: Eye },
       ],
       reddit: [
         { key: "likes", icon: ArrowBigUp },
-        { key: "comments", icon: MessageCircle }, // conteo numérico
+        { key: "comments", icon: MessageCircle },
       ],
       twitter: [
         { key: "likes", icon: Heart },
@@ -150,126 +152,123 @@ export default function MentionCard({
           <TooltipContent>Opciones</TooltipContent>
         </Tooltip>
 
-      {optionsOpen && (
-        <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
-          {showDismiss && (
+        {optionsOpen && (
+          <div className="absolute right-2 top-8 bg-card shadow-md rounded p-2 space-y-1 z-50">
+            {showDismiss && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setOptionsOpen(false);
+                  const confirmed = window.confirm(
+                    "¿Estás seguro de que deseas marcar esta mención como irrelevante? Las menciones irrelevantes ya no se mostrarán."
+                  );
+                  if (!confirmed) return;
+                  try {
+                    await supabase
+                      .from("fact_mentions")
+                      .update({ is_relevant: false })
+                      .eq("content_id", mention.content_id);
+                    if (onHide) onHide();
+                  } catch (error) {
+                    console.error("Error updating mention relevance", error);
+                  }
+                }}
+                className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
+              >
+                <X className="size-4" />
+                Marcar como irrelevante
+              </button>
+            )}
             <button
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
                 setOptionsOpen(false);
-                const confirmed = window.confirm(
-                  "¿Estás seguro de que deseas marcar esta mención como irrelevante? Las menciones irrelevantes ya no se mostrarán."
-                );
-                if (!confirmed) return;
-                try {
-                  await supabase
-                    .from("fact_mentions")
-                    .update({ is_relevant: false })
-                    .eq("content_id", mention.content_id);
-                  if (onHide) onHide();
-                } catch (error) {
-                  console.error("Error updating mention relevance", error);
-                }
+                handleFavClick(e);
               }}
               className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
             >
-              <X className="size-4" />
-              Marcar como irrelevante
+              <Star className="size-4" />
+              {favorite ? "Remover de destacados" : "Agregar a destacados"}
             </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOptionsOpen(false);
-              handleFavClick(e);
-            }}
-            className="flex items-center gap-2 w-full text-left p-2 rounded hover:bg-muted"
+          </div>
+        )}
+
+        <CardContent className="p-6 flex gap-4">
+          <div
+            className={`w-10 h-10 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
+            style={iconBg ? { backgroundColor: iconBg } : {}}
           >
-            <Star className="size-4" />
-            {favorite ? "Remover de destacados" : "Agregar a destacados"}
-          </button>
-        </div>
-      )}
-
-      <CardContent className="p-6 flex gap-4">
-        <div
-          className={`w-10 h-10 flex items-center justify-center rounded-full shrink-0 ${!iconBg ? "bg-muted" : ""}`}
-          style={iconBg ? { backgroundColor: iconBg } : {}}
-        >
-          <Icon className={iconSizeClass} style={{ color: iconColor }} />
-        </div>
-
-        <div className="flex-1 space-y-1 min-w-0">
-          {keyword && (
-            <span className="inline-block text-xs bg-white/20 text-muted-foreground px-2 py-0.5 rounded">
-              {keyword}
-            </span>
-          )}
-          <div className="flex items-center justify-between gap-3 min-w-0">
-            <span className="font-semibold text-primary">@{username}</span>
-            <span className="text-xs text-muted-foreground shrink-0">{timestamp}</span>
+            <Icon className={iconSizeClass} style={{ color: iconColor }} />
           </div>
 
-          <p className="text-base leading-relaxed text-muted-foreground">
-            {content}
-          </p>
+          <div className="flex-1 space-y-1 min-w-0">
+            {keyword && (
+              <span className="inline-block text-xs bg-white/20 text-muted-foreground px-2 py-0.5 rounded">
+                {keyword}
+              </span>
+            )}
+            <div className="flex items-center justify-between gap-3 min-w-0">
+              <span className="font-semibold text-primary">@{username}</span>
+              <span className="text-xs text-muted-foreground shrink-0">{timestamp}</span>
+            </div>
 
-          {renderTags()}
-          {expanded && renderMetrics()}
+            {/* ✅ Decodificamos el contenido */}
+            <p className="text-base leading-relaxed text-muted-foreground">
+              {he.decode(content)}
+            </p>
 
-          {/* ================== Comentarios destacados (colapsados con “…”) ================== */}
-          {expanded && topComments.length > 0 && (
-            <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
-              <h4 className="text-sm font-semibold text-primary mb-3">
-                Comentarios destacados
-              </h4>
+            {renderTags()}
+            {expanded && renderMetrics()}
 
-              <div className="space-y-3">
-                {topComments.map((c, i) => {
-                  const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart;
-                  return (
-                    <div
-                      key={i}
-                      className="min-w-0 w-full p-3 rounded-lg bg-slate-700/40 border border-slate-600
-                                 flex items-center gap-3 text-sm text-muted-foreground"
-                      style={{ minWidth: 0 }}
-                    >
-                      {/* Contenedor del texto: puede encogerse (truco w-0 flex-1) */}
-                      <div className="w-0 flex-1 max-w-full" style={{ minWidth: 0 }}>
-                        {/* Texto: una sola línea con “…” (funciona incluso en flex) */}
-                        <span
-                          className="block overflow-hidden text-ellipsis whitespace-nowrap"
-                          title={c.comment ?? undefined}
-                        >
-                          {c.comment ?? "—"}
+            {/* ================== Comentarios destacados ================== */}
+            {expanded && topComments.length > 0 && (
+              <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
+                <h4 className="text-sm font-semibold text-primary mb-3">
+                  Comentarios destacados
+                </h4>
+
+                <div className="space-y-3">
+                  {topComments.map((c, i) => {
+                    const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart;
+                    return (
+                      <div
+                        key={i}
+                        className="min-w-0 w-full p-3 rounded-lg bg-slate-700/40 border border-slate-600
+                                   flex items-center gap-3 text-sm text-muted-foreground"
+                        style={{ minWidth: 0 }}
+                      >
+                        <div className="w-0 flex-1 max-w-full" style={{ minWidth: 0 }}>
+                          <span
+                            className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                            title={c.comment ? he.decode(c.comment) : undefined}
+                          >
+                            {c.comment ? he.decode(c.comment) : "—"}
+                          </span>
+                        </div>
+                        <span className="flex items-center gap-1 flex-none text-xs font-medium">
+                          <CommentIcon className="size-4" />
+                          {c.comment_likes ?? 0}
                         </span>
                       </div>
-
-                      {/* Métrica: fijo, no se encoge */}
-                      <span className="flex items-center gap-1 flex-none text-xs font-medium">
-                        <CommentIcon className="size-4" />
-                        {c.comment_likes ?? 0}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-          {/* ================================================================================ */}
+            )}
+            {/* =========================================================== */}
 
-          {expanded && url && (
-            <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
-              <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  Ir al sitio
-                </a>
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            {expanded && url && (
+              <div className="mt-8 pt-2 border-t border-slate-700/60 min-w-0">
+                <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    Ir al sitio
+                  </a>
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </TooltipProvider>
   );
 }

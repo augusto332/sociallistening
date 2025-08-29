@@ -28,7 +28,7 @@ export default function Login() {
       <form onSubmit={handleLogin} className="bg-secondary p-8 rounded-lg space-y-4 shadow-md w-80">
         <h1 className="text-2xl font-bold text-center">Iniciar sesión</h1>
         <Input
-          placeholder="Usuario"
+          placeholder="Usuario/Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
