@@ -138,8 +138,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [search, setSearch] = useState("")
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
-  const mentionsCacheRef = useRef({})
-  const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
+  const [cursor, setCursor] = useState(null)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const sentinelRef = useRef(null)
+  const loadedMentionIdsRef = useRef(new Set())
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
   const [rangeFilter, setRangeFilter] = useState("7")
@@ -347,79 +350,114 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  // ========== FETCH (ARREGLADO): base + top_3_comments_vw por content_id ==========
-  const fetchMentions = async (view = "mentions_display_vw") => {
-    setMentions([]);
-    setMentionsLoading(true)
-    const cacheEntry = mentionsCacheRef.current[view]
-    if (cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_TTL) {
-      setMentions(cacheEntry.data)
-      setMentionsLoading(false)
-      return
-    }
-    // 1) Traigo menciones base SIN joins anidados
-    const { data: base, error: errBase } = await supabase
+  const PAGE_SIZE = 150
+
+  const fetchMentionsPage = async (view, afterCursor = null) => {
+    let query = supabase
       .from(view)
       .select("*")
       .order("created_at", { ascending: false })
+      .order("mention_id", { ascending: false })
+      .limit(PAGE_SIZE)
 
-    if (errBase) {
-      console.error("Error fetching mentions (base)", errBase)
-      setMentions([])
-      setMentionsLoading(false)
-      return
+    if (afterCursor) {
+      const { created_at, mention_id } = afterCursor
+      query = query.or(
+        `created_at.lt.${created_at},and(created_at.eq.${created_at},mention_id.lt.${mention_id})`
+      )
     }
 
-    const rows = base || []
-    if (rows.length === 0) {
-      setMentions([])
-      setMentionsLoading(false)
-      return
+    const { data: rows, error } = await query
+    if (error) {
+      console.error("Error fetching mentions page", error)
+      return { rows: [], cursor: null, hasMore: false }
     }
 
-    // 2) Armo lista de content_id para buscar top comments
-    const contentIds = rows.map((r) => r.content_id).filter(Boolean)
+    const contentIds = (rows || []).map((r) => r.content_id).filter(Boolean)
 
-    let topCommentsById = {}
-    try {
-      const { data: tc, error: errTc } = await supabase
-        .from("top_3_comments_vw")
-        .select("content_id, comment_likes, comment")
-        .in("content_id", contentIds)
-
-      if (errTc) {
-        console.error("Error fetching top_3_comments_vw", errTc)
-      } else {
-        topCommentsById = (tc || []).reduce((acc, item) => {
-          const k = item.content_id
-          if (!k) return acc
-          if (!acc[k]) acc[k] = []
-          acc[k].push({ comment_likes: item.comment_likes, comment: item.comment })
-          return acc
-        }, {})
-
-        // Ordeno por likes para garantizar el orden
-        for (const k of Object.keys(topCommentsById)) {
-          topCommentsById[k] = topCommentsById[k].sort(
-            (a, b) => (b.comment_likes ?? 0) - (a.comment_likes ?? 0)
-          );
+    const topCommentsById = {}
+    for (let i = 0; i < contentIds.length; i += 200) {
+      const chunk = contentIds.slice(i, i + 200)
+      try {
+        const { data: tc, error: tcErr } = await supabase
+          .from("top_3_comments_vw")
+          .select("content_id, comment_likes, comment")
+          .in("content_id", chunk)
+        if (tcErr) {
+          console.error("Error fetching top_3_comments_vw", tcErr)
+        } else {
+          ;(tc || []).forEach((item) => {
+            const k = item.content_id
+            if (!k) return
+            if (!topCommentsById[k]) topCommentsById[k] = []
+            topCommentsById[k].push({
+              comment_likes: item.comment_likes,
+              comment: item.comment,
+            })
+          })
         }
+      } catch (e) {
+        console.error("Top comments fetch blew up", e)
       }
-    } catch (e) {
-      console.error("Top comments fetch blew up", e)
     }
 
-    // 3) Uno resultados sin pisar la métrica numérica `comments`
-    const enriched = rows.map((r) => ({
+    Object.keys(topCommentsById).forEach((k) => {
+      topCommentsById[k] = topCommentsById[k]
+        .sort((a, b) => (b.comment_likes ?? 0) - (a.comment_likes ?? 0))
+        .slice(0, 3)
+    })
+
+    const enriched = (rows || []).map((r) => ({
       ...r,
       is_highlighted: r.is_highlighted === true || r.is_highlighted === "true",
       top_comments: topCommentsById[r.content_id] || [],
     }))
-    mentionsCacheRef.current[view] = { data: enriched, timestamp: Date.now() }
 
-    // Nota: reemplazo directo para evitar estados viejos/dedupe que escondan resultados
-    setMentions(enriched)
+    const last = enriched[enriched.length - 1]
+    const nextCursor = last
+      ? { created_at: last.created_at, mention_id: last.mention_id }
+      : null
+
+    return {
+      rows: enriched,
+      cursor: nextCursor,
+      hasMore: enriched.length === PAGE_SIZE,
+    }
+  }
+
+  const loadFirstPage = async (view) => {
+    setMentions([])
+    setMentionsLoading(true)
+    setCursor(null)
+    setHasMore(true)
+    setIsLoadingMore(false)
+    loadedMentionIdsRef.current = new Set()
+
+    const { rows, cursor: nextCursor, hasMore: more } = await fetchMentionsPage(view)
+
+    rows.forEach((m) => loadedMentionIdsRef.current.add(m.mention_id))
+
+    setMentions(rows)
+    setCursor(nextCursor)
+    setHasMore(more)
     setMentionsLoading(false)
+  }
+
+  const loadMore = async (view) => {
+    if (isLoadingMore || !hasMore || !cursor) return
+    setIsLoadingMore(true)
+    const { rows, cursor: nextCursor, hasMore: more } = await fetchMentionsPage(
+      view,
+      cursor
+    )
+
+    const deduped = rows.filter((m) => !loadedMentionIdsRef.current.has(m.mention_id))
+    deduped.forEach((m) => loadedMentionIdsRef.current.add(m.mention_id))
+
+    setMentions((prev) => [...prev, ...deduped])
+    setCursor(nextCursor)
+    setHasMore(more)
+    setIsLoadingMore(false)
   }
 
   const fetchKeywords = async () => {
@@ -583,8 +621,27 @@ export default function ModernSocialListeningApp({ onLogout }) {
         : onlyFavorites
           ? "total_mentions_highlighted_vw"
           : "mentions_display_vw"
-    fetchMentions(view)
+    loadFirstPage(view)
   }, [activeTab, onlyFavorites])
+
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node) return
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting && hasMore && !isLoadingMore) {
+        const view =
+          activeTab === "dashboard"
+            ? "total_mentions_vw"
+            : onlyFavorites
+              ? "total_mentions_highlighted_vw"
+              : "mentions_display_vw"
+        loadMore(view)
+      }
+    })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [hasMore, isLoadingMore, activeTab, onlyFavorites, mentions])
 
   const fetchSavedReports = async () => {
     const { data: userData } = await supabase.auth.getUser()
@@ -1162,28 +1219,36 @@ export default function ModernSocialListeningApp({ onLogout }) {
         ))}
       </div>
     ) : homeMentions.length ? (
-                      homeMentions.map((m) => (
-                        <div
-                          key={m.mention_id}
-                          className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/50 transition-all duration-200"
-                        >
-                          <MentionCard
-                            mention={m}
-                            source={m.platform}
-                            username={m.source}
-                            timestamp={formatDistanceToNow(new Date(m.created_at), {
-                              addSuffix: true,
-                              locale: es,
-                            })}
-                            content={m.mention}
-                            keyword={m.keyword}
-                            url={m.url}
-                            onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
-                            onToggleHighlight={toggleHighlight}
-                            tags={getTagsForMention(m)}
-                          />
-                        </div>
-                      ))
+                      <>
+                        {homeMentions.map((m) => (
+                          <div
+                            key={m.mention_id}
+                            className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/50 transition-all duration-200"
+                          >
+                            <MentionCard
+                              mention={m}
+                              source={m.platform}
+                              username={m.source}
+                              timestamp={formatDistanceToNow(new Date(m.created_at), {
+                                addSuffix: true,
+                                locale: es,
+                              })}
+                              content={m.mention}
+                              keyword={m.keyword}
+                              url={m.url}
+                              onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
+                              onToggleHighlight={toggleHighlight}
+                              tags={getTagsForMention(m)}
+                            />
+                          </div>
+                        ))}
+                        {isLoadingMore && (
+                          <div className="text-center py-4 text-sm text-slate-400">
+                            Cargando...
+                          </div>
+                        )}
+                        <div ref={sentinelRef} />
+                      </>
                     ) : mentions.length === 0 ? (
                       <div className="text-center py-12">
                         <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
