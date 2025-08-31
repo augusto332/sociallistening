@@ -139,6 +139,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
   const [dashLoading, setDashLoading] = useState(false)
+  const [kpiTotal, setKpiTotal] = useState(0)
+  const [kpiMoM, setKpiMoM] = useState({ curr_cnt: 0, prev_cnt: 0, pct_change: 0 })
   const [series, setSeries] = useState([])
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
@@ -708,6 +710,53 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setEndDate("")
   }
 
+  const fetchDashboardKpis = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywordsUuid = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data: totalData, error: totalError } = await supabase.rpc(
+        "rpt_mentions_total",
+        {
+          p_from,
+          p_to,
+          p_platforms,
+          p_keywords_id: p_keywordsUuid,
+        },
+      )
+      if (totalError) throw totalError
+      setKpiTotal(totalData?.[0]?.total || 0)
+      const { data: momData, error: momError } = await supabase.rpc(
+        "rpt_mentions_mom_variation",
+        {
+          p_from,
+          p_to,
+          p_platforms,
+          p_keywords: p_keywordsUuid,
+        },
+      )
+      if (momError) throw momError
+      setKpiMoM(momData?.[0] || { curr_cnt: 0, prev_cnt: 0, pct_change: 0 })
+    } catch (err) {
+      console.error("Error fetching dashboard KPIs", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   const fetchTopWords = async () => {
     setDashLoading(true)
     try {
@@ -856,6 +905,18 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setDashLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchDashboardKpis()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
 
   useEffect(() => {
     if (activeTab !== "dashboard") return
@@ -1028,58 +1089,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
       ...new Set(activeMentions.map((m) => m.platform).filter(Boolean)),
     ].length
   }, [mentions, activeKeywords])
-
-  const totalActiveKeywordCount = activeKeywords.length
-
-  const monthlyMentionStats = useMemo(() => {
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
-    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
-
-    let currentCount = 0
-    let lastCount = 0
-
-    mentions.forEach((m) => {
-      const created = new Date(m.created_at)
-      const platform = m.platform?.toLowerCase?.()
-      if (!activeKeywords.some((k) => k.keyword === m.keyword)) return
-      if (
-        !selectedDashboardKeywords.includes("all") &&
-        !selectedDashboardKeywords.includes(m.keyword)
-      )
-        return
-      if (
-        !selectedDashboardPlatforms.includes("all") &&
-        !selectedDashboardPlatforms.includes(platform)
-      )
-        return
-
-      const month = created.getMonth()
-      const year = created.getFullYear()
-
-      if (month === currentMonth && year === currentYear) currentCount++
-      else if (month === lastMonth && year === lastMonthYear) lastCount++
-    })
-
-    return { currentCount, lastCount }
-  }, [
-    mentions,
-    activeKeywords,
-    selectedDashboardKeywords,
-    selectedDashboardPlatforms,
-  ])
-
-  const mentionGrowth = useMemo(() => {
-    const { currentCount, lastCount } = monthlyMentionStats
-    if (lastCount === 0) return 0
-    return ((currentCount - lastCount) / lastCount) * 100
-  }, [monthlyMentionStats])
-  // Get stats for dashboard
-  const totalMentions = dashboardFilteredMentions.length
   const activePlatforms = [...new Set(dashboardFilteredMentions.map((m) => m.platform).filter(Boolean))].length
-  const activeKeywordCount = [...new Set(dashboardFilteredMentions.map((m) => m.keyword))].length
+
+  const kpiMoMDisplay = useMemo(() => {
+    const pct = kpiMoM.pct_change
+    if (pct == null) return "—%"
+    const value = Math.abs(pct) >= 1 ? pct.toFixed(0) : pct.toFixed(2)
+    return `${pct >= 0 ? "+" : ""}${parseFloat(value)}%`
+  }, [kpiMoM])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1440,14 +1457,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
                                   variant="secondary"
                                   className="bg-blue-500/10 text-blue-400 border-blue-500/20"
                                 >
-                                  {`${mentionGrowth >= 0 ? "+" : ""}${mentionGrowth.toFixed(0)}%`}
+                                  {kpiMoMDisplay}
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>En comparación con el mes pasado</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <div className="text-2xl font-bold text-white mb-1">{totalMentions.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-white mb-1">{kpiTotal.toLocaleString()}</div>
                         <div className="text-sm text-slate-400">Total de menciones</div>
                       </CardContent>
                     </Card>
