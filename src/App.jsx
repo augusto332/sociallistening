@@ -138,6 +138,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [search, setSearch] = useState("")
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
+  const [dashLoading, setDashLoading] = useState(false)
+  const [topWords, setTopWords] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -703,6 +705,55 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setEndDate("")
   }
 
+  const fetchTopWords = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data, error } = await supabase.rpc("rpt_top_words", {
+        p_from,
+        p_to,
+        p_platforms,
+        p_keywords,
+        p_min_len: 3,
+        p_limit: 30,
+      })
+      if (error) throw error
+      setTopWords(
+        (data || []).map((item) => ({ text: item.word, value: Number(item.cnt) }))
+      )
+    } catch (err) {
+      console.error("Error fetching top words", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchTopWords()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
+
   const handleCreateReport = async () => {
     const { data: userData } = await supabase.auth.getUser()
     const { user } = userData || {}
@@ -881,66 +932,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (lastCount === 0) return 0
     return ((currentCount - lastCount) / lastCount) * 100
   }, [monthlyMentionStats])
-
-  const stopwords = useMemo(
-    () =>
-      new Set([
-        "de",
-        "la",
-        "que",
-        "y",
-        "el",
-        "en",
-        "no",
-        "se",
-        "con",
-        "los",
-        "del",
-        "un",
-        "es",
-        "por",
-        "las",
-        "para",
-        "lo",
-        "al",
-        "si",
-        "sin",
-        "le",
-        "su",
-        "esta",
-        "hay",
-      ]),
-    [],
-  )
-
-  const normalizeWord = (w) =>
-    w
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-
-  const wordCloudData = useMemo(() => {
-    const counts = {}
-    for (const m of dashboardFilteredMentions) {
-      const words = m.mention
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-ZñÑüÜ\s]/g, " ")
-        .split(/\s+/)
-        .filter(Boolean)
-      for (const w of words) {
-        const normalized = normalizeWord(w)
-        if (normalized.length < 3) continue
-        if (stopwords.has(normalized)) continue
-        counts[normalized] = (counts[normalized] || 0) + 1
-      }
-    }
-    return Object.entries(counts)
-      .filter(([_, v]) => v >= 2)
-      .map(([text, value]) => ({ text, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 30)
-  }, [dashboardFilteredMentions, stopwords])
 
   const platformCounts = useMemo(() => {
     const counts = {}
@@ -1406,11 +1397,17 @@ export default function ModernSocialListeningApp({ onLogout }) {
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                           <p className="font-semibold text-white">Palabras más mencionadas</p>
                         </div>
-                        <div className="flex-1">
-                          <WordCloud words={wordCloudData} />
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <div className="flex-1">
+                            {dashLoading ? (
+                              <div className="flex items-center justify-center h-full">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                              </div>
+                            ) : (
+                              <WordCloud words={topWords} />
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
 
                     <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm h-[400px]">
                       <CardContent className="p-6 space-y-4 h-full flex flex-col">
