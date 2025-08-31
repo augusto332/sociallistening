@@ -141,6 +141,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [dashLoading, setDashLoading] = useState(false)
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
+  const [platCounts, setPlatCounts] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -777,6 +778,41 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
+  const fetchPlatforms = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data, error } = await supabase.rpc("rpt_mentions_by_platform", {
+        p_from,
+        p_to,
+        p_platforms,
+        p_keywords,
+      })
+      if (error) throw error
+      setPlatCounts(
+        (data || []).map((item) => ({ platform: item.platform, count: Number(item.cnt) }))
+      )
+    } catch (err) {
+      console.error("Error fetching mentions by platform", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (activeTab !== "dashboard") return
     fetchTopWords()
@@ -793,6 +829,18 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (activeTab !== "dashboard") return
     fetchTopSources()
   }, [activeTab, startDate, endDate, selectedDashboardKeywords, keywords])
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchPlatforms()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
 
   const handleCreateReport = async () => {
     const { data: userData } = await supabase.auth.getUser()
@@ -972,18 +1020,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (lastCount === 0) return 0
     return ((currentCount - lastCount) / lastCount) * 100
   }, [monthlyMentionStats])
-
-  const platformCounts = useMemo(() => {
-    const counts = {}
-    for (const m of dashboardFilteredMentions) {
-      const platform = m.platform?.toLowerCase?.()
-      if (!platform) continue
-      counts[platform] = (counts[platform] || 0) + 1
-    }
-    return Object.entries(counts)
-      .map(([platform, count]) => ({ platform, count }))
-      .sort((a, b) => b.count - a.count)
-  }, [dashboardFilteredMentions])
   const mentionsOverTime = useMemo(() => {
     const counts = {}
     for (const m of dashboardFilteredMentions) {
@@ -1442,7 +1478,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
                           <p className="font-semibold text-white">Menciones por plataforma</p>
                         </div>
                         <div className="flex-1">
-                          <PlatformBarChart data={platformCounts} />
+                          {dashLoading ? (
+                            <div className="flex items-center justify-center h-full">
+                              <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                          ) : (
+                            <PlatformBarChart data={platCounts} />
+                          )}
                         </div>
                       </CardContent>
                     </Card>
