@@ -140,6 +140,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [mentionsLoading, setMentionsLoading] = useState(true)
   const [dashLoading, setDashLoading] = useState(false)
   const [topWords, setTopWords] = useState([])
+  const [sourceTop, setSourceTop] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -742,6 +743,40 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
+  const fetchTopSources = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_sources = null
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data, error } = await supabase.rpc("rpt_mentions_by_source", {
+        p_from,
+        p_to,
+        p_sources,
+        p_keywords,
+        p_limit: 10,
+      })
+      if (error) throw error
+      setSourceTop(
+        (data || []).map((item) => ({ name: item.source, count: Number(item.cnt) }))
+      )
+    } catch (err) {
+      console.error("Error fetching top sources", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (activeTab !== "dashboard") return
     fetchTopWords()
@@ -753,6 +788,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
     selectedDashboardKeywords,
     keywords,
   ])
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchTopSources()
+  }, [activeTab, startDate, endDate, selectedDashboardKeywords, keywords])
 
   const handleCreateReport = async () => {
     const { data: userData } = await supabase.auth.getUser()
@@ -944,20 +984,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .map(([platform, count]) => ({ platform, count }))
       .sort((a, b) => b.count - a.count)
   }, [dashboardFilteredMentions])
-
-  const sourceCounts = useMemo(() => {
-    const counts = {}
-    for (const m of dashboardFilteredMentions) {
-      const name = m.source
-      if (!name) continue
-      counts[name] = (counts[name] || 0) + 1
-    }
-    return Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-  }, [dashboardFilteredMentions])
-
   const mentionsOverTime = useMemo(() => {
     const counts = {}
     for (const m of dashboardFilteredMentions) {
@@ -1425,10 +1451,16 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       <CardContent className="p-6 space-y-4 h-full flex flex-col">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <p className="font-semibold text-white">Usuarios más activos</p>
+                          <p className="font-semibold text-white">Fuentes más activas</p>
                         </div>
                         <div className="flex-1">
-                          <ActiveSourcesBarChart data={sourceCounts} />
+                          {dashLoading ? (
+                            <div className="flex items-center justify-center h-full">
+                              <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                          ) : (
+                            <ActiveSourcesBarChart data={sourceTop} />
+                          )}
                         </div>
                       </CardContent>
                     </Card>
