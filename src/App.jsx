@@ -146,6 +146,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [sourceTop, setSourceTop] = useState([])
   const [kpiPlatformCount, setKpiPlatformCount] = useState(0)
   const [badgePlatformActive, setBadgePlatformActive] = useState(0)
+  const [kpiKeywordCount, setKpiKeywordCount] = useState(0)
+  const [badgeKeywordsActive, setBadgeKeywordsActive] = useState(0)
   const [platCounts, setPlatCounts] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
@@ -798,6 +800,45 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
+  const fetchKeywordsKpis = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data, error } = await supabase.rpc("rpt_keyword_count", {
+        p_from,
+        p_to,
+        p_platforms,
+        p_keywords,
+      })
+      if (error) throw error
+      setKpiKeywordCount(data?.[0]?.keywords ?? 0)
+      const { count, error: activeError } = await supabase
+        .from("dim_keywords")
+        .select("keyword_id", { count: "exact", head: true })
+        .eq("active", true)
+      if (activeError) throw activeError
+      setBadgeKeywordsActive(count ?? 0)
+    } catch (err) {
+      console.error("Error fetching keyword KPIs", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   const fetchTopWords = async () => {
     setDashLoading(true)
     try {
@@ -962,6 +1003,18 @@ export default function ModernSocialListeningApp({ onLogout }) {
   useEffect(() => {
     if (activeTab !== "dashboard") return
     fetchPlatformsKpis()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchKeywordsKpis()
   }, [
     activeTab,
     startDate,
@@ -1516,10 +1569,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             <TrendingUp className="w-6 h-6 text-green-400" />
                           </div>
                           <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                            {`${activeKeywords.length} Activas`}
+                            {`${badgeKeywordsActive} Activas`}
                           </Badge>
                         </div>
-                        <div className="text-2xl font-bold text-white mb-1">{activeKeywords.length}</div>
+                        <div className="text-2xl font-bold text-white mb-1">{kpiKeywordCount}</div>
                         <div className="text-sm text-slate-400">Palabras clave</div>
                       </CardContent>
                     </Card>
