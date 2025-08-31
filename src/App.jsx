@@ -144,6 +144,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [series, setSeries] = useState([])
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
+  const [kpiPlatformCount, setKpiPlatformCount] = useState(0)
+  const [badgePlatformActive, setBadgePlatformActive] = useState(0)
   const [platCounts, setPlatCounts] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
@@ -757,6 +759,45 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
+  const fetchPlatformsKpis = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      const { data, error } = await supabase.rpc("rpt_platform_count", {
+        p_from,
+        p_to,
+        p_platforms,
+        p_keywords,
+      })
+      if (error) throw error
+      setKpiPlatformCount(data?.[0]?.platforms ?? 0)
+      const { data: activeData, error: activeError } = await supabase.rpc(
+        "rpt_platform_count",
+        { p_from: null, p_to: null, p_platforms: null, p_keywords: null },
+      )
+      if (activeError) throw activeError
+      setBadgePlatformActive(activeData?.[0]?.platforms ?? 0)
+    } catch (err) {
+      console.error("Error fetching platform KPIs", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   const fetchTopWords = async () => {
     setDashLoading(true)
     try {
@@ -920,6 +961,18 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   useEffect(() => {
     if (activeTab !== "dashboard") return
+    fetchPlatformsKpis()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
     fetchTopWords()
   }, [
     activeTab,
@@ -1062,34 +1115,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
-
-  const dashboardFilteredMentions = useMemo(() => {
-    return mentions.filter((m) => {
-      const isActive = activeKeywords.some((k) => k.keyword === m.keyword)
-      if (!isActive) return false
-      if (!selectedDashboardKeywords.includes("all") && !selectedDashboardKeywords.includes(m.keyword)) return false
-      const platform = m.platform?.toLowerCase?.()
-      if (!selectedDashboardPlatforms.includes("all") && !selectedDashboardPlatforms.includes(platform)) return false
-      const created = new Date(m.created_at)
-      if (startDate && created < new Date(startDate)) return false
-      if (endDate) {
-        const end = new Date(endDate)
-        end.setHours(23, 59, 59, 999)
-        if (created > end) return false
-      }
-      return true
-    })
-  }, [mentions, activeKeywords, selectedDashboardKeywords, selectedDashboardPlatforms, startDate, endDate])
-
-  const totalActivePlatformCount = useMemo(() => {
-    const activeMentions = mentions.filter((m) =>
-      activeKeywords.some((k) => k.keyword === m.keyword),
-    )
-    return [
-      ...new Set(activeMentions.map((m) => m.platform).filter(Boolean)),
-    ].length
-  }, [mentions, activeKeywords])
-  const activePlatforms = [...new Set(dashboardFilteredMentions.map((m) => m.platform).filter(Boolean))].length
 
   const kpiMoMDisplay = useMemo(() => {
     const pct = kpiMoM.pct_change
@@ -1476,10 +1501,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             <Activity className="w-6 h-6 text-purple-400" />
                           </div>
                           <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                            {`${totalActivePlatformCount} Activas`}
+                            {`${badgePlatformActive} Activas`}
                           </Badge>
                         </div>
-                        <div className="text-2xl font-bold text-white mb-1">{activePlatforms}</div>
+                        <div className="text-2xl font-bold text-white mb-1">{kpiPlatformCount}</div>
                         <div className="text-sm text-slate-400">Plataformas</div>
                       </CardContent>
                     </Card>
