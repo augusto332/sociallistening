@@ -139,6 +139,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [mentions, setMentions] = useState([])
   const [mentionsLoading, setMentionsLoading] = useState(true)
   const [dashLoading, setDashLoading] = useState(false)
+  const [series, setSeries] = useState([])
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
   const [platCounts, setPlatCounts] = useState([])
@@ -813,6 +814,49 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
+  const fetchSeries = async () => {
+    setDashLoading(true)
+    try {
+      const p_from = startDate ? new Date(startDate).toISOString() : null
+      let p_to = null
+      if (endDate) {
+        const d = new Date(endDate)
+        d.setHours(23, 59, 59, 999)
+        p_to = d.toISOString()
+      }
+      const p_platforms = selectedDashboardPlatforms.includes("all")
+        ? null
+        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+      const p_keywords = selectedDashboardKeywords.includes("all")
+        ? null
+        : selectedDashboardKeywords
+            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+            .filter((id) => typeof id === "string")
+      let p_bucket = "day"
+      if (startDate && endDate) {
+        const diff =
+          (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
+        if (diff > 180) p_bucket = "month"
+        else if (diff > 60) p_bucket = "week"
+      }
+      const { data, error } = await supabase.rpc("rpt_mentions_over_time", {
+        p_from,
+        p_to,
+        p_platforms,
+        p_keywords,
+        p_bucket,
+      })
+      if (error) throw error
+      setSeries(
+        (data || []).map((item) => ({ date: item.ts, count: Number(item.cnt) }))
+      )
+    } catch (err) {
+      console.error("Error fetching mentions over time", err)
+    } finally {
+      setDashLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (activeTab !== "dashboard") return
     fetchTopWords()
@@ -833,6 +877,18 @@ export default function ModernSocialListeningApp({ onLogout }) {
   useEffect(() => {
     if (activeTab !== "dashboard") return
     fetchPlatforms()
+  }, [
+    activeTab,
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    keywords,
+  ])
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return
+    fetchSeries()
   }, [
     activeTab,
     startDate,
@@ -1020,31 +1076,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (lastCount === 0) return 0
     return ((currentCount - lastCount) / lastCount) * 100
   }, [monthlyMentionStats])
-  const mentionsOverTime = useMemo(() => {
-    const counts = {}
-    for (const m of dashboardFilteredMentions) {
-      const day = m.created_at.slice(0, 10)
-      counts[day] = (counts[day] || 0) + 1
-    }
-
-    const dates = Object.keys(counts).sort()
-    if (!dates.length) return []
-
-    const start = startDate || dates[0]
-    const end = endDate || dates[dates.length - 1]
-
-    const result = []
-    const current = new Date(start)
-    const endDt = new Date(end)
-    while (current <= endDt) {
-      const key = current.toISOString().slice(0, 10)
-      result.push({ date: key, count: counts[key] || 0 })
-      current.setDate(current.getDate() + 1)
-    }
-
-    return result
-  }, [dashboardFilteredMentions, startDate, endDate])
-
   // Get stats for dashboard
   const totalMentions = dashboardFilteredMentions.length
   const activePlatforms = [...new Set(dashboardFilteredMentions.map((m) => m.platform).filter(Boolean))].length
@@ -1514,7 +1545,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
                           <p className="font-semibold text-white">Evolución de menciones</p>
                         </div>
                         <div className="flex-1">
-                          <MentionsLineChart data={mentionsOverTime} />
+                          {dashLoading ? (
+                            <div className="flex items-center justify-center h-full">
+                              <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                          ) : (
+                            <MentionsLineChart data={series} />
+                          )}
                         </div>
                       </CardContent>
                     </Card>
