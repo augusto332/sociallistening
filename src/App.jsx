@@ -44,6 +44,7 @@ import ReportsTable from "@/components/ReportsTable"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import AISummary from "@/components/AISummary"
 
 // ===== Helpers for time buckets and engagement metrics =====
 // Hours elapsed since a given ISO date
@@ -1333,6 +1334,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             <section className="p-8">
               <div className="flex items-start gap-8 min-h-screen">
                 <div className="flex-1">
+                  <AISummary />
                   {/* Search Header */}
                   <div className="mb-8">
                     <div className="relative mb-6">
