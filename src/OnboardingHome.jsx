@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -40,8 +46,8 @@ export default function ModernOnboardingHome() {
   const [saved, setSaved] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [step, setStep] = useState(0)
-  const [languages, setLanguages] = useState([])
-  const [savingLanguages, setSavingLanguages] = useState(false)
+  const [language, setLanguage] = useState("")
+  const [savingLanguage, setSavingLanguage] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -71,25 +77,20 @@ export default function ModernOnboardingHome() {
     setKeywords(keywords.filter((k) => k !== kw))
   }
 
-  const toggleLanguage = (lang) => {
-    setLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
-    )
-  }
 
-  const saveLanguages = async () => {
-    if (!languages.length) return
-    setSavingLanguages(true)
+  const saveLanguage = async () => {
+    if (!language) return
+    setSavingLanguage(true)
     const { error } = await supabase
       .from("dim_keywords")
-      .update({ language_codes: languages })
+      .update({ language })
       .eq("user_id", user.id)
       .in("keyword", keywords)
-    setSavingLanguages(false)
+    setSavingLanguage(false)
     if (!error) {
       navigate("/app/mentions")
     } else {
-      console.error("Error saving languages", error)
+      console.error("Error saving language", error)
     }
   }
 
@@ -349,7 +350,7 @@ export default function ModernOnboardingHome() {
           )}
           {step === 2 && (
             <motion.div
-              key="languages"
+              key="language"
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -100, opacity: 0 }}
@@ -359,30 +360,30 @@ export default function ModernOnboardingHome() {
               <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50">
                 <CardContent className="p-8">
                   <div className="mb-8">
-                    <h2 className="text-2xl font-semibold text-white mb-2">Selecciona los idiomas</h2>
-                    <p className="text-slate-400">Elige los idiomas en los que deseas monitorear las menciones.</p>
+                    <h2 className="text-2xl font-semibold text-white mb-2">Selecciona el idioma</h2>
+                    <p className="text-slate-400">Elige el idioma en el que deseas monitorear las menciones o selecciona "Todos".</p>
                   </div>
 
-                  <div className="space-y-4 mb-8">
-                    {[{ id: "es", label: "Español" }, { id: "en", label: "Inglés" }].map((lang) => (
-                      <label key={lang.id} htmlFor={lang.id} className="flex items-center gap-2">
-                        <Checkbox
-                          id={lang.id}
-                          checked={languages.includes(lang.id)}
-                          onCheckedChange={() => toggleLanguage(lang.id)}
-                        />
-                        <span className="text-white">{lang.label}</span>
-                      </label>
-                    ))}
+                  <div className="mb-8">
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona un idioma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="es">Español</SelectItem>
+                        <SelectItem value="en">Inglés</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button
-                      onClick={saveLanguages}
-                      disabled={savingLanguages || languages.length === 0}
+                      onClick={saveLanguage}
+                      disabled={savingLanguage || !language}
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 h-12 flex-1"
                     >
-                      {savingLanguages ? (
+                      {savingLanguage ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                           Guardando...
@@ -395,14 +396,6 @@ export default function ModernOnboardingHome() {
                       )}
                     </Button>
                   </div>
-
-                  {languages.length === 0 && (
-                    <div className="mt-6 p-4 bg-slate-700/30 border border-slate-600/30 rounded-lg">
-                      <p className="text-sm text-slate-400 text-center">
-                        💡 <strong>Tip:</strong> Puedes seleccionar más de un idioma.
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
