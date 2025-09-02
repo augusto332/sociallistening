@@ -171,7 +171,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null)
   const [keywordChanges, setKeywordChanges] = useState({})
   const [showKeywordLangs, setShowKeywordLangs] = useState(false)
-  const [newKeywordLangs, setNewKeywordLangs] = useState([])
+  const [newKeywordLang, setNewKeywordLang] = useState("")
   const [pendingKeyword, setPendingKeyword] = useState("")
   const navigate = useNavigate()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
@@ -476,7 +476,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const { data, error } = await supabase
       .from("dim_keywords")
       .select(
-        "keyword, keyword_id, created_at, active, language_codes, last_processed_at_yt, last_processed_at_rd, last_processed_at_tw",
+        "keyword, keyword_id, created_at, active, language, last_processed_at_yt, last_processed_at_rd, last_processed_at_tw",
       )
       .order("created_at", { ascending: false })
     if (error) {
@@ -529,12 +529,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (!newKeyword.trim()) return
     setPendingKeyword(newKeyword.trim())
     setShowKeywordLangs(true)
-    setNewKeywordLangs([])
+    setNewKeywordLang("")
     setAddKeywordMessage(null)
   }
 
   const saveNewKeyword = async () => {
-    if (!pendingKeyword.trim() || newKeywordLangs.length === 0) return
+    if (!pendingKeyword.trim() || !newKeywordLang) return
     setAddKeywordMessage(null)
     const { data: userData } = await supabase.auth.getUser()
     const { user } = userData || {}
@@ -549,7 +549,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
         user_id: user.id,
         created_at: new Date().toISOString(),
         active: false,
-        language_codes: newKeywordLangs,
+        language: newKeywordLang,
       })
       .select()
     if (error || !data || data.length === 0) {
@@ -562,7 +562,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setKeywords((k) => [...data, ...k])
       setNewKeyword("")
       setPendingKeyword("")
-      setNewKeywordLangs([])
+      setNewKeywordLang("")
       setShowKeywordLangs(false)
       setAddKeywordMessage({ type: "success", text: "Keyword agregada" })
     }
@@ -1921,16 +1921,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     </div>
                     {showKeywordLangs && (
                       <div className="flex items-center gap-3 mt-4">
-                        <MultiSelect
-                          options={[{ label: "Español", value: "es" }, { label: "Inglés", value: "en" }]}
-                          value={newKeywordLangs}
-                          onChange={setNewKeywordLangs}
-                          placeholder="Selecciona idiomas"
-                          className="flex-1"
-                        />
+                        <Select value={newKeywordLang} onValueChange={setNewKeywordLang}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Selecciona un idioma" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="es">Español</SelectItem>
+                            <SelectItem value="en">Inglés</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button
                           onClick={saveNewKeyword}
-                          disabled={newKeywordLangs.length === 0}
+                          disabled={!newKeywordLang}
                           className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
                         >
                           Guardar
@@ -1939,7 +1942,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                           variant="outline"
                           onClick={() => {
                             setShowKeywordLangs(false)
-                            setNewKeywordLangs([])
+                            setNewKeywordLang("")
                           }}
                           className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-transparent"
                         >

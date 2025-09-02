@@ -14,7 +14,7 @@ export default function KeywordTable({ keywords, onToggle }) {
       <TableHeader>
         <TableRow>
           <TableHead>Keyword</TableHead>
-          <TableHead>Idioma(s)</TableHead>
+          <TableHead>Idioma</TableHead>
           <TableHead>Fecha de creación</TableHead>
           <TableHead>Última extracción de datos</TableHead>
           <TableHead>Estado</TableHead>
@@ -37,7 +37,7 @@ export default function KeywordTable({ keywords, onToggle }) {
           return (
             <TableRow key={k.keyword_id}>
               <TableCell className="font-medium">{k.keyword}</TableCell>
-              <TableCell>{k.language_codes?.join(", ") || "-"}</TableCell>
+              <TableCell>{k.language || "-"}</TableCell>
               <TableCell>
                 {format(new Date(k.created_at), "dd/MM/yyyy", { locale: es })}
               </TableCell>
