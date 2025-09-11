@@ -1425,6 +1425,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                               onHide={() => setHiddenMentions((prev) => [...prev, m.url])}
                               onToggleHighlight={toggleHighlight}
                               tags={getTagsForMention(m)}
+                              aiTags={m.ai_classification_tags || []}
                             />
                           </div>
                         ))}

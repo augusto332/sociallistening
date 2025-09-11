@@ -34,6 +34,7 @@ export default function MentionCard({
   onToggleHighlight,
   showDismiss = true,
   tags = [], // precomputed tags
+  aiTags = [], // AI classification tags
 }) {
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
@@ -115,16 +116,25 @@ export default function MentionCard({
   };
 
   const renderTags = () => {
-    if (!tags.length) return null;
+    if (!tags.length && !aiTags.length) return null;
     return (
       <div className="flex items-center gap-2 mt-1 flex-wrap">
         {tags.map((type, i) => (
           <Badge
-            key={i}
+            key={`tag-${i}`}
             variant="secondary"
             className={`${tagClasses[type]} rounded-lg px-3 py-1 text-sm font-semibold`}
           >
             {tagTexts[type]}
+          </Badge>
+        ))}
+        {aiTags.map((tag, i) => (
+          <Badge
+            key={`ai-${i}`}
+            variant="secondary"
+            className="bg-amber-500/10 text-amber-400 border-amber-500/20 rounded-lg px-3 py-1 text-sm font-semibold"
+          >
+            {tag}
           </Badge>
         ))}
       </div>
