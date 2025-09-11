@@ -290,9 +290,16 @@ export default function ModernMentionCard({
                           className="p-4 rounded-lg bg-slate-800/40 border border-slate-700/50 flex items-start gap-3"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-300 leading-relaxed">
-                              {c.comment ? he.decode(c.comment) : "—"}
-                            </p>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <p className="text-sm text-slate-300 leading-relaxed truncate">
+                                  {c.comment ? he.decode(c.comment) : "—"}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {c.comment ? he.decode(c.comment) : "—"}
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                           <div className="flex items-center gap-1 text-xs font-medium text-slate-400 shrink-0">
                             <CommentIcon className="w-3 h-3" />
