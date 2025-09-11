@@ -151,7 +151,7 @@ export default function ModernMentionCard({
     <TooltipProvider>
       <Card
         onClick={() => setExpanded((e) => !e)}
-        className="relative bg-gradient-to-br from-slate-800/50 to-slate-800/30 backdrop-blur-sm border border-slate-700/50 hover:bg-gradient-to-br hover:from-slate-800/70 hover:to-slate-800/50 transition-all duration-200 rounded-xl cursor-pointer shadow-lg"
+        className="relative bg-gradient-to-br from-slate-800/50 to-slate-800/30 backdrop-blur-sm border border-slate-700/50 hover:bg-gradient-to-br hover:from-slate-800/70 hover:to-slate-800/50 transition-all duration-200 rounded-xl cursor-pointer shadow-lg w-full"
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -209,7 +209,7 @@ export default function ModernMentionCard({
           </div>
         )}
 
-        <CardContent className="p-6">
+        <CardContent className="p-6 w-full">
           <div className="flex gap-4">
             {/* Platform Icon */}
             <div
@@ -287,12 +287,19 @@ export default function ModernMentionCard({
                       return (
                         <div
                           key={i}
-                          className="p-4 rounded-lg bg-slate-800/40 border border-slate-700/50 flex items-start gap-3"
+                          className="p-4 rounded-lg bg-slate-800/40 border border-slate-700/50 flex items-start gap-3 w-full"
                         >
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 w-full">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <p className="text-sm text-slate-300 leading-relaxed truncate">
+                                <p
+                                  className="text-sm text-slate-300 leading-relaxed w-full overflow-hidden text-ellipsis"
+                                  style={{
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                  }}
+                                >
                                   {c.comment ? he.decode(c.comment) : "—"}
                                 </p>
                               </TooltipTrigger>
