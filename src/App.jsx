@@ -627,13 +627,15 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }, [])
 
   useEffect(() => {
-    const view =
-      activeTab === "dashboard"
-        ? "total_mentions_vw"
-        : onlyFavorites
+    if (activeTab === "dashboard") {
+      setMentionsLoading(false)
+    } else {
+      const view =
+        onlyFavorites
           ? "total_mentions_highlighted_vw"
           : "mentions_display_vw"
-    loadFirstPage(view)
+      loadFirstPage(view)
+    }
   }, [activeTab, onlyFavorites])
 
   useEffect(() => {
@@ -641,13 +643,16 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (!node) return
     const observer = new IntersectionObserver((entries) => {
       const entry = entries[0]
-      if (entry.isIntersecting && hasMore && !isLoadingMore) {
+      if (
+        entry.isIntersecting &&
+        hasMore &&
+        !isLoadingMore &&
+        activeTab !== "dashboard"
+      ) {
         const view =
-          activeTab === "dashboard"
-            ? "total_mentions_vw"
-            : onlyFavorites
-              ? "total_mentions_highlighted_vw"
-              : "mentions_display_vw"
+          onlyFavorites
+            ? "total_mentions_highlighted_vw"
+            : "mentions_display_vw"
         loadMore(view)
       }
     })
