@@ -161,6 +161,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
   const [tagsFilter, setTagsFilter] = useState([])
+  const [aiTagsFilter, setAiTagsFilter] = useState([])
   const [order, setOrder] = useState("recent")
   const [hiddenMentions, setHiddenMentions] = useState([])
   const [keywords, setKeywords] = useState([])
@@ -311,7 +312,17 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const matchesKeyword = keywordsFilter.includes("all") || keywordsFilter.includes(m.keyword)
     const mentionTags = getTagsForMention(m)
     const matchesTag = tagsFilter.length === 0 || tagsFilter.some((t) => mentionTags.includes(t))
-    return matchesSearch && matchesSource && matchesRange && matchesKeyword && matchesTag
+    const matchesAiTag =
+      aiTagsFilter.length === 0 ||
+      (m.ai_classification_tags || []).some((t) => aiTagsFilter.includes(t))
+    return (
+      matchesSearch &&
+      matchesSource &&
+      matchesRange &&
+      matchesKeyword &&
+      matchesTag &&
+      matchesAiTag
+    )
   })
 
   const sortedMentions = [...filteredMentions].sort((a, b) => {
@@ -705,12 +716,17 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setTagsFilter((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
   }
 
+  const toggleAiTagFilter = (tag) => {
+    setAiTagsFilter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
   const clearSidebarFilters = () => {
     setRangeFilter("7")
     setSourcesFilter([])
     setSearch("")
     setKeywordsFilter(["all"])
     setTagsFilter([])
+    setAiTagsFilter([])
   }
 
   const clearDashboardFilters = () => {
@@ -1174,6 +1190,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
+  const aiTagOptions = useMemo(() => {
+    const set = new Set()
+    mentions.forEach((m) => {
+      ;(m.ai_classification_tags || []).forEach((tag) => set.add(tag))
+    })
+    return Array.from(set)
+  }, [mentions])
 
   const kpiMoMDisplay = useMemo(() => {
     const pct = kpiMoM.pct_change
@@ -1463,6 +1486,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   keywordOptions={activeKeywords}
                   tags={tagsFilter}
                   toggleTag={toggleTagFilter}
+                  aiTags={aiTagsFilter}
+                  toggleAiTag={toggleAiTagFilter}
+                  aiTagOptions={aiTagOptions}
                   clearFilters={clearSidebarFilters}
                 />
               </div>
