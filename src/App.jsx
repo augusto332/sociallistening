@@ -1696,7 +1696,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
                   Mis Reportes
                 </h1>
-                <p className="text-slate-400">Crea y gestiona tus reportes personalizados</p>
+                <p className="text-slate-400">Crea y gestiona tus reportes descargables</p>
               </div>
 
               <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">

@@ -114,7 +114,7 @@ export default function RightSidebar({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-slate-400" />
-              <h4 className="font-medium text-white">Plataformas</h4>
+              <h4 className="font-medium text-white">Fuentes</h4>
             </div>
 
             <div className="grid grid-cols-2 gap-x-4">
