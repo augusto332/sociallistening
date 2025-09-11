@@ -3,7 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { FilterX } from "lucide-react";
+import { FilterX, Sparkles, TrendingUp, Users, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MultiSelect from "@/components/MultiSelect";
 
@@ -18,15 +18,33 @@ export default function RightSidebar({
   keywordOptions = [],
   tags = [],
   toggleTag,
+  aiTags = [],
+  toggleAiTag,
+  aiTagOptions = [],
   clearFilters,
 }) {
   const handleClearFilters = () => clearFilters();
 
-  const tagClasses = {
-    approval: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    reach: "bg-green-500/10 text-green-400 border-green-500/20",
-    conversation: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  const tagConfig = {
+    approval: {
+      text: "Muy valorado",
+      icon: TrendingUp,
+      className: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    },
+    reach: {
+      text: "Gran alcance",
+      icon: Users,
+      className: "bg-green-500/10 text-green-400 border-green-500/20",
+    },
+    conversation: {
+      text: "Generó conversación",
+      icon: MessageSquare,
+      className: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    },
   };
+
+  const aiTagClass =
+    "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/20";
 
   return (
     <TooltipProvider>
@@ -142,26 +160,49 @@ export default function RightSidebar({
         <div>
           <p className="font-semibold mb-2">Etiquetas</p>
           <div className="flex flex-wrap gap-2">
-            {[
-              { id: "approval", label: "Muy valorado" },
-              { id: "reach", label: "Gran alcance" },
-              { id: "conversation", label: "Generó conversación" },
-            ].map((t) => (
-              <Badge
-                key={t.id}
-                onClick={() => toggleTag(t.id)}
-                className={cn(
-                  tagClasses[t.id],
-                  "rounded-lg px-3 py-1 text-sm font-semibold cursor-pointer",
-                  tags.includes(t.id) ? "" : "opacity-50"
-                )}
-                variant="secondary"
-              >
-                {t.label}
-              </Badge>
-            ))}
+            {Object.entries(tagConfig).map(([id, config]) => {
+              const TagIcon = config.icon;
+              return (
+                <Badge
+                  key={id}
+                  onClick={() => toggleTag(id)}
+                  className={cn(
+                    config.className,
+                    "rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 cursor-pointer",
+                    tags.includes(id) ? "" : "opacity-50"
+                  )}
+                  variant="secondary"
+                >
+                  <TagIcon className="w-3 h-3" />
+                  {config.text}
+                </Badge>
+              );
+            })}
           </div>
         </div>
+
+        {aiTagOptions.length > 0 && (
+          <div>
+            <p className="font-semibold mb-2 mt-4">Clasificación AI</p>
+            <div className="flex flex-wrap gap-2">
+              {aiTagOptions.map((tag) => (
+                <Badge
+                  key={tag}
+                  onClick={() => toggleAiTag(tag)}
+                  className={cn(
+                    aiTagClass,
+                    "rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 cursor-pointer",
+                    aiTags.includes(tag) ? "" : "opacity-50"
+                  )}
+                  variant="secondary"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* FOOTER */}
