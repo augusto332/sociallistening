@@ -19,6 +19,10 @@ import {
   TrendingUp,
   Users,
   MessageSquare,
+  Smile,
+  Meh,
+  Frown,
+  BarChart3,
 } from "lucide-react"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import he from "he"
@@ -54,11 +58,115 @@ export default function ModernMentionCard({
 
   const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : []
 
+  // Mock sentiment data - replace with actual data from your API
+  const sentimentData = {
+    positive: mention.sentiment_positive || 45,
+    neutral: mention.sentiment_neutral || 35,
+    negative: mention.sentiment_negative || 20,
+  }
+
   const handleFavClick = async (e) => {
     e.stopPropagation()
     if (onToggleHighlight) {
       await onToggleHighlight(mention)
     }
+  }
+
+  const renderSentimentAnalysis = () => {
+    // Only show for YouTube and Reddit (platforms with comments)
+    if (!["youtube", "reddit"].includes(platform) || !topComments.length) return null
+
+    const total = sentimentData.positive + sentimentData.neutral + sentimentData.negative
+    if (total === 0) return null
+
+    const positivePercent = Math.round((sentimentData.positive / total) * 100)
+    const neutralPercent = Math.round((sentimentData.neutral / total) * 100)
+    const negativePercent = Math.round((sentimentData.negative / total) * 100)
+
+    return (
+      <div className="mt-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart3 className="w-4 h-4 text-slate-400" />
+          <span className="text-sm font-semibold text-white">Análisis de sentimiento</span>
+          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs">
+            {total} comentarios
+          </Badge>
+        </div>
+
+        {/* Sentiment Bars */}
+        <div className="space-y-3">
+          {/* Positive */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 w-20">
+              <Smile className="w-4 h-4 text-green-400" />
+              <span className="text-xs font-medium text-green-400">{positivePercent}%</span>
+            </div>
+            <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                style={{ width: `${positivePercent}%` }}
+              />
+            </div>
+            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.positive}</span>
+          </div>
+
+          {/* Neutral */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 w-20">
+              <Meh className="w-4 h-4 text-slate-400" />
+              <span className="text-xs font-medium text-slate-400">{neutralPercent}%</span>
+            </div>
+            <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-slate-500 to-slate-400 rounded-full transition-all duration-500"
+                style={{ width: `${neutralPercent}%` }}
+              />
+            </div>
+            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.neutral}</span>
+          </div>
+
+          {/* Negative */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 w-20">
+              <Frown className="w-4 h-4 text-red-400" />
+              <span className="text-xs font-medium text-red-400">{negativePercent}%</span>
+            </div>
+            <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+                style={{ width: `${negativePercent}%` }}
+              />
+            </div>
+            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.negative}</span>
+          </div>
+        </div>
+
+        {/* Overall Sentiment Indicator */}
+        <div className="mt-4 pt-3 border-t border-slate-700/50">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Sentimiento general:</span>
+            <div className="flex items-center gap-2">
+              {positivePercent > negativePercent && positivePercent > neutralPercent ? (
+                <>
+                  <Smile className="w-3 h-3 text-green-400" />
+                  <span className="text-xs font-medium text-green-400">Positivo</span>
+                </>
+              ) : negativePercent > positivePercent && negativePercent > neutralPercent ? (
+                <>
+                  <Frown className="w-3 h-3 text-red-400" />
+                  <span className="text-xs font-medium text-red-400">Negativo</span>
+                </>
+              ) : (
+                <>
+                  <Meh className="w-3 h-3 text-slate-400" />
+                  <span className="text-xs font-medium text-slate-400">Neutral</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const renderMetrics = () => {
@@ -273,6 +381,9 @@ export default function ModernMentionCard({
               {/* Metrics */}
               {expanded && renderMetrics()}
 
+              {/* Sentiment Analysis - Only for YouTube and Reddit */}
+              {expanded && renderSentimentAnalysis()}
+
               {/* Top Comments */}
               {expanded && topComments.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-slate-700/50">
@@ -303,9 +414,7 @@ export default function ModernMentionCard({
                                   {c.comment ? he.decode(c.comment) : "—"}
                                 </p>
                               </TooltipTrigger>
-                              <TooltipContent>
-                                {c.comment ? he.decode(c.comment) : "—"}
-                              </TooltipContent>
+                              <TooltipContent>{c.comment ? he.decode(c.comment) : "—"}</TooltipContent>
                             </Tooltip>
                           </div>
                           <div className="flex items-center gap-1 text-xs font-medium text-slate-400 shrink-0">
