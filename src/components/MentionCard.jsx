@@ -65,6 +65,92 @@ export default function ModernMentionCard({
     }
   }
 
+  // Get mention sentiment (for the main post)
+  // TODO: Replace hardcoded sentiment with real data from mention.sentiment or mention.mention_sentiment
+  const getMentionSentiment = () => {
+    // Hardcoded positive sentiment for testing - replace with real data later
+    const mentionSentiment = "positive"
+
+    const sentimentConfig = {
+      positive: { icon: Smile, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
+      neutral: { icon: Meh, color: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/20" },
+      negative: { icon: Frown, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
+    }
+
+    const config = sentimentConfig[mentionSentiment.toLowerCase()]
+    if (!config) return null
+
+    const SentimentIcon = config.icon
+    return (
+      <Badge
+        variant="secondary"
+        className={`${config.bg} ${config.color} ${config.border} rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5`}
+      >
+        <SentimentIcon className="w-3 h-3" />
+        {mentionSentiment.charAt(0).toUpperCase() + mentionSentiment.slice(1)}
+      </Badge>
+    )
+  }
+
+  // Get comments sentiment preview
+  const getCommentsSentimentPreview = () => {
+    if (!["youtube", "reddit"].includes(platform) || !topComments.length) return null
+
+    const total = Number(mention.comments) || 0
+    if (total === 0) return null
+
+    const positivePercent = Number(mention.comments_positive_pct) || 0
+    const neutralPercent = Number(mention.comments_neutral_pct) || 0
+    const negativePercent = Number(mention.comments_negative_pct) || 0
+
+    // Determine dominant sentiment
+    let dominantSentiment = "neutral"
+    let dominantPercent = neutralPercent
+    let dominantIcon = Meh
+    let dominantColor = "text-slate-400"
+
+    if (positivePercent > neutralPercent && positivePercent > negativePercent) {
+      dominantSentiment = "positive"
+      dominantPercent = positivePercent
+      dominantIcon = Smile
+      dominantColor = "text-green-400"
+    } else if (negativePercent > positivePercent && negativePercent > neutralPercent) {
+      dominantSentiment = "negative"
+      dominantPercent = negativePercent
+      dominantIcon = Frown
+      dominantColor = "text-red-400"
+    }
+
+    const DominantIcon = dominantIcon
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+            <BarChart3 className="w-3 h-3 text-slate-400" />
+            <div className="flex items-center gap-1">
+              <DominantIcon className={`w-3 h-3 ${dominantColor}`} />
+              <span className={`text-xs font-medium ${dominantColor}`}>{dominantPercent.toFixed(0)}%</span>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="space-y-1">
+            <div className="text-xs font-medium">Sentimiento de comentarios:</div>
+            <div className="flex items-center gap-2 text-xs">
+              <Smile className="w-3 h-3 text-green-400" />
+              <span className="text-green-400">{positivePercent.toFixed(1)}%</span>
+              <Meh className="w-3 h-3 text-slate-400" />
+              <span className="text-slate-400">{neutralPercent.toFixed(1)}%</span>
+              <Frown className="w-3 h-3 text-red-400" />
+              <span className="text-red-400">{negativePercent.toFixed(1)}%</span>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
   const renderSentimentAnalysis = () => {
     // Only show for YouTube and Reddit (platforms with comments)
     if (!["youtube", "reddit"].includes(platform) || !topComments.length) return null
@@ -325,19 +411,38 @@ export default function ModernMentionCard({
             </div>
 
             <div className="flex-1 space-y-3 min-w-0">
-              {/* AI Classification Tags - Top Position */}
-              {aiTags.length > 0 && (
+              {/* AI Classification Tags + Sentiment Badges - Top Position */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* AI Tags */}
+                {aiTags.map((tag, i) => (
+                  <Badge
+                    key={`ai-${i}`}
+                    variant="secondary"
+                    className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/20 rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {tag}
+                  </Badge>
+                ))}
+
+                {/* Mention Sentiment Badge */}
+                {getMentionSentiment()}
+
+                {/* Keyword Badge */}
+                {keyword && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-slate-700/50 text-slate-300 border-slate-600/50 text-xs px-2 py-1"
+                  >
+                    {keyword}
+                  </Badge>
+                )}
+              </div>
+
+              {/* If no AI tags, show keyword and sentiment */}
+              {aiTags.length === 0 && (keyword || getMentionSentiment()) && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  {aiTags.map((tag, i) => (
-                    <Badge
-                      key={`ai-${i}`}
-                      variant="secondary"
-                      className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/20 rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      {tag}
-                    </Badge>
-                  ))}
+                  {getMentionSentiment()}
                   {keyword && (
                     <Badge
                       variant="secondary"
@@ -349,22 +454,14 @@ export default function ModernMentionCard({
                 </div>
               )}
 
-              {/* If no AI tags, show keyword alone */}
-              {aiTags.length === 0 && keyword && (
-                <div>
-                  <Badge
-                    variant="secondary"
-                    className="bg-slate-700/50 text-slate-300 border-slate-600/50 text-xs px-2 py-1"
-                  >
-                    {keyword}
-                  </Badge>
-                </div>
-              )}
-
               {/* Header */}
               <div className="flex items-center justify-between gap-3 min-w-0">
                 <span className="font-semibold text-white">@{username}</span>
-                <span className="text-xs text-slate-500 shrink-0">{timestamp}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Comments Sentiment Preview */}
+                  {!expanded && getCommentsSentimentPreview()}
+                  <span className="text-xs text-slate-500">{timestamp}</span>
+                </div>
               </div>
 
               {/* Content */}
