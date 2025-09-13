@@ -58,13 +58,6 @@ export default function ModernMentionCard({
 
   const topComments = Array.isArray(mention?.top_comments) ? mention.top_comments : []
 
-  // Mock sentiment data - replace with actual data from your API
-  const sentimentData = {
-    positive: mention.sentiment_positive || 45,
-    neutral: mention.sentiment_neutral || 35,
-    negative: mention.sentiment_negative || 20,
-  }
-
   const handleFavClick = async (e) => {
     e.stopPropagation()
     if (onToggleHighlight) {
@@ -76,12 +69,16 @@ export default function ModernMentionCard({
     // Only show for YouTube and Reddit (platforms with comments)
     if (!["youtube", "reddit"].includes(platform) || !topComments.length) return null
 
-    const total = sentimentData.positive + sentimentData.neutral + sentimentData.negative
+    const total = Number(mention.comments) || 0
     if (total === 0) return null
 
-    const positivePercent = Math.round((sentimentData.positive / total) * 100)
-    const neutralPercent = Math.round((sentimentData.neutral / total) * 100)
-    const negativePercent = Math.round((sentimentData.negative / total) * 100)
+    const positivePercent = Number(mention.comments_positive_pct) || 0
+    const neutralPercent = Number(mention.comments_neutral_pct) || 0
+    const negativePercent = Number(mention.comments_negative_pct) || 0
+
+    const positiveCount = Math.round((positivePercent / 100) * total)
+    const neutralCount = Math.round((neutralPercent / 100) * total)
+    const negativeCount = Math.round((negativePercent / 100) * total)
 
     return (
       <div className="mt-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
@@ -99,7 +96,7 @@ export default function ModernMentionCard({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 w-20">
               <Smile className="w-4 h-4 text-green-400" />
-              <span className="text-xs font-medium text-green-400">{positivePercent}%</span>
+              <span className="text-xs font-medium text-green-400">{positivePercent.toFixed(1)}%</span>
             </div>
             <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
               <div
@@ -107,14 +104,14 @@ export default function ModernMentionCard({
                 style={{ width: `${positivePercent}%` }}
               />
             </div>
-            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.positive}</span>
+            <span className="text-xs text-slate-500 w-12 text-right">{positiveCount}</span>
           </div>
 
           {/* Neutral */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 w-20">
               <Meh className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-medium text-slate-400">{neutralPercent}%</span>
+              <span className="text-xs font-medium text-slate-400">{neutralPercent.toFixed(1)}%</span>
             </div>
             <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
               <div
@@ -122,14 +119,14 @@ export default function ModernMentionCard({
                 style={{ width: `${neutralPercent}%` }}
               />
             </div>
-            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.neutral}</span>
+            <span className="text-xs text-slate-500 w-12 text-right">{neutralCount}</span>
           </div>
 
           {/* Negative */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 w-20">
               <Frown className="w-4 h-4 text-red-400" />
-              <span className="text-xs font-medium text-red-400">{negativePercent}%</span>
+              <span className="text-xs font-medium text-red-400">{negativePercent.toFixed(1)}%</span>
             </div>
             <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
               <div
@@ -137,7 +134,7 @@ export default function ModernMentionCard({
                 style={{ width: `${negativePercent}%` }}
               />
             </div>
-            <span className="text-xs text-slate-500 w-12 text-right">{sentimentData.negative}</span>
+            <span className="text-xs text-slate-500 w-12 text-right">{negativeCount}</span>
           </div>
         </div>
 
