@@ -572,17 +572,43 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const fetchAccount = async () => {
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser()
-    if (user) {
-      const displayName = user.user_metadata?.display_name || ""
-      setAccountEmail(user.email || "")
-      setAccountName(displayName)
-      setOriginalAccountName(displayName)
-      const plan = user.user_metadata?.plan || user.app_metadata?.plan || "free"
-      setUserPlan(plan)
-    } else {
-      setUserPlan("free")
+
+    if (userError) {
+      console.error("Error fetching authenticated user", userError)
     }
+
+    if (!user) {
+      setAccountEmail("")
+      setAccountName("")
+      setOriginalAccountName("")
+      setUserPlan("free")
+      return
+    }
+
+    const displayName = user.user_metadata?.display_name || ""
+    setAccountEmail(user.email || "")
+    setAccountName(displayName)
+    setOriginalAccountName(displayName)
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profile")
+      .select("plan")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    if (profileError) {
+      console.error("Error fetching profile plan", profileError)
+    }
+
+    const planFromProfile = profileData?.plan
+    const normalizedPlan =
+      typeof planFromProfile === "string" && planFromProfile.trim()
+        ? planFromProfile.trim().toLowerCase()
+        : "free"
+
+    setUserPlan(normalizedPlan)
   }
 
   const togglePasswordFields = () => {
