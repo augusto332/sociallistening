@@ -21,6 +21,7 @@ export default function RightSidebar({
   toggleAiTag,
   aiTagOptions = [],
   clearFilters,
+  isFreePlan = true,
 }) {
   const handleClearFilters = () => clearFilters()
 
@@ -43,6 +44,19 @@ export default function RightSidebar({
   }
 
   const aiTagClass = "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/20"
+
+  const primarySources = [
+    { id: "youtube", label: "YouTube" },
+    { id: "reddit", label: "Reddit" },
+    { id: "twitter", label: "Twitter", requiresUpgrade: true },
+    { id: "tiktok", label: "TikTok", requiresUpgrade: true },
+  ]
+
+  const secondarySources = [
+    { id: "instagram", label: "Instagram", requiresUpgrade: true },
+    { id: "facebook", label: "Facebook", requiresUpgrade: true },
+    { id: "otros", label: "Otros", requiresUpgrade: true },
+  ]
 
   return (
     <TooltipProvider>
@@ -92,77 +106,74 @@ export default function RightSidebar({
 
             <div className="grid grid-cols-2 gap-x-4">
               <div className="space-y-3">
-                {[
-                  { id: "youtube", label: "YouTube" },
-                  { id: "reddit", label: "Reddit" },
-                  { id: "twitter", label: "Twitter", disabled: true },
-                  { id: "tiktok", label: "TikTok", disabled: true },
-                ].map((s) => (
-                  <Tooltip key={s.id}>
-                    <TooltipTrigger asChild>
-                      <label
-                        htmlFor={s.id}
-                        className={cn(
-                          "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
-                          "hover:bg-slate-800/50",
-                          s.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
-                        )}
-                      >
-                        <Checkbox
-                          id={s.id}
-                          checked={sources.includes(s.id)}
-                          onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                          disabled={s.disabled}
-                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                        />
-                        <span className={cn("text-sm", s.disabled ? "text-slate-500" : "text-slate-300")}>
-                          {s.label}
-                        </span>
-                      </label>
-                    </TooltipTrigger>
-                    {s.disabled && (
-                      <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
-                        No disponible en versión gratuita
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ))}
+                {primarySources.map((s) => {
+                  const disabled = isFreePlan && s.requiresUpgrade
+                  return (
+                    <Tooltip key={s.id}>
+                      <TooltipTrigger asChild>
+                        <label
+                          htmlFor={s.id}
+                          className={cn(
+                            "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
+                            "hover:bg-slate-800/50",
+                            disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
+                          )}
+                        >
+                          <Checkbox
+                            id={s.id}
+                            checked={sources.includes(s.id)}
+                            onCheckedChange={!disabled ? () => toggleSource(s.id) : undefined}
+                            disabled={disabled}
+                            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                          />
+                          <span className={cn("text-sm", disabled ? "text-slate-500" : "text-slate-300")}>
+                            {s.label}
+                          </span>
+                        </label>
+                      </TooltipTrigger>
+                      {disabled && (
+                        <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
+                          No disponible en versión gratuita
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  )
+                })}
               </div>
               <div className="space-y-3">
-                {[
-                  { id: "instagram", label: "Instagram", disabled: true },
-                  { id: "facebook", label: "Facebook", disabled: true },
-                  { id: "otros", label: "Otros", disabled: true },
-                ].map((s) => (
-                  <Tooltip key={s.id}>
-                    <TooltipTrigger asChild>
-                      <label
-                        htmlFor={s.id}
-                        className={cn(
-                          "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
-                          "hover:bg-slate-800/50",
-                          s.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
-                        )}
-                      >
-                        <Checkbox
-                          id={s.id}
-                          checked={sources.includes(s.id)}
-                          onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                          disabled={s.disabled}
-                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                        />
-                        <span className={cn("text-sm", s.disabled ? "text-slate-500" : "text-slate-300")}>
-                          {s.label}
-                        </span>
-                      </label>
-                    </TooltipTrigger>
-                    {s.disabled && (
-                      <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
-                        No disponible en versión gratuita
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ))}
+                {secondarySources.map((s) => {
+                  const disabled = isFreePlan && s.requiresUpgrade
+                  return (
+                    <Tooltip key={s.id}>
+                      <TooltipTrigger asChild>
+                        <label
+                          htmlFor={s.id}
+                          className={cn(
+                            "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
+                            "hover:bg-slate-800/50",
+                            disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
+                          )}
+                        >
+                          <Checkbox
+                            id={s.id}
+                            checked={sources.includes(s.id)}
+                            onCheckedChange={!disabled ? () => toggleSource(s.id) : undefined}
+                            disabled={disabled}
+                            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                          />
+                          <span className={cn("text-sm", disabled ? "text-slate-500" : "text-slate-300")}>
+                            {s.label}
+                          </span>
+                        </label>
+                      </TooltipTrigger>
+                      {disabled && (
+                        <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
+                          No disponible en versión gratuita
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  )
+                })}
               </div>
             </div>
           </div>

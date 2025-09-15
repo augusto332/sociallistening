@@ -183,6 +183,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [showPasswordFields, setShowPasswordFields] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
+  const [userPlan, setUserPlan] = useState("free")
+  const isFreePlan = userPlan === "free"
   const [reportStartDate, setReportStartDate] = useState("")
   const [reportEndDate, setReportEndDate] = useState("")
   const [reportPlatform, setReportPlatform] = useState("")
@@ -576,6 +578,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setAccountEmail(user.email || "")
       setAccountName(displayName)
       setOriginalAccountName(displayName)
+      const plan = user.user_metadata?.plan || user.app_metadata?.plan || "free"
+      setUserPlan(plan)
+    } else {
+      setUserPlan("free")
     }
   }
 
@@ -1349,7 +1355,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             <section className="p-8">
               <div className="flex items-start gap-8 min-h-screen">
                 <div className="flex-1">
-                  <AISummary />
+                  <AISummary isFreePlan={isFreePlan} />
                   {/* Search Header */}
                   <div className="mb-8">
                     <div className="relative mb-6">
@@ -1436,6 +1442,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                               onToggleHighlight={toggleHighlight}
                               tags={getTagsForMention(m)}
                               aiTags={m.ai_classification_tags || []}
+                              isFreePlan={isFreePlan}
                             />
                           </div>
                         ))}
@@ -1475,6 +1482,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   toggleAiTag={toggleAiTagFilter}
                   aiTagOptions={aiTagOptions}
                   clearFilters={clearSidebarFilters}
+                  isFreePlan={isFreePlan}
                 />
               </div>
             </section>

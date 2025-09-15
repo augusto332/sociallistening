@@ -3,8 +3,12 @@
 import { useState } from "react"
 import { ChevronDown, Brain, Lock } from "lucide-react"
 
-export default function ModernAISummary() {
+export default function ModernAISummary({ isFreePlan = true }) {
   const [open, setOpen] = useState(false)
+
+  if (!isFreePlan) {
+    return null
+  }
 
   return (
     <div className="mb-8">

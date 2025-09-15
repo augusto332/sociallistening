@@ -23,6 +23,7 @@ import {
   Meh,
   Frown,
   BarChart3,
+  Lock,
 } from "lucide-react"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import he from "he"
@@ -40,6 +41,7 @@ export default function ModernMentionCard({
   showDismiss = true,
   tags = [], // precomputed tags
   aiTags = [], // AI classification tags
+  isFreePlan = true,
 }) {
   const icons = {
     twitter: { Icon: FaTwitter, color: "#1DA1F2" },
@@ -94,6 +96,7 @@ export default function ModernMentionCard({
 
   // Get comments sentiment preview
   const getCommentsSentimentPreview = () => {
+    if (isFreePlan) return null
     if (!["youtube", "reddit"].includes(platform) || !topComments.length) return null
 
     const total = Number(mention.comments) || 0
@@ -157,6 +160,23 @@ export default function ModernMentionCard({
 
     const total = Number(mention.comments) || 0
     if (total === 0) return null
+
+    if (isFreePlan) {
+      return (
+        <div className="mt-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-semibold text-white">Análisis de sentimiento</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-slate-400">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-slate-700/40 rounded-lg">
+              <Lock className="w-5 h-5 text-slate-400" />
+            </div>
+            <p className="text-sm text-slate-400 text-center">No disponible en versión gratuita</p>
+          </div>
+        </div>
+      )
+    }
 
     const positivePercent = Number(mention.comments_positive_pct) || 0
     const neutralPercent = Number(mention.comments_neutral_pct) || 0
@@ -247,6 +267,70 @@ export default function ModernMentionCard({
               )}
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderTopCommentsSection = () => {
+    if (!topComments.length) return null
+
+    if (isFreePlan) {
+      return (
+        <div className="mt-6 pt-4 border-t border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageCircle className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-semibold text-white">Comentarios destacados</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-slate-400">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-slate-700/40 rounded-lg">
+              <Lock className="w-5 h-5 text-slate-400" />
+            </div>
+            <p className="text-sm text-slate-400 text-center">No disponible en versión gratuita</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="mt-6 pt-4 border-t border-slate-700/50">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageCircle className="w-4 h-4 text-slate-400" />
+          <span className="text-sm font-semibold text-white">Comentarios destacados</span>
+        </div>
+
+        <div className="space-y-3">
+          {topComments.map((c, i) => {
+            const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart
+            return (
+              <div
+                key={i}
+                className="p-4 rounded-lg bg-slate-800/40 border border-slate-700/50 flex items-start gap-3 w-full"
+              >
+                <div className="flex-1 min-w-0 w-full">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p
+                        className="text-sm text-slate-300 leading-relaxed w-full overflow-hidden text-ellipsis"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {c.comment ? he.decode(c.comment) : "—"}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>{c.comment ? he.decode(c.comment) : "—"}</TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-medium text-slate-400 shrink-0">
+                  <CommentIcon className="w-3 h-3" />
+                  {c.comment_likes ?? 0}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -495,48 +579,7 @@ export default function ModernMentionCard({
               {expanded && renderSentimentAnalysis()}
 
               {/* Top Comments */}
-              {expanded && topComments.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-slate-700/50">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MessageCircle className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-semibold text-white">Comentarios destacados</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {topComments.map((c, i) => {
-                      const CommentIcon = platform === "reddit" ? ArrowBigUp : Heart
-                      return (
-                        <div
-                          key={i}
-                          className="p-4 rounded-lg bg-slate-800/40 border border-slate-700/50 flex items-start gap-3 w-full"
-                        >
-                          <div className="flex-1 min-w-0 w-full">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <p
-                                  className="text-sm text-slate-300 leading-relaxed w-full overflow-hidden text-ellipsis"
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                  }}
-                                >
-                                  {c.comment ? he.decode(c.comment) : "—"}
-                                </p>
-                              </TooltipTrigger>
-                              <TooltipContent>{c.comment ? he.decode(c.comment) : "—"}</TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs font-medium text-slate-400 shrink-0">
-                            <CommentIcon className="w-3 h-3" />
-                            {c.comment_likes ?? 0}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              {expanded && renderTopCommentsSection()}
             </div>
           </div>
         </CardContent>
