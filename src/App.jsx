@@ -593,9 +593,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setOriginalAccountName(displayName)
 
     const { data: profileData, error: profileError } = await supabase
-      .from("profile")
+      .from("profiles")
       .select("plan")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .maybeSingle()
 
     if (profileError) {
