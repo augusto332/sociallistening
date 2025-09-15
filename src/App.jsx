@@ -15,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { cn } from "@/lib/utils"
 import RightSidebar from "@/components/RightSidebar"
 import { supabase } from "@/lib/supabaseClient"
+import { useAuth } from "@/context/AuthContext"
 import {
   Search,
   CircleUser,
@@ -174,6 +175,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [newKeywordLang, setNewKeywordLang] = useState("")
   const [pendingKeyword, setPendingKeyword] = useState("")
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
@@ -570,15 +572,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const fetchAccount = async () => {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      console.error("Error fetching authenticated user", userError)
-    }
-
     if (!user) {
       setAccountEmail("")
       setAccountName("")
@@ -654,8 +647,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   useEffect(() => {
     fetchKeywords()
-    fetchAccount()
   }, [])
+
+  useEffect(() => {
+    if (user) fetchAccount()
+  }, [user])
 
   useEffect(() => {
     if (activeTab === "dashboard") {
