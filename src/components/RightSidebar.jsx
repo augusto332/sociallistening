@@ -1,18 +1,15 @@
 "use client"
 
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { FilterX, Sparkles, TrendingUp, Users, MessageSquare, Clock, Hash, Globe, Tag, Zap } from "lucide-react"
+import { FilterX, Sparkles, TrendingUp, Users, MessageSquare, Hash, Globe, Tag, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import MultiSelect from "@/components/MultiSelect"
 
 export default function RightSidebar({
   className = "",
-  range,
-  setRange,
   sources,
   toggleSource,
   keywords,
@@ -69,30 +66,6 @@ export default function RightSidebar({
 
         {/* Content */}
         <div className="flex-1 p-6 space-y-8 overflow-y-auto">
-          {/* Time Range */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-400" />
-              <h4 className="font-medium text-white">Rango de tiempo</h4>
-            </div>
-            <Select value={range} onValueChange={setRange}>
-              <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20">
-                <SelectValue placeholder="Seleccionar período" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50">
-                <SelectItem value="7" className="text-slate-300 focus:bg-slate-700/50 focus:text-white">
-                  Últimos 7 días
-                </SelectItem>
-                <SelectItem value="15" className="text-slate-300 focus:bg-slate-700/50 focus:text-white">
-                  Últimos 15 días
-                </SelectItem>
-                <SelectItem value="30" className="text-slate-300 focus:bg-slate-700/50 focus:text-white">
-                  Últimos 30 días
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Keywords */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">

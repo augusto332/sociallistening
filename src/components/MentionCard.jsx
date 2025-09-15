@@ -475,6 +475,22 @@ export default function ModernMentionCard({
               {/* Metrics */}
               {expanded && renderMetrics()}
 
+              {/* Action Button */}
+              {expanded && url && (
+                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                  <Button
+                    size="sm"
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                  >
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      Ver publicación original
+                    </a>
+                  </Button>
+                </div>
+              )}
+
               {/* Sentiment Analysis - Only for YouTube and Reddit */}
               {expanded && renderSentimentAnalysis()}
 
@@ -519,22 +535,6 @@ export default function ModernMentionCard({
                       )
                     })}
                   </div>
-                </div>
-              )}
-
-              {/* Action Button */}
-              {expanded && url && (
-                <div className="mt-6 pt-4 border-t border-slate-700/50">
-                  <Button
-                    size="sm"
-                    asChild
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                  >
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                      Ver publicación original
-                    </a>
-                  </Button>
                 </div>
               )}
             </div>

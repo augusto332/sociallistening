@@ -157,7 +157,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const loadedMentionIdsRef = useRef(new Set())
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
-  const [rangeFilter, setRangeFilter] = useState("7")
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
   const [tagsFilter, setTagsFilter] = useState([])
@@ -299,16 +298,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
     const matchesSource = sourcesFilter.length === 0 || sourcesFilter.includes(m.platform?.toLowerCase())
 
-    const matchesRange =
-      !rangeFilter ||
-      (() => {
-        const days = Number.parseInt(rangeFilter, 10)
-        const created = new Date(m.created_at)
-        const now = new Date()
-        const diff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
-        return diff <= days
-      })()
-
     const matchesKeyword = keywordsFilter.includes("all") || keywordsFilter.includes(m.keyword)
     const mentionTags = getTagsForMention(m)
     const matchesTag = tagsFilter.length === 0 || tagsFilter.some((t) => mentionTags.includes(t))
@@ -318,7 +307,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     return (
       matchesSearch &&
       matchesSource &&
-      matchesRange &&
       matchesKeyword &&
       matchesTag &&
       matchesAiTag
@@ -721,7 +709,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const clearSidebarFilters = () => {
-    setRangeFilter("7")
     setSourcesFilter([])
     setSearch("")
     setKeywordsFilter(["all"])
@@ -1477,8 +1464,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
                 <RightSidebar
                   className="mt-0 ml-auto"
-                  range={rangeFilter}
-                  setRange={setRangeFilter}
                   sources={sourcesFilter}
                   toggleSource={toggleSourceFilter}
                   keywords={keywordsFilter}
