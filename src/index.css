@@ -58,9 +58,21 @@
     --chart-5: 340 75% 55%;
   }
 
-
+  /* 👇 Ajuste de escala global (opción 4) */
   html {
-    font-size: 16px; /* fuerza el tamaño base */
+    font-size: 14px; /* antes 16px → ahora ~90% */
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: 15px; /* crece un poco en pantallas grandes */
+    }
+  }
+
+  @media (min-width: 1536px) {
+    html {
+      font-size: 16px; /* vuelve al valor normal en pantallas muy grandes */
+    }
   }
 }
 
