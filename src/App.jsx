@@ -361,7 +361,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const PAGE_SIZE = 150
+  const PAGE_SIZE = 20
 
   const fetchMentionsPage = async (view, afterCursor = null) => {
     let query = supabase
