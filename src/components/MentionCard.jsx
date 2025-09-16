@@ -66,18 +66,38 @@ export default function ModernMentionCard({
   }
 
   // Get mention sentiment (for the main post)
-  // TODO: Replace hardcoded sentiment with real data from mention.sentiment or mention.mention_sentiment
   const getMentionSentiment = () => {
-    // Hardcoded positive sentiment for testing - replace with real data later
-    const mentionSentiment = "positive"
+    const mentionSentimentRaw = mention?.ai_sentiment
+    if (typeof mentionSentimentRaw !== "string") return null
+
+    const mentionSentiment = mentionSentimentRaw.trim().toLowerCase()
+    if (!mentionSentiment) return null
 
     const sentimentConfig = {
-      positive: { icon: Smile, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
-      neutral: { icon: Meh, color: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/20" },
-      negative: { icon: Frown, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
+      positive: {
+        icon: Smile,
+        color: "text-green-400",
+        bg: "bg-green-500/10",
+        border: "border-green-500/20",
+        label: "Positivo",
+      },
+      neutral: {
+        icon: Meh,
+        color: "text-slate-400",
+        bg: "bg-slate-500/10",
+        border: "border-slate-500/20",
+        label: "Neutral",
+      },
+      negative: {
+        icon: Frown,
+        color: "text-red-400",
+        bg: "bg-red-500/10",
+        border: "border-red-500/20",
+        label: "Negativo",
+      },
     }
 
-    const config = sentimentConfig[mentionSentiment.toLowerCase()]
+    const config = sentimentConfig[mentionSentiment]
     if (!config) return null
 
     const SentimentIcon = config.icon
@@ -87,7 +107,7 @@ export default function ModernMentionCard({
         className={`${config.bg} ${config.color} ${config.border} rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5`}
       >
         <SentimentIcon className="w-3 h-3" />
-        {mentionSentiment.charAt(0).toUpperCase() + mentionSentiment.slice(1)}
+        {config.label}
       </Badge>
     )
   }
