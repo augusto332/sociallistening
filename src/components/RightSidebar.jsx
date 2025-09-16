@@ -4,7 +4,20 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { FilterX, Sparkles, TrendingUp, Users, MessageSquare, Hash, Globe, Tag, Zap } from "lucide-react"
+import {
+  FilterX,
+  Sparkles,
+  TrendingUp,
+  Users,
+  MessageSquare,
+  Hash,
+  Globe,
+  Tag,
+  Zap,
+  Smile,
+  Meh,
+  Frown,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import MultiSelect from "@/components/MultiSelect"
 
@@ -20,6 +33,9 @@ export default function RightSidebar({
   aiTags = [],
   toggleAiTag,
   aiTagOptions = [],
+  sentiments = [],
+  toggleSentiment,
+  sentimentOptions = [],
   clearFilters,
 }) {
   const handleClearFilters = () => clearFilters()
@@ -43,6 +59,23 @@ export default function RightSidebar({
   }
 
   const aiTagClass = "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/20"
+  const sentimentConfig = {
+    positive: {
+      text: "Positivo",
+      icon: Smile,
+      className: "bg-green-500/10 text-green-400 border border-green-500/20",
+    },
+    neutral: {
+      text: "Neutral",
+      icon: Meh,
+      className: "bg-slate-500/10 text-slate-300 border border-slate-500/20",
+    },
+    negative: {
+      text: "Negativo",
+      icon: Frown,
+      className: "bg-red-500/10 text-red-400 border border-red-500/20",
+    },
+  }
 
   return (
     <TooltipProvider>
@@ -218,6 +251,41 @@ export default function RightSidebar({
                     {tag}
                   </Badge>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sentiment */}
+          {sentimentOptions.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Smile className="w-4 h-4 text-green-400" />
+                <h4 className="font-medium text-white">Sentimiento</h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {sentimentOptions.map((sentiment) => {
+                  const config = sentimentConfig[sentiment] || {
+                    text: sentiment,
+                    icon: Sparkles,
+                    className: "bg-slate-500/10 text-slate-300 border border-slate-500/20",
+                  }
+                  const SentimentIcon = config.icon
+                  return (
+                    <Badge
+                      key={sentiment}
+                      onClick={() => toggleSentiment?.(sentiment)}
+                      className={cn(
+                        config.className,
+                        "rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all duration-200",
+                        sentiments.includes(sentiment) ? "" : "opacity-50 hover:opacity-75",
+                      )}
+                      variant="secondary"
+                    >
+                      <SentimentIcon className="w-3 h-3" />
+                      {config.text}
+                    </Badge>
+                  )
+                })}
               </div>
             </div>
           )}
