@@ -161,6 +161,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
   const [tagsFilter, setTagsFilter] = useState([])
   const [aiTagsFilter, setAiTagsFilter] = useState([])
+  const [sentimentFilter, setSentimentFilter] = useState([])
   const [order, setOrder] = useState("recent")
   const [hiddenMentions, setHiddenMentions] = useState([])
   const [keywords, setKeywords] = useState([])
@@ -304,12 +305,16 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const matchesAiTag =
       aiTagsFilter.length === 0 ||
       (m.ai_classification_tags || []).some((t) => aiTagsFilter.includes(t))
+    const mentionSentiment = typeof m.ai_sentiment === "string" ? m.ai_sentiment.trim().toLowerCase() : null
+    const matchesSentiment =
+      sentimentFilter.length === 0 || (mentionSentiment && sentimentFilter.includes(mentionSentiment))
     return (
       matchesSearch &&
       matchesSource &&
       matchesKeyword &&
       matchesTag &&
-      matchesAiTag
+      matchesAiTag &&
+      matchesSentiment
     )
   })
 
@@ -708,12 +713,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setAiTagsFilter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
+  const toggleSentimentFilter = (sentiment) => {
+    setSentimentFilter((prev) =>
+      prev.includes(sentiment) ? prev.filter((s) => s !== sentiment) : [...prev, sentiment],
+    )
+  }
+
   const clearSidebarFilters = () => {
     setSourcesFilter([])
     setSearch("")
     setKeywordsFilter(["all"])
     setTagsFilter([])
     setAiTagsFilter([])
+    setSentimentFilter([])
   }
 
   const clearDashboardFilters = () => {
@@ -1185,6 +1197,22 @@ export default function ModernSocialListeningApp({ onLogout }) {
     return Array.from(set)
   }, [mentions])
 
+  const sentimentOptions = useMemo(() => {
+    const available = new Set()
+    mentions.forEach((m) => {
+      if (typeof m.ai_sentiment === "string") {
+        const normalized = m.ai_sentiment.trim().toLowerCase()
+        if (normalized) {
+          available.add(normalized)
+        }
+      }
+    })
+    const preferredOrder = ["positive", "neutral", "negative"]
+    const ordered = preferredOrder.filter((sentiment) => available.has(sentiment))
+    preferredOrder.forEach((sentiment) => available.delete(sentiment))
+    return [...ordered, ...Array.from(available)]
+  }, [mentions])
+
   const kpiMoMDisplay = useMemo(() => {
     const pct = kpiMoM.pct_change
     if (pct == null) return "—%"
@@ -1474,6 +1502,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   aiTags={aiTagsFilter}
                   toggleAiTag={toggleAiTagFilter}
                   aiTagOptions={aiTagOptions}
+                  sentiments={sentimentFilter}
+                  toggleSentiment={toggleSentimentFilter}
+                  sentimentOptions={sentimentOptions}
                   clearFilters={clearSidebarFilters}
                 />
               </div>
