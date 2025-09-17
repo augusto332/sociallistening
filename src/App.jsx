@@ -241,6 +241,35 @@ export default function ModernSocialListeningApp({ onLogout }) {
     return stats
   }, [mentions])
 
+  const mentionsFilters = useMemo(() => {
+    const normalizedSources = Array.isArray(sourcesFilter)
+      ? sourcesFilter.filter((source) => typeof source === "string" && source.trim().length > 0)
+      : []
+    const normalizedKeywords = Array.isArray(keywordsFilter)
+      ? keywordsFilter.filter((kw) => typeof kw === "string" && kw !== "all" && kw.trim().length > 0)
+      : []
+    const normalizedTags = Array.isArray(tagsFilter)
+      ? tagsFilter.filter((tag) => typeof tag === "string" && tag.trim().length > 0)
+      : []
+    const normalizedAiTags = Array.isArray(aiTagsFilter)
+      ? aiTagsFilter.filter((tag) => typeof tag === "string" && tag.trim().length > 0)
+      : []
+    const normalizedSentiment = Array.isArray(sentimentFilter)
+      ? sentimentFilter
+          .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : null))
+          .filter((s) => s && s.length > 0)
+      : []
+
+    return {
+      search: typeof search === "string" ? search.trim() : "",
+      sources: normalizedSources,
+      keywords: normalizedKeywords,
+      tags: normalizedTags,
+      aiTags: normalizedAiTags,
+      sentiment: normalizedSentiment,
+    }
+  }, [search, sourcesFilter, keywordsFilter, tagsFilter, aiTagsFilter, sentimentFilter])
+
   const getTagsForMention = (mention) => {
     const platform = mention.platform?.toLowerCase?.()
     const hrs = hoursSince(mention.created_at)
@@ -368,22 +397,80 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const PAGE_SIZE = 20
 
-  const fetchMentionsPage = async (view, afterCursor = null) => {
+  const fetchMentionsPage = async (view, filters = {}, afterCursor = null) => {
     let query = supabase
       .from(view)
       .select("*")
       .order("created_at", { ascending: false })
       .order("mention_id", { ascending: false })
-      .limit(PAGE_SIZE)
+
+    const { search: searchFilter, sources = [], keywords = [], tags = [], aiTags = [], sentiment = [] } =
+      filters || {}
+
+    if (searchFilter) {
+      const sanitized = searchFilter
+        .trim()
+        .replace(/[%_]/g, "\\$&")
+        .replace(/,/g, "\\,")
+        .replace(/'/g, "''")
+      query = query.or(`mention.ilike.%${sanitized}%,source.ilike.%${sanitized}%`)
+    }
+
+    if (sources.length) {
+      query = query.in(
+        "platform",
+        sources.map((s) => s?.toLowerCase?.()).filter(Boolean),
+      )
+    }
+
+    if (keywords.length) {
+      query = query.in(
+        "keyword",
+        keywords.filter((k) => typeof k === "string" && k.trim().length > 0),
+      )
+    }
+
+    if (aiTags.length) {
+      query = query.overlaps(
+        "ai_classification_tags",
+        aiTags.filter((t) => typeof t === "string" && t.trim().length > 0),
+      )
+    }
+
+    if (sentiment.length) {
+      query = query.in(
+        "ai_sentiment",
+        sentiment
+          .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : null))
+          .filter((s) => s && s.length > 0),
+      )
+    }
+
+    if (tags.length) {
+      const tagColumns = {
+        approval: "tag_is_approval",
+        reach: "tag_is_reach",
+        conversation: "tag_is_conversation",
+      }
+
+      const activeTagColumns = tags
+        .map((tag) => tagColumns[tag])
+        .filter(Boolean)
+        .map((column) => `${column}.is.true`)
+
+      if (activeTagColumns.length) {
+        query = query.or(activeTagColumns.join(","))
+      }
+    }
 
     if (afterCursor) {
       const { created_at, mention_id } = afterCursor
       query = query.or(
-        `created_at.lt.${created_at},and(created_at.eq.${created_at},mention_id.lt.${mention_id})`
+        `created_at.lt.${created_at},and(created_at.eq.${created_at},mention_id.lt.${mention_id})`,
       )
     }
 
-    const { data: rows, error } = await query
+    const { data: rows, error } = await query.limit(PAGE_SIZE)
     if (error) {
       console.error("Error fetching mentions page", error)
       return { rows: [], cursor: null, hasMore: false }
@@ -441,7 +528,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const loadFirstPage = async (view) => {
+  const loadFirstPage = async (view, filters = {}) => {
     setMentions([])
     setMentionsLoading(true)
     setCursor(null)
@@ -449,7 +536,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setIsLoadingMore(false)
     loadedMentionIdsRef.current = new Set()
 
-    const { rows, cursor: nextCursor, hasMore: more } = await fetchMentionsPage(view)
+    const { rows, cursor: nextCursor, hasMore: more } = await fetchMentionsPage(view, filters)
 
     rows.forEach((m) => loadedMentionIdsRef.current.add(m.mention_id))
 
@@ -459,11 +546,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setMentionsLoading(false)
   }
 
-  const loadMore = async (view) => {
+  const loadMore = async (view, filters = {}) => {
     if (isLoadingMore || !hasMore || !cursor) return
     setIsLoadingMore(true)
     const { rows, cursor: nextCursor, hasMore: more } = await fetchMentionsPage(
       view,
+      filters,
       cursor
     )
 
@@ -633,14 +721,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
   useEffect(() => {
     if (activeTab === "dashboard") {
       setMentionsLoading(false)
-    } else {
-      const view =
-        onlyFavorites
-          ? "total_mentions_highlighted_vw"
-          : "mentions_display_vw"
-      loadFirstPage(view)
+      return
     }
-  }, [activeTab, onlyFavorites])
+
+    const view = onlyFavorites ? "total_mentions_highlighted_vw" : "mentions_display_vw"
+    loadFirstPage(view, mentionsFilters)
+  }, [activeTab, onlyFavorites, mentionsFilters])
 
   useEffect(() => {
     const node = sentinelRef.current
@@ -657,12 +743,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
           onlyFavorites
             ? "total_mentions_highlighted_vw"
             : "mentions_display_vw"
-        loadMore(view)
+        loadMore(view, mentionsFilters)
       }
     })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [hasMore, isLoadingMore, activeTab, onlyFavorites, mentions])
+  }, [hasMore, isLoadingMore, activeTab, onlyFavorites, mentions, mentionsFilters])
 
   const fetchSavedReports = async () => {
     const { data: userData } = await supabase.auth.getUser()
