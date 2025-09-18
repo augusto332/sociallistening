@@ -162,6 +162,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [tagsFilter, setTagsFilter] = useState([])
   const [aiTagsFilter, setAiTagsFilter] = useState([])
   const [sentimentFilter, setSentimentFilter] = useState([])
+  const [allAiTagOptions, setAllAiTagOptions] = useState([])
+  const [allSentimentOptions, setAllSentimentOptions] = useState([])
   const [order, setOrder] = useState("recent")
   const [hiddenMentions, setHiddenMentions] = useState([])
   const [keywords, setKeywords] = useState([])
@@ -397,6 +399,66 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const PAGE_SIZE = 20
 
+  const sanitizeSearch = (value = "") =>
+    value
+      .trim()
+      .replace(/[%_]/g, "\\$&")
+      .replace(/,/g, "\\,")
+      .replace(/'/g, "''")
+
+  const applyMentionFilters = (
+    query,
+    filters = {},
+    { skipSearch = false, skipSources = false, skipKeywords = false, skipAiTags = false, skipSentiment = false } = {},
+  ) => {
+    const {
+      search: searchFilter = "",
+      sources = [],
+      keywords = [],
+      aiTags = [],
+      sentiment = [],
+    } = filters || {}
+
+    let nextQuery = query
+
+    if (!skipSearch && searchFilter) {
+      const sanitized = sanitizeSearch(searchFilter)
+      nextQuery = nextQuery.or(`mention.ilike.%${sanitized}%,source.ilike.%${sanitized}%`)
+    }
+
+    if (!skipSources && sources.length) {
+      nextQuery = nextQuery.in(
+        "platform",
+        sources.map((s) => s?.toLowerCase?.()).filter(Boolean),
+      )
+    }
+
+    if (!skipKeywords && keywords.length) {
+      nextQuery = nextQuery.in(
+        "keyword",
+        keywords.filter((k) => typeof k === "string" && k.trim().length > 0),
+      )
+    }
+
+    if (!skipAiTags && aiTags.length) {
+      nextQuery = nextQuery.overlaps(
+        "ai_classification_tags",
+        aiTags.filter((t) => typeof t === "string" && t.trim().length > 0),
+      )
+    }
+
+    if (!skipSentiment && sentiment.length) {
+      nextQuery = nextQuery.in(
+        "ai_sentiment",
+        sentiment
+          .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : null))
+          .filter((s) => s && s.length > 0),
+      )
+    }
+
+    return nextQuery
+  }
+
   const fetchMentionsPage = async (view, filters = {}, afterCursor = null) => {
     let query = supabase
       .from(view)
@@ -404,47 +466,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .order("created_at", { ascending: false })
       .order("mention_id", { ascending: false })
 
-    const { search: searchFilter, sources = [], keywords = [], aiTags = [], sentiment = [] } =
-      filters || {}
-
-    if (searchFilter) {
-      const sanitized = searchFilter
-        .trim()
-        .replace(/[%_]/g, "\\$&")
-        .replace(/,/g, "\\,")
-        .replace(/'/g, "''")
-      query = query.or(`mention.ilike.%${sanitized}%,source.ilike.%${sanitized}%`)
-    }
-
-    if (sources.length) {
-      query = query.in(
-        "platform",
-        sources.map((s) => s?.toLowerCase?.()).filter(Boolean),
-      )
-    }
-
-    if (keywords.length) {
-      query = query.in(
-        "keyword",
-        keywords.filter((k) => typeof k === "string" && k.trim().length > 0),
-      )
-    }
-
-    if (aiTags.length) {
-      query = query.overlaps(
-        "ai_classification_tags",
-        aiTags.filter((t) => typeof t === "string" && t.trim().length > 0),
-      )
-    }
-
-    if (sentiment.length) {
-      query = query.in(
-        "ai_sentiment",
-        sentiment
-          .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : null))
-          .filter((s) => s && s.length > 0),
-      )
-    }
+    query = applyMentionFilters(query, filters)
 
     if (afterCursor) {
       const { created_at, mention_id } = afterCursor
@@ -545,6 +567,89 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setCursor(nextCursor)
     setHasMore(more)
     setIsLoadingMore(false)
+  }
+
+  const fetchAiTagOptions = async (view, filters = {}) => {
+    try {
+      let query = supabase.from(view).select("ai_classification_tags", { distinct: true })
+      query = applyMentionFilters(query, filters, { skipAiTags: true })
+      query = query.not("ai_classification_tags", "is", null)
+
+      const { data, error } = await query
+      if (error) throw error
+
+      const tagSet = new Set()
+      ;(data || []).forEach((row) => {
+        const tags = Array.isArray(row?.ai_classification_tags)
+          ? row.ai_classification_tags
+          : []
+        tags.forEach((tag) => {
+          const normalized = typeof tag === "string" ? tag.trim() : ""
+          if (normalized) {
+            tagSet.add(normalized)
+          }
+        })
+      })
+
+      const merged = new Set([...tagSet, ...(filters.aiTags || [])])
+      return Array.from(merged)
+    } catch (err) {
+      console.error("Error fetching AI classification tags", err)
+      const merged = new Set(filters.aiTags || [])
+      return Array.from(merged)
+    }
+  }
+
+  const fetchSentimentOptions = async (view, filters = {}) => {
+    const preferredOrder = ["positive", "neutral", "negative"]
+    try {
+      let query = supabase.from(view).select("ai_sentiment", { distinct: true })
+      query = applyMentionFilters(query, filters, { skipSentiment: true })
+      query = query.not("ai_sentiment", "is", null)
+
+      const { data, error } = await query
+      if (error) throw error
+
+      const normalized = Array.from(
+        new Set(
+          (data || [])
+            .map((row) =>
+              typeof row?.ai_sentiment === "string" ? row.ai_sentiment.trim().toLowerCase() : "",
+            )
+            .filter((value) => value.length > 0),
+        ),
+      )
+
+      const ordered = [
+        ...preferredOrder.filter((sentiment) => normalized.includes(sentiment)),
+        ...normalized.filter((sentiment) => !preferredOrder.includes(sentiment)),
+      ]
+
+      const merged = new Set([...(filters.sentiment || []), ...ordered])
+      const mergedOrdered = [
+        ...preferredOrder.filter((sentiment) => merged.has(sentiment)),
+        ...Array.from(merged).filter((sentiment) => !preferredOrder.includes(sentiment)),
+      ]
+
+      return mergedOrdered
+    } catch (err) {
+      console.error("Error fetching sentiment options", err)
+      const merged = new Set(filters.sentiment || [])
+      return Array.from(merged)
+    }
+  }
+
+  const refreshGlobalFilterOptions = async (view, filters = {}) => {
+    try {
+      const [aiTags, sentiments] = await Promise.all([
+        fetchAiTagOptions(view, filters),
+        fetchSentimentOptions(view, filters),
+      ])
+      setAllAiTagOptions(aiTags)
+      setAllSentimentOptions(sentiments)
+    } catch (err) {
+      console.error("Error refreshing global filter options", err)
+    }
   }
 
   const fetchKeywords = async () => {
@@ -709,6 +814,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
     const view = onlyFavorites ? "total_mentions_highlighted_vw" : "mentions_display_vw"
     loadFirstPage(view, mentionsFilters)
+    refreshGlobalFilterOptions(view, mentionsFilters)
   }, [activeTab, onlyFavorites, mentionsFilters])
 
   useEffect(() => {
@@ -1258,30 +1364,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
-  const aiTagOptions = useMemo(() => {
-    const set = new Set()
-    mentions.forEach((m) => {
-      ;(m.ai_classification_tags || []).forEach((tag) => set.add(tag))
-    })
-    return Array.from(set)
-  }, [mentions])
-
-  const sentimentOptions = useMemo(() => {
-    const available = new Set()
-    mentions.forEach((m) => {
-      if (typeof m.ai_sentiment === "string") {
-        const normalized = m.ai_sentiment.trim().toLowerCase()
-        if (normalized) {
-          available.add(normalized)
-        }
-      }
-    })
-    const preferredOrder = ["positive", "neutral", "negative"]
-    const ordered = preferredOrder.filter((sentiment) => available.has(sentiment))
-    preferredOrder.forEach((sentiment) => available.delete(sentiment))
-    return [...ordered, ...Array.from(available)]
-  }, [mentions])
-
   const kpiMoMDisplay = useMemo(() => {
     const pct = kpiMoM.pct_change
     if (pct == null) return "—%"
@@ -1570,10 +1652,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   toggleTag={toggleTagFilter}
                   aiTags={aiTagsFilter}
                   toggleAiTag={toggleAiTagFilter}
-                  aiTagOptions={aiTagOptions}
+                  aiTagOptions={allAiTagOptions}
                   sentiments={sentimentFilter}
                   toggleSentiment={toggleSentimentFilter}
-                  sentimentOptions={sentimentOptions}
+                  sentimentOptions={allSentimentOptions}
                   clearFilters={clearSidebarFilters}
                 />
               </div>
