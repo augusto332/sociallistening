@@ -404,7 +404,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       .order("created_at", { ascending: false })
       .order("mention_id", { ascending: false })
 
-    const { search: searchFilter, sources = [], keywords = [], tags = [], aiTags = [], sentiment = [] } =
+    const { search: searchFilter, sources = [], keywords = [], aiTags = [], sentiment = [] } =
       filters || {}
 
     if (searchFilter) {
@@ -444,23 +444,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
           .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : null))
           .filter((s) => s && s.length > 0),
       )
-    }
-
-    if (tags.length) {
-      const tagColumns = {
-        approval: "tag_is_approval",
-        reach: "tag_is_reach",
-        conversation: "tag_is_conversation",
-      }
-
-      const activeTagColumns = tags
-        .map((tag) => tagColumns[tag])
-        .filter(Boolean)
-        .map((column) => `${column}.is.true`)
-
-      if (activeTagColumns.length) {
-        query = query.or(activeTagColumns.join(","))
-      }
     }
 
     if (afterCursor) {
