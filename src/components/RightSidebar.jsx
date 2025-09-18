@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import MultiSelect from "@/components/MultiSelect"
+import { useAuth } from "@/context/AuthContext"
 
 export default function RightSidebar({
   className = "",
@@ -38,6 +39,75 @@ export default function RightSidebar({
   sentimentOptions = [],
   clearFilters,
 }) {
+  const { plan: authPlan = "free" } = useAuth()
+  const normalizedPlan = typeof authPlan === "string" ? authPlan.toLowerCase() : "free"
+
+  const planHierarchy = ["free", "pro", "enterprise"]
+  const getPlanLevel = (planName, fallback = 0) => {
+    if (!planName) return fallback
+    const normalized = typeof planName === "string" ? planName.toLowerCase() : ""
+    const index = planHierarchy.indexOf(normalized)
+    return index === -1 ? fallback : index
+  }
+
+  const userPlanLevel = getPlanLevel(normalizedPlan, planHierarchy.length - 1)
+  const hasPlanAccess = (minPlan) => {
+    if (!minPlan) return true
+    return userPlanLevel >= getPlanLevel(minPlan)
+  }
+
+  const sourceColumns = [
+    [
+      { id: "youtube", label: "YouTube" },
+      { id: "reddit", label: "Reddit" },
+      { id: "twitter", label: "Twitter", minPlan: "pro" },
+      { id: "tiktok", label: "TikTok", minPlan: "pro" },
+    ],
+    [
+      { id: "instagram", label: "Instagram", minPlan: "pro" },
+      { id: "facebook", label: "Facebook", minPlan: "pro" },
+      { id: "otros", label: "Otros", minPlan: "pro" },
+    ],
+  ]
+
+  const renderSourceOption = (source) => {
+    const isDisabled = !hasPlanAccess(source.minPlan)
+
+    const optionLabel = (
+      <label
+        key={source.id}
+        htmlFor={source.id}
+        className={cn(
+          "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
+          "hover:bg-slate-800/50",
+          isDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
+        )}
+      >
+        <Checkbox
+          id={source.id}
+          checked={sources.includes(source.id)}
+          onCheckedChange={!isDisabled ? () => toggleSource(source.id) : undefined}
+          disabled={isDisabled}
+          className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+        />
+        <span className={cn("text-sm", isDisabled ? "text-slate-500" : "text-slate-300")}>{source.label}</span>
+      </label>
+    )
+
+    if (isDisabled) {
+      return (
+        <Tooltip key={source.id}>
+          <TooltipTrigger asChild>{optionLabel}</TooltipTrigger>
+          <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
+            No disponible en versión gratuita
+          </TooltipContent>
+        </Tooltip>
+      )
+    }
+
+    return optionLabel
+  }
+
   const handleClearFilters = () => clearFilters()
 
   const tagConfig = {
@@ -124,79 +194,11 @@ export default function RightSidebar({
             </div>
 
             <div className="grid grid-cols-2 gap-x-4">
-              <div className="space-y-3">
-                {[
-                  { id: "youtube", label: "YouTube" },
-                  { id: "reddit", label: "Reddit" },
-                  { id: "twitter", label: "Twitter", disabled: true },
-                  { id: "tiktok", label: "TikTok", disabled: true },
-                ].map((s) => (
-                  <Tooltip key={s.id}>
-                    <TooltipTrigger asChild>
-                      <label
-                        htmlFor={s.id}
-                        className={cn(
-                          "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
-                          "hover:bg-slate-800/50",
-                          s.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
-                        )}
-                      >
-                        <Checkbox
-                          id={s.id}
-                          checked={sources.includes(s.id)}
-                          onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                          disabled={s.disabled}
-                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                        />
-                        <span className={cn("text-sm", s.disabled ? "text-slate-500" : "text-slate-300")}>
-                          {s.label}
-                        </span>
-                      </label>
-                    </TooltipTrigger>
-                    {s.disabled && (
-                      <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
-                        No disponible en versión gratuita
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ))}
-              </div>
-              <div className="space-y-3">
-                {[
-                  { id: "instagram", label: "Instagram", disabled: true },
-                  { id: "facebook", label: "Facebook", disabled: true },
-                  { id: "otros", label: "Otros", disabled: true },
-                ].map((s) => (
-                  <Tooltip key={s.id}>
-                    <TooltipTrigger asChild>
-                      <label
-                        htmlFor={s.id}
-                        className={cn(
-                          "flex items-center gap-3 p-2 rounded-lg transition-all duration-200 cursor-pointer",
-                          "hover:bg-slate-800/50",
-                          s.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
-                        )}
-                      >
-                        <Checkbox
-                          id={s.id}
-                          checked={sources.includes(s.id)}
-                          onCheckedChange={!s.disabled ? () => toggleSource(s.id) : undefined}
-                          disabled={s.disabled}
-                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                        />
-                        <span className={cn("text-sm", s.disabled ? "text-slate-500" : "text-slate-300")}>
-                          {s.label}
-                        </span>
-                      </label>
-                    </TooltipTrigger>
-                    {s.disabled && (
-                      <TooltipContent className="bg-slate-800/95 backdrop-blur-xl border-slate-700/50 text-slate-300">
-                        No disponible en versión gratuita
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ))}
-              </div>
+              {sourceColumns.map((column, columnIndex) => (
+                <div key={columnIndex} className="space-y-3">
+                  {column.map((source) => renderSourceOption(source))}
+                </div>
+              ))}
             </div>
           </div>
 
