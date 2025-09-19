@@ -6,16 +6,16 @@ import ReactWordCloud from "react-d3-cloud"
 export default function WordCloud({ words = [] }) {
   const containerRef = useRef(null)
   const tooltipRef = useRef(null)
-  const [dimensions, setDimensions] = useState({ width: 700, height: 300 })
+  const [dimensions, setDimensions] = useState(null)
 
-  // 🔑 Calcular tamaño inicial antes de pintar (evita parpadeo)
+  // 🔑 Medir tamaño inicial
   useLayoutEffect(() => {
     if (containerRef.current) {
       const { width, height } = containerRef.current.getBoundingClientRect()
       if (width >= 300 && height >= 200) {
         setDimensions({
-          width: Math.max(300, Math.round(width)),
-          height: Math.max(200, Math.round(height)),
+          width: Math.round(width),
+          height: Math.round(height),
         })
       }
     }
@@ -25,17 +25,32 @@ export default function WordCloud({ words = [] }) {
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect
-      if (width < 300 || height < 200) return // ignorar glitches
-      setDimensions({
-        width: Math.max(300, Math.round(width)),
-        height: Math.max(200, Math.round(height)),
-      })
+      if (width >= 300 && height >= 200) {
+        setDimensions({
+          width: Math.round(width),
+          height: Math.round(height),
+        })
+      }
     })
 
     if (containerRef.current) observer.observe(containerRef.current)
-    return () => {
-      if (containerRef.current) observer.unobserve(containerRef.current)
-    }
+    return () => observer.disconnect()
+  }, [])
+
+  // 🔑 Forzar re-cálculo al segundo tick (por si arranca en 0x0)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect()
+        if (width >= 300 && height >= 200) {
+          setDimensions({
+            width: Math.round(width),
+            height: Math.round(height),
+          })
+        }
+      }
+    }, 100)
+    return () => clearTimeout(id)
   }, [])
 
   // 🔑 Tamaño balanceado
@@ -47,14 +62,12 @@ export default function WordCloud({ words = [] }) {
   // 🔑 Todas horizontales
   const rotate = useCallback(() => 0, [])
 
-  // Tooltip con ref (sin re-render)
+  // Tooltip
   const handleWordMouseEnter = (event, word) => {
     if (!tooltipRef.current) return
     tooltipRef.current.style.display = "block"
     tooltipRef.current.querySelector(".tooltip-text").textContent = word.text
-    tooltipRef.current.querySelector(
-      ".tooltip-value"
-    ).textContent = `${word.value} menciones`
+    tooltipRef.current.querySelector(".tooltip-value").textContent = `${word.value} menciones`
   }
 
   const handleWordMouseLeave = () => {
@@ -69,19 +82,21 @@ export default function WordCloud({ words = [] }) {
 
   return (
     <div ref={containerRef} className="w-full h-full relative">
-      <ReactWordCloud
-        data={words}
-        width={dimensions.width}
-        height={dimensions.height}
-        font="Inter"
-        fontSize={fontSizeMapper}
-        rotate={rotate}
-        padding={1}
-        onWordMouseOver={handleWordMouseEnter}
-        onWordMouseOut={handleWordMouseLeave}
-      />
+      {dimensions && (
+        <ReactWordCloud
+          data={words}
+          width={dimensions.width}
+          height={dimensions.height}
+          font="Inter"
+          fontSize={fontSizeMapper}
+          rotate={rotate}
+          padding={1}
+          onWordMouseOver={handleWordMouseEnter}
+          onWordMouseOut={handleWordMouseLeave}
+        />
+      )}
 
-      {/* Tooltip con ref */}
+      {/* Tooltip */}
       <div
         ref={tooltipRef}
         style={{ display: "none" }}
