@@ -23,13 +23,13 @@ export default function ModernAISummary() {
     try {
       const { data, error } = await supabase
         .from("ai_summaries")
-        .select("summary_text, created_at")
+        .select("summary, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
 
       if (!error && data?.length) {
-        setSummary(data[0]?.summary_text ?? "")
+        setSummary(data[0]?.summary ?? "")
         setSummaryTimestamp(data[0]?.created_at ?? null)
       } else if (!error) {
         setSummary("")
