@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext"
 export default function ModernAISummary() {
   const [open, setOpen] = useState(false)
   const [summary, setSummary] = useState("")
+  const [summaryTimestamp, setSummaryTimestamp] = useState(null)
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [generating, setGenerating] = useState(false)
   const { session, user, plan, planLoading } = useAuth()
@@ -22,15 +23,17 @@ export default function ModernAISummary() {
     try {
       const { data, error } = await supabase
         .from("ai_summaries")
-        .select("summary_text")
+        .select("summary_text, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
 
       if (!error && data?.length) {
         setSummary(data[0]?.summary_text ?? "")
+        setSummaryTimestamp(data[0]?.created_at ?? null)
       } else if (!error) {
         setSummary("")
+        setSummaryTimestamp(null)
       }
     } finally {
       setLoadingSummary(false)
@@ -46,6 +49,7 @@ export default function ModernAISummary() {
   useEffect(() => {
     if (!planLoading && plan === "free") {
       setSummary("")
+      setSummaryTimestamp(null)
     }
   }, [plan, planLoading])
 
@@ -105,20 +109,38 @@ export default function ModernAISummary() {
               </div>
             ) : (
               <>
-                <div className="min-h-[120px] rounded-lg border border-slate-700/60 bg-slate-900/20 p-4 text-left">
-                  {loadingSummary ? (
-                    <span className="text-sm text-slate-400">Cargando resumen...</span>
-                  ) : summary ? (
-                    <p className="text-sm text-slate-200 whitespace-pre-line">{summary}</p>
-                  ) : null}
-                </div>
+                {summary && (
+                  <div className="rounded-lg border border-slate-700/60 bg-slate-900/20 p-4 text-left space-y-2">
+                    {loadingSummary ? (
+                      <span className="text-sm text-slate-400">Cargando resumen...</span>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-200 whitespace-pre-line">{summary}</p>
+                        {summaryTimestamp && (
+                          <p className="text-xs text-slate-500">
+                            Generado el {new Date(summaryTimestamp).toLocaleString()}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={handleGenerateSummary}
                   disabled={generating}
                   className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 py-2 text-sm font-semibold text-white transition-colors hover:from-blue-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {generating ? "Generando..." : "Generar resumen"}
+                  <span className="flex items-center justify-center gap-2">
+                    {generating && (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    )}
+                    {generating
+                      ? "Generando resumen AI"
+                      : summary
+                        ? "Volver a generar resumen AI"
+                        : "Generar resumen AI"}
+                  </span>
                 </button>
               </>
             )}
