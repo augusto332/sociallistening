@@ -939,17 +939,83 @@ export default function ModernSocialListeningApp({ onLogout }) {
       )
       if (totalError) throw totalError
       setKpiTotal(totalData?.[0]?.total || 0)
-      const { data: momData, error: momError } = await supabase.rpc(
-        "rpt_mentions_mom_variation",
-        {
-          p_from,
-          p_to,
-          p_platforms,
-          p_keywords: p_keywordsUuid,
-        },
-      )
-      if (momError) throw momError
-      setKpiMoM(momData?.[0] || { curr_cnt: 0, prev_cnt: 0, pct_change: 0 })
+
+      const toStartOfDay = (date) => {
+        const d = new Date(date)
+        d.setHours(0, 0, 0, 0)
+        return d
+      }
+
+      const toEndOfDay = (date) => {
+        const d = new Date(date)
+        d.setHours(23, 59, 59, 999)
+        return d
+      }
+
+      const getStartOfWeek = (date) => {
+        const d = new Date(date)
+        const day = d.getDay()
+        const diff = day === 0 ? -6 : 1 - day
+        d.setDate(d.getDate() + diff)
+        d.setHours(0, 0, 0, 0)
+        return d
+      }
+
+      let referenceDate = endDate ? new Date(endDate) : new Date()
+      if (endDate) {
+        referenceDate = toEndOfDay(referenceDate)
+      }
+      if (Number.isNaN(referenceDate?.getTime())) {
+        setKpiMoM({ curr_cnt: 0, prev_cnt: 0, pct_change: 0 })
+      } else {
+        let currentPeriodEnd = new Date(referenceDate)
+        let currentPeriodStart = getStartOfWeek(currentPeriodEnd)
+        const filterStart = startDate ? toStartOfDay(new Date(startDate)) : null
+        if (filterStart && !Number.isNaN(filterStart.getTime())) {
+          if (filterStart > currentPeriodEnd) {
+            currentPeriodStart = filterStart
+            currentPeriodEnd = new Date(filterStart)
+          } else if (filterStart > currentPeriodStart) {
+            currentPeriodStart = filterStart
+          }
+        }
+        currentPeriodStart = toStartOfDay(currentPeriodStart)
+        if (currentPeriodEnd < currentPeriodStart) {
+          currentPeriodEnd = new Date(currentPeriodStart)
+        }
+        const currentDuration = currentPeriodEnd.getTime() - currentPeriodStart.getTime()
+        const previousPeriodStart = new Date(currentPeriodStart)
+        previousPeriodStart.setDate(previousPeriodStart.getDate() - 7)
+        const previousPeriodEnd = new Date(previousPeriodStart.getTime() + currentDuration)
+
+        const { data: currentWeekData, error: currentWeekError } = await supabase.rpc(
+          "rpt_mentions_total",
+          {
+            p_from: currentPeriodStart.toISOString(),
+            p_to: currentPeriodEnd.toISOString(),
+            p_platforms,
+            p_keywords_id: p_keywordsUuid,
+          },
+        )
+        if (currentWeekError) throw currentWeekError
+
+        const { data: previousWeekData, error: previousWeekError } = await supabase.rpc(
+          "rpt_mentions_total",
+          {
+            p_from: previousPeriodStart.toISOString(),
+            p_to: previousPeriodEnd.toISOString(),
+            p_platforms,
+            p_keywords_id: p_keywordsUuid,
+          },
+        )
+        if (previousWeekError) throw previousWeekError
+
+        const curr_cnt = Number(currentWeekData?.[0]?.total) || 0
+        const prev_cnt = Number(previousWeekData?.[0]?.total) || 0
+        const pct_change = prev_cnt === 0 ? (curr_cnt === 0 ? 0 : 100) : ((curr_cnt - prev_cnt) / prev_cnt) * 100
+
+        setKpiMoM({ curr_cnt, prev_cnt, pct_change })
+      }
     } catch (err) {
       console.error("Error fetching dashboard KPIs", err)
     } finally {
@@ -1739,7 +1805,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                                   {kpiMoMDisplay}
                                 </Badge>
                               </TooltipTrigger>
-                              <TooltipContent>En comparación con el mes pasado</TooltipContent>
+                              <TooltipContent>En comparación con la semana pasada</TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
