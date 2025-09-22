@@ -19,7 +19,8 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
         setWeekOverWeekChange(0)
         return
       }
-      // Helper functions for date calculations
+
+      // Helpers
       const toStartOfDay = (date) => {
         const d = new Date(date)
         d.setHours(0, 0, 0, 0)
@@ -41,13 +42,31 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
         return d
       }
 
-      // Calculate current period dates
+      // --------------------
+      // 1) Query global (para el % actual)
+      // --------------------
+      const { data: totalData, error: totalError } = await supabase.rpc("rpt_mentions_by_sentiment", {
+        p_from: filters.p_from,
+        p_to: filters.p_to,
+        p_platforms: filters.p_platforms,
+        p_keywords: filters.p_keywords,
+        p_ai_classification_tags: filters.p_ai_classification_tags,
+      })
+
+      if (totalError) throw totalError
+
+      const totalSentimentData = (totalData || []).find(
+        (item) => item.ai_sentiment?.toLowerCase() === sentiment.toLowerCase()
+      )
+      const currentPercentage = parseFloat(totalSentimentData?.pct) || 0
+      setCurrentPct(currentPercentage)
+
+      // --------------------
+      // 2) Queries semanales (para la badge)
+      // --------------------
       let referenceDate = filters.p_to ? new Date(filters.p_to) : new Date()
-      if (filters.p_to) {
-        referenceDate = toEndOfDay(referenceDate)
-      }
+      if (filters.p_to) referenceDate = toEndOfDay(referenceDate)
       if (Number.isNaN(referenceDate?.getTime())) {
-        setCurrentPct(0)
         setWeekOverWeekChange(0)
         return
       }
@@ -70,57 +89,49 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
         currentPeriodEnd = new Date(currentPeriodStart)
       }
 
-      // Calculate previous period dates (previous week)
       const currentDuration = currentPeriodEnd.getTime() - currentPeriodStart.getTime()
       const previousPeriodStart = new Date(currentPeriodStart)
       previousPeriodStart.setDate(previousPeriodStart.getDate() - 7)
       const previousPeriodEnd = new Date(previousPeriodStart.getTime() + currentDuration)
 
-      // Fetch current period data
+      // Current week data
       const { data: currentData, error: currentError } = await supabase.rpc("rpt_mentions_by_sentiment", {
         p_from: currentPeriodStart.toISOString(),
         p_to: currentPeriodEnd.toISOString(),
         p_platforms: filters.p_platforms,
         p_keywords: filters.p_keywords,
-        p_ai_sentiment: filters.p_ai_sentiment,
         p_ai_classification_tags: filters.p_ai_classification_tags,
       })
-
       if (currentError) throw currentError
 
-      // Fetch previous period data
+      const currentSentimentData = (currentData || []).find(
+        (item) => item.ai_sentiment?.toLowerCase() === sentiment.toLowerCase()
+      )
+      const weekCurrentPct = parseFloat(currentSentimentData?.pct) || 0
+
+      // Previous week data
       const { data: previousData, error: previousError } = await supabase.rpc("rpt_mentions_by_sentiment", {
         p_from: previousPeriodStart.toISOString(),
         p_to: previousPeriodEnd.toISOString(),
         p_platforms: filters.p_platforms,
         p_keywords: filters.p_keywords,
-        p_ai_sentiment: filters.p_ai_sentiment,
         p_ai_classification_tags: filters.p_ai_classification_tags,
       })
-
       if (previousError) throw previousError
 
-      // Find sentiment data for current period
-      const currentSentimentData = (currentData || []).find(
-        (item) => item.ai_sentiment?.toLowerCase() === sentiment.toLowerCase(),
-      )
-      const currentPercentage = currentSentimentData?.pct || 0
-
-      // Find sentiment data for previous period
       const previousSentimentData = (previousData || []).find(
-        (item) => item.ai_sentiment?.toLowerCase() === sentiment.toLowerCase(),
+        (item) => item.ai_sentiment?.toLowerCase() === sentiment.toLowerCase()
       )
-      const previousPercentage = previousSentimentData?.pct || 0
+      const weekPreviousPct = parseFloat(previousSentimentData?.pct) || 0
 
-      // Calculate week-over-week change
+      // Calculate WoW change
       let weekChange = 0
-      if (previousPercentage === 0) {
-        weekChange = currentPercentage === 0 ? 0 : 100
+      if (weekPreviousPct === 0) {
+        weekChange = weekCurrentPct === 0 ? 0 : 100
       } else {
-        weekChange = ((currentPercentage - previousPercentage) / previousPercentage) * 100
+        weekChange = ((weekCurrentPct - weekPreviousPct) / weekPreviousPct) * 100
       }
 
-      setCurrentPct(currentPercentage)
       setWeekOverWeekChange(weekChange)
     } catch (error) {
       console.error("Error fetching sentiment data:", error)
@@ -135,14 +146,12 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
     fetchSentimentData()
   }, [sentiment, filters])
 
-  // Format percentage display
   const formatPercentage = (pct) => {
     if (pct == null || Number.isNaN(pct)) return "0%"
     const value = Math.abs(pct) >= 1 ? pct.toFixed(0) : pct.toFixed(1)
     return `${Number.parseFloat(value)}%`
   }
 
-  // Format week-over-week change
   const formatWeekChange = (change) => {
     if (change == null || Number.isNaN(change)) return "0%"
     const value = Math.abs(change) >= 1 ? change.toFixed(0) : change.toFixed(1)
@@ -150,7 +159,6 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
     return `${sign}${Number.parseFloat(value)}%`
   }
 
-  // Get color classes based on sentiment
   const getColorClasses = () => {
     switch (color) {
       case "green":
@@ -196,10 +204,14 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
     }
   }
 
-  const colorClasses = getColorClasses()
+  // Traducciones de sentimientos
+  const sentimentLabels = {
+    positive: "positivo",
+    negative: "negativo",
+    neutral: "neutral",
+  }
 
-  // Capitalize sentiment for display
-  const displaySentiment = sentiment.charAt(0).toUpperCase() + sentiment.slice(1)
+  const colorClasses = getColorClasses()
 
   return (
     <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
@@ -222,8 +234,12 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="text-2xl font-bold text-white mb-1">{loading ? "..." : formatPercentage(currentPct)}</div>
-        <div className="text-sm text-slate-400">Sentimiento {displaySentiment.toLowerCase()}</div>
+        <div className="text-2xl font-bold text-white mb-1">
+          {loading ? "..." : formatPercentage(currentPct)}
+        </div>
+        <div className="text-sm text-slate-400">
+          Sentimiento {sentimentLabels[sentiment.toLowerCase()] || sentiment}
+        </div>
       </CardContent>
     </Card>
   )

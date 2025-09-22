@@ -972,7 +972,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
           p_from: from,
           p_to: to,
           p_platforms: platforms,
-          p_keywords_id: keywordIds,
+          p_keywords: keywordIds,
           p_ai_sentiment: sentiments,
           p_ai_classification_tags: aiTags,
         },
@@ -1034,7 +1034,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             p_from: currentPeriodStart.toISOString(),
             p_to: currentPeriodEnd.toISOString(),
             p_platforms: platforms,
-            p_keywords_id: keywordIds,
+            p_keywords: keywordIds,
           },
         )
         if (currentWeekError) throw currentWeekError
@@ -1045,7 +1045,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             p_from: previousPeriodStart.toISOString(),
             p_to: previousPeriodEnd.toISOString(),
             p_platforms: platforms,
-            p_keywords_id: keywordIds,
+            p_keywords: keywordIds,
             p_ai_sentiment: sentiments,
             p_ai_classification_tags: aiTags,
           },
@@ -1297,13 +1297,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
   const sentimentKpiFilters = useMemo(() => {
-    const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
+    const { from, to, platforms, keywordIds, aiTags } = buildDashboardParams()
     return {
       p_from: from,
       p_to: to,
       p_platforms: platforms,
       p_keywords: keywordIds,
-      p_ai_sentiment: sentiments,
       p_ai_classification_tags: aiTags,
     }
   }, [
@@ -1311,7 +1310,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     endDate,
     selectedDashboardPlatforms,
     selectedDashboardKeywords,
-    selectedDashboardSentiments,
     selectedDashboardAiTags,
     keywords,
   ])
