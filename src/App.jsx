@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import RightSidebar from "@/components/RightSidebar"
+import SentimentKPI from "@/components/SentimentKPI"
 import { supabase } from "@/lib/supabaseClient"
 import {
   Search,
@@ -26,8 +27,6 @@ import {
   CircleHelp,
   Plus,
   Minus,
-  TrendingUp,
-  Activity,
   MessageSquare,
   ChevronDown,
   Sparkles,
@@ -35,6 +34,8 @@ import {
   Lightbulb,
   Headset,
   Loader2,
+  Smile,
+  Frown,
 } from "lucide-react"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -145,10 +146,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [series, setSeries] = useState([])
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
-  const [kpiPlatformCount, setKpiPlatformCount] = useState(0)
-  const [badgePlatformActive, setBadgePlatformActive] = useState(0)
-  const [kpiKeywordCount, setKpiKeywordCount] = useState(0)
-  const [badgeKeywordsActive, setBadgeKeywordsActive] = useState(0)
   const [platCounts, setPlatCounts] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
@@ -1066,54 +1063,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const fetchPlatformsKpis = async () => {
-    try {
-      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
-      const { data, error } = await supabase.rpc("rpt_platform_count", {
-        p_from: from,
-        p_to: to,
-        p_platforms: platforms,
-        p_keywords: keywordIds,
-        p_ai_sentiment: sentiments,
-        p_ai_classification_tags: aiTags,
-      })
-      if (error) throw error
-      setKpiPlatformCount(data?.[0]?.platforms ?? 0)
-      const { data: activeData, error: activeError } = await supabase.rpc(
-        "rpt_platform_count",
-        { p_from: null, p_to: null, p_platforms: null, p_keywords: null },
-      )
-      if (activeError) throw activeError
-      setBadgePlatformActive(activeData?.[0]?.platforms ?? 0)
-    } catch (err) {
-      console.error("Error fetching platform KPIs", err)
-    }
-  }
-
-  const fetchKeywordsKpis = async () => {
-    try {
-      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
-      const { data, error } = await supabase.rpc("rpt_keyword_count", {
-        p_from: from,
-        p_to: to,
-        p_platforms: platforms,
-        p_keywords: keywordIds,
-        p_ai_sentiment: sentiments,
-        p_ai_classification_tags: aiTags,
-      })
-      if (error) throw error
-      setKpiKeywordCount(data?.[0]?.keywords ?? 0)
-      const { count, error: activeError } = await supabase
-        .from("dim_keywords")
-        .select("keyword_id", { count: "exact", head: true })
-        .eq("active", true)
-      if (activeError) throw activeError
-      setBadgeKeywordsActive(count ?? 0)
-    } catch (err) {
-      console.error("Error fetching keyword KPIs", err)
-    }
-  }
-
   const fetchTopWords = async () => {
     try {
       const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
@@ -1216,8 +1165,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
       try {
         await Promise.all([
           fetchDashboardKpis(),
-          fetchPlatformsKpis(),
-          fetchKeywordsKpis(),
           fetchTopWords(),
           fetchTopSources(),
           fetchPlatforms(),
@@ -1349,6 +1296,25 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const activeKeywords = useMemo(() => keywords.filter((k) => k.active), [keywords])
+  const sentimentKpiFilters = useMemo(() => {
+    const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
+    return {
+      p_from: from,
+      p_to: to,
+      p_platforms: platforms,
+      p_keywords: keywordIds,
+      p_ai_sentiment: sentiments,
+      p_ai_classification_tags: aiTags,
+    }
+  }, [
+    startDate,
+    endDate,
+    selectedDashboardPlatforms,
+    selectedDashboardKeywords,
+    selectedDashboardSentiments,
+    selectedDashboardAiTags,
+    keywords,
+  ])
   const kpiMoMDisplay = useMemo(() => {
     const pct = kpiMoM.pct_change
     if (pct == null) return "—%"
@@ -1753,35 +1719,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center">
-                            <Activity className="w-6 h-6 text-purple-400" />
-                          </div>
-                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                            {`${badgePlatformActive} Activas`}
-                          </Badge>
-                        </div>
-                        <div className="text-2xl font-bold text-white mb-1">{kpiPlatformCount}</div>
-                        <div className="text-sm text-slate-400">Plataformas</div>
-                      </CardContent>
-                    </Card>
+                    <SentimentKPI
+                      sentiment="positive"
+                      icon={Smile}
+                      color="green"
+                      filters={sentimentKpiFilters}
+                    />
 
-                    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
-                            <TrendingUp className="w-6 h-6 text-green-400" />
-                          </div>
-                          <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                            {`${badgeKeywordsActive} Activas`}
-                          </Badge>
-                        </div>
-                        <div className="text-2xl font-bold text-white mb-1">{kpiKeywordCount}</div>
-                        <div className="text-sm text-slate-400">Palabras clave</div>
-                      </CardContent>
-                    </Card>
+                    <SentimentKPI
+                      sentiment="negative"
+                      icon={Frown}
+                      color="red"
+                      filters={sentimentKpiFilters}
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

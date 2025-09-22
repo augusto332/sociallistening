@@ -14,6 +14,11 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
   const fetchSentimentData = async () => {
     setLoading(true)
     try {
+      if (!filters) {
+        setCurrentPct(0)
+        setWeekOverWeekChange(0)
+        return
+      }
       // Helper functions for date calculations
       const toStartOfDay = (date) => {
         const d = new Date(date)
@@ -77,6 +82,7 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
         p_to: currentPeriodEnd.toISOString(),
         p_platforms: filters.p_platforms,
         p_keywords: filters.p_keywords,
+        p_ai_sentiment: filters.p_ai_sentiment,
         p_ai_classification_tags: filters.p_ai_classification_tags,
       })
 
@@ -88,6 +94,7 @@ export default function SentimentKPI({ sentiment, icon: Icon, color, filters }) 
         p_to: previousPeriodEnd.toISOString(),
         p_platforms: filters.p_platforms,
         p_keywords: filters.p_keywords,
+        p_ai_sentiment: filters.p_ai_sentiment,
         p_ai_classification_tags: filters.p_ai_classification_tags,
       })
 
