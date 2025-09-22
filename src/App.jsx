@@ -6,7 +6,7 @@ import DatePickerInput from "@/components/DatePickerInput"
 import { Card, CardContent } from "@/components/ui/card"
 import MentionCard from "@/components/MentionCard"
 import WordCloud from "@/components/WordCloud"
-import PlatformBarChart from "@/components/PlatformBarChart"
+import TagMentionsBarChart from "@/components/TagMentionsBarChart"
 import ActiveSourcesBarChart from "@/components/ActiveSourcesBarChart"
 import MentionsLineChart from "@/components/MentionsLineChart"
 import MultiSelect from "@/components/MultiSelect"
@@ -146,7 +146,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [series, setSeries] = useState([])
   const [topWords, setTopWords] = useState([])
   const [sourceTop, setSourceTop] = useState([])
-  const [platCounts, setPlatCounts] = useState([])
+  const [tagCounts, setTagCounts] = useState([])
   const [cursor, setCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -1107,23 +1107,24 @@ export default function ModernSocialListeningApp({ onLogout }) {
     }
   }
 
-  const fetchPlatforms = async () => {
+  const fetchTagMentions = async () => {
     try {
       const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
-      const { data, error } = await supabase.rpc("rpt_mentions_by_platform", {
+      const { data, error } = await supabase.rpc("rpt_mentions_by_tag", {
         p_from: from,
         p_to: to,
-        p_platforms: platforms,
+        p_sources: platforms,
         p_keywords: keywordIds,
         p_ai_sentiment: sentiments,
         p_ai_classification_tags: aiTags,
+        p_limit: 20,
       })
       if (error) throw error
-      setPlatCounts(
-        (data || []).map((item) => ({ platform: item.platform, count: Number(item.cnt) }))
+      setTagCounts(
+        (data || []).map((item) => ({ tag: item.tag, count: Number(item.cnt) }))
       )
     } catch (err) {
-      console.error("Error fetching mentions by platform", err)
+      console.error("Error fetching mentions by tag", err)
     }
   }
 
@@ -1167,7 +1168,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
           fetchDashboardKpis(),
           fetchTopWords(),
           fetchTopSources(),
-          fetchPlatforms(),
+          fetchTagMentions(),
           fetchSeries(),
         ])
       } finally {
@@ -1754,7 +1755,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       <CardContent className="p-6 space-y-4 h-full flex flex-col">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                          <p className="font-semibold text-white">Menciones por plataforma</p>
+                          <p className="font-semibold text-white">Menciones por tag</p>
                         </div>
                         <div className="flex-1">
                           {dashLoading ? (
@@ -1762,7 +1763,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                               <Loader2 className="h-8 w-8 animate-spin" />
                             </div>
                           ) : (
-                            <PlatformBarChart data={platCounts} />
+                            <TagMentionsBarChart data={tagCounts} />
                           )}
                         </div>
                       </CardContent>
