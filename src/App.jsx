@@ -976,8 +976,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
           p_to: to,
           p_platforms: platforms,
           p_keywords_id: keywordIds,
-          p_sentiments: sentiments,
-          p_ai_tags: aiTags,
+          p_ai_sentiment: sentiments,
+          p_ai_classification_tags: aiTags,
         },
       )
       if (totalError) throw totalError
@@ -1049,8 +1049,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
             p_to: previousPeriodEnd.toISOString(),
             p_platforms: platforms,
             p_keywords_id: keywordIds,
-            p_sentiments: sentiments,
-            p_ai_tags: aiTags,
+            p_ai_sentiment: sentiments,
+            p_ai_classification_tags: aiTags,
           },
         )
         if (previousWeekError) throw previousWeekError
@@ -1074,8 +1074,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setKpiPlatformCount(data?.[0]?.platforms ?? 0)
@@ -1098,8 +1098,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setKpiKeywordCount(data?.[0]?.keywords ?? 0)
@@ -1124,8 +1124,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_keywords: keywordIds,
         p_min_len: 3,
         p_limit: 30,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setTopWords(
@@ -1146,8 +1146,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_sources,
         p_keywords: keywordIds,
         p_limit: 10,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setSourceTop(
@@ -1166,8 +1166,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setPlatCounts(
@@ -1194,8 +1194,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_platforms: platforms,
         p_keywords: keywordIds,
         p_bucket,
-        p_sentiments: sentiments,
-        p_ai_tags: aiTags,
+        p_ai_sentiment: sentiments,
+        p_ai_classification_tags: aiTags,
       })
       if (error) throw error
       setSeries(
