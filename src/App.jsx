@@ -911,7 +911,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const fetchDashboardKpis = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1018,13 +1017,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       }
     } catch (err) {
       console.error("Error fetching dashboard KPIs", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchPlatformsKpis = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1057,13 +1053,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setBadgePlatformActive(activeData?.[0]?.platforms ?? 0)
     } catch (err) {
       console.error("Error fetching platform KPIs", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchKeywordsKpis = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1096,13 +1089,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setBadgeKeywordsActive(count ?? 0)
     } catch (err) {
       console.error("Error fetching keyword KPIs", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchTopWords = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1133,13 +1123,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       )
     } catch (err) {
       console.error("Error fetching top words", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchTopSources = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1167,13 +1154,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       )
     } catch (err) {
       console.error("Error fetching top sources", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchPlatforms = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1202,13 +1186,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       )
     } catch (err) {
       console.error("Error fetching mentions by platform", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   const fetchSeries = async () => {
-    setDashLoading(true)
     try {
       const p_from = startDate ? new Date(startDate).toISOString() : null
       let p_to = null
@@ -1245,79 +1226,38 @@ export default function ModernSocialListeningApp({ onLogout }) {
       )
     } catch (err) {
       console.error("Error fetching mentions over time", err)
-    } finally {
-      setDashLoading(false)
     }
   }
 
   useEffect(() => {
     if (activeTab !== "dashboard") return
-    fetchDashboardKpis()
-  }, [
-    activeTab,
-    startDate,
-    endDate,
-    selectedDashboardPlatforms,
-    selectedDashboardKeywords,
-    keywords,
-  ])
 
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchPlatformsKpis()
-  }, [
-    activeTab,
-    startDate,
-    endDate,
-    selectedDashboardPlatforms,
-    selectedDashboardKeywords,
-    keywords,
-  ])
+    let isSubscribed = true
 
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchKeywordsKpis()
-  }, [
-    activeTab,
-    startDate,
-    endDate,
-    selectedDashboardPlatforms,
-    selectedDashboardKeywords,
-    keywords,
-  ])
+    const loadDashboardData = async () => {
+      setDashLoading(true)
+      try {
+        await Promise.all([
+          fetchDashboardKpis(),
+          fetchPlatformsKpis(),
+          fetchKeywordsKpis(),
+          fetchTopWords(),
+          fetchTopSources(),
+          fetchPlatforms(),
+          fetchSeries(),
+        ])
+      } finally {
+        if (isSubscribed) {
+          setDashLoading(false)
+        }
+      }
+    }
 
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchTopWords()
-  }, [
-    activeTab,
-    startDate,
-    endDate,
-    selectedDashboardPlatforms,
-    selectedDashboardKeywords,
-    keywords,
-  ])
+    loadDashboardData()
 
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchTopSources()
-  }, [activeTab, startDate, endDate, selectedDashboardKeywords, keywords])
-
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchPlatforms()
-  }, [
-    activeTab,
-    startDate,
-    endDate,
-    selectedDashboardPlatforms,
-    selectedDashboardKeywords,
-    keywords,
-  ])
-
-  useEffect(() => {
-    if (activeTab !== "dashboard") return
-    fetchSeries()
+    return () => {
+      isSubscribed = false
+    }
   }, [
     activeTab,
     startDate,
