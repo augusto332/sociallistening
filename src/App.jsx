@@ -169,6 +169,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [keywords, setKeywords] = useState([])
   const [selectedDashboardKeywords, setSelectedDashboardKeywords] = useState(["all"])
   const [selectedDashboardPlatforms, setSelectedDashboardPlatforms] = useState(["all"])
+  const [selectedDashboardSentiments, setSelectedDashboardSentiments] = useState([])
+  const [selectedDashboardAiTags, setSelectedDashboardAiTags] = useState([])
   const [newKeyword, setNewKeyword] = useState("")
   const [addKeywordMessage, setAddKeywordMessage] = useState(null)
   const [saveKeywordMessage, setSaveKeywordMessage] = useState(null)
@@ -242,6 +244,28 @@ export default function ModernSocialListeningApp({ onLogout }) {
     })
     return stats
   }, [mentions])
+
+  const dashboardSentimentOptions = useMemo(
+    () =>
+      (allSentimentOptions || []).map((sentiment) => {
+        const normalized =
+          typeof sentiment === "string" ? sentiment : String(sentiment ?? "")
+        const label = normalized
+          ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+          : normalized
+        return { value: normalized, label }
+      }),
+    [allSentimentOptions],
+  )
+
+  const dashboardAiTagOptions = useMemo(
+    () =>
+      (allAiTagOptions || []).map((tag) => {
+        const normalized = typeof tag === "string" ? tag : String(tag ?? "")
+        return { value: normalized, label: normalized }
+      }),
+    [allAiTagOptions],
+  )
 
   const mentionsFilters = useMemo(() => {
     const normalizedSources = Array.isArray(sourcesFilter)
@@ -906,6 +930,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const clearDashboardFilters = () => {
     setSelectedDashboardKeywords(["all"])
     setSelectedDashboardPlatforms(["all"])
+    setSelectedDashboardSentiments([])
+    setSelectedDashboardAiTags([])
     setStartDate("")
     setEndDate("")
   }
@@ -927,12 +953,22 @@ export default function ModernSocialListeningApp({ onLogout }) {
           .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
           .filter((id) => typeof id === "string")
 
-    return { from, to, platforms, keywordIds }
+    const sentimentList = selectedDashboardSentiments
+      .map((s) => (typeof s === "string" ? s.trim().toLowerCase() : ""))
+      .filter((s) => s.length > 0)
+    const sentiments = sentimentList.length ? sentimentList : null
+
+    const aiTagList = selectedDashboardAiTags
+      .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+      .filter((tag) => tag.length > 0)
+    const aiTags = aiTagList.length ? aiTagList : null
+
+    return { from, to, platforms, keywordIds, sentiments, aiTags }
   }
 
   const fetchDashboardKpis = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const { data: totalData, error: totalError } = await supabase.rpc(
         "rpt_mentions_total",
         {
@@ -940,6 +976,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
           p_to: to,
           p_platforms: platforms,
           p_keywords_id: keywordIds,
+          p_sentiments: sentiments,
+          p_ai_tags: aiTags,
         },
       )
       if (totalError) throw totalError
@@ -1011,6 +1049,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
             p_to: previousPeriodEnd.toISOString(),
             p_platforms: platforms,
             p_keywords_id: keywordIds,
+            p_sentiments: sentiments,
+            p_ai_tags: aiTags,
           },
         )
         if (previousWeekError) throw previousWeekError
@@ -1028,12 +1068,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchPlatformsKpis = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_platform_count", {
         p_from: from,
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setKpiPlatformCount(data?.[0]?.platforms ?? 0)
@@ -1050,12 +1092,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchKeywordsKpis = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_keyword_count", {
         p_from: from,
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setKpiKeywordCount(data?.[0]?.keywords ?? 0)
@@ -1072,7 +1116,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchTopWords = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_top_words", {
         p_from: from,
         p_to: to,
@@ -1080,6 +1124,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_keywords: keywordIds,
         p_min_len: 3,
         p_limit: 30,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setTopWords(
@@ -1092,7 +1138,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchTopSources = async () => {
     try {
-      const { from, to, keywordIds } = buildDashboardParams()
+      const { from, to, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const p_sources = null
       const { data, error } = await supabase.rpc("rpt_mentions_by_source", {
         p_from: from,
@@ -1100,6 +1146,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_sources,
         p_keywords: keywordIds,
         p_limit: 10,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setSourceTop(
@@ -1112,12 +1160,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchPlatforms = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_mentions_by_platform", {
         p_from: from,
         p_to: to,
         p_platforms: platforms,
         p_keywords: keywordIds,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setPlatCounts(
@@ -1130,7 +1180,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchSeries = async () => {
     try {
-      const { from, to, platforms, keywordIds } = buildDashboardParams()
+      const { from, to, platforms, keywordIds, sentiments, aiTags } = buildDashboardParams()
       let p_bucket = "day"
       if (startDate && endDate) {
         const diff =
@@ -1144,6 +1194,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_platforms: platforms,
         p_keywords: keywordIds,
         p_bucket,
+        p_sentiments: sentiments,
+        p_ai_tags: aiTags,
       })
       if (error) throw error
       setSeries(
@@ -1189,6 +1241,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
     endDate,
     selectedDashboardPlatforms,
     selectedDashboardKeywords,
+    selectedDashboardSentiments,
+    selectedDashboardAiTags,
     keywords,
   ])
 
@@ -1638,6 +1692,26 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     ]}
                     value={selectedDashboardPlatforms}
                     onChange={setSelectedDashboardPlatforms}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Sentimiento</p>
+                  <MultiSelect
+                    className="w-40"
+                    options={dashboardSentimentOptions}
+                    value={selectedDashboardSentiments}
+                    onChange={setSelectedDashboardSentiments}
+                    placeholder="Todos"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Clasificación AI</p>
+                  <MultiSelect
+                    className="min-w-[12rem]"
+                    options={dashboardAiTagOptions}
+                    value={selectedDashboardAiTags}
+                    onChange={setSelectedDashboardAiTags}
+                    placeholder="Todas"
                   />
                 </div>
                 <div className="flex items-end">
