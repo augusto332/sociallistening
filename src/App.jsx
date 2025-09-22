@@ -910,30 +910,36 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setEndDate("")
   }
 
+  const buildDashboardParams = () => {
+    const from = startDate ? new Date(startDate).toISOString() : null
+    let to = null
+    if (endDate) {
+      const d = new Date(endDate)
+      d.setHours(23, 59, 59, 999)
+      to = d.toISOString()
+    }
+    const platforms = selectedDashboardPlatforms.includes("all")
+      ? null
+      : selectedDashboardPlatforms.map((p) => p.toLowerCase())
+    const keywordIds = selectedDashboardKeywords.includes("all")
+      ? null
+      : selectedDashboardKeywords
+          .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
+          .filter((id) => typeof id === "string")
+
+    return { from, to, platforms, keywordIds }
+  }
+
   const fetchDashboardKpis = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywordsUuid = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       const { data: totalData, error: totalError } = await supabase.rpc(
         "rpt_mentions_total",
         {
-          p_from,
-          p_to,
-          p_platforms,
-          p_keywords_id: p_keywordsUuid,
+          p_from: from,
+          p_to: to,
+          p_platforms: platforms,
+          p_keywords_id: keywordIds,
         },
       )
       if (totalError) throw totalError
@@ -992,8 +998,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
           {
             p_from: currentPeriodStart.toISOString(),
             p_to: currentPeriodEnd.toISOString(),
-            p_platforms,
-            p_keywords_id: p_keywordsUuid,
+            p_platforms: platforms,
+            p_keywords_id: keywordIds,
           },
         )
         if (currentWeekError) throw currentWeekError
@@ -1003,8 +1009,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
           {
             p_from: previousPeriodStart.toISOString(),
             p_to: previousPeriodEnd.toISOString(),
-            p_platforms,
-            p_keywords_id: p_keywordsUuid,
+            p_platforms: platforms,
+            p_keywords_id: keywordIds,
           },
         )
         if (previousWeekError) throw previousWeekError
@@ -1022,26 +1028,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchPlatformsKpis = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_platform_count", {
-        p_from,
-        p_to,
-        p_platforms,
-        p_keywords,
+        p_from: from,
+        p_to: to,
+        p_platforms: platforms,
+        p_keywords: keywordIds,
       })
       if (error) throw error
       setKpiPlatformCount(data?.[0]?.platforms ?? 0)
@@ -1058,26 +1050,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchKeywordsKpis = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_keyword_count", {
-        p_from,
-        p_to,
-        p_platforms,
-        p_keywords,
+        p_from: from,
+        p_to: to,
+        p_platforms: platforms,
+        p_keywords: keywordIds,
       })
       if (error) throw error
       setKpiKeywordCount(data?.[0]?.keywords ?? 0)
@@ -1094,26 +1072,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchTopWords = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_top_words", {
-        p_from,
-        p_to,
-        p_platforms,
-        p_keywords,
+        p_from: from,
+        p_to: to,
+        p_platforms: platforms,
+        p_keywords: keywordIds,
         p_min_len: 3,
         p_limit: 30,
       })
@@ -1128,24 +1092,13 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchTopSources = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
+      const { from, to, keywordIds } = buildDashboardParams()
       const p_sources = null
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
       const { data, error } = await supabase.rpc("rpt_mentions_by_source", {
-        p_from,
-        p_to,
+        p_from: from,
+        p_to: to,
         p_sources,
-        p_keywords,
+        p_keywords: keywordIds,
         p_limit: 10,
       })
       if (error) throw error
@@ -1159,26 +1112,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchPlatforms = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       const { data, error } = await supabase.rpc("rpt_mentions_by_platform", {
-        p_from,
-        p_to,
-        p_platforms,
-        p_keywords,
+        p_from: from,
+        p_to: to,
+        p_platforms: platforms,
+        p_keywords: keywordIds,
       })
       if (error) throw error
       setPlatCounts(
@@ -1191,21 +1130,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
   const fetchSeries = async () => {
     try {
-      const p_from = startDate ? new Date(startDate).toISOString() : null
-      let p_to = null
-      if (endDate) {
-        const d = new Date(endDate)
-        d.setHours(23, 59, 59, 999)
-        p_to = d.toISOString()
-      }
-      const p_platforms = selectedDashboardPlatforms.includes("all")
-        ? null
-        : selectedDashboardPlatforms.map((p) => p.toLowerCase())
-      const p_keywords = selectedDashboardKeywords.includes("all")
-        ? null
-        : selectedDashboardKeywords
-            .map((kw) => keywords.find((k) => k.keyword === kw)?.keyword_id)
-            .filter((id) => typeof id === "string")
+      const { from, to, platforms, keywordIds } = buildDashboardParams()
       let p_bucket = "day"
       if (startDate && endDate) {
         const diff =
@@ -1214,10 +1139,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
         else if (diff > 60) p_bucket = "week"
       }
       const { data, error } = await supabase.rpc("rpt_mentions_over_time", {
-        p_from,
-        p_to,
-        p_platforms,
-        p_keywords,
+        p_from: from,
+        p_to: to,
+        p_platforms: platforms,
+        p_keywords: keywordIds,
         p_bucket,
       })
       if (error) throw error
