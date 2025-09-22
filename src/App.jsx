@@ -1677,7 +1677,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                     placeholder="Todas"
                   />
                 </div>
-                <div className="flex items-end">
+                <div className="flex items-center gap-2">
                   <Button variant="outline" onClick={clearDashboardFilters}>
                     Limpiar filtros
                   </Button>
