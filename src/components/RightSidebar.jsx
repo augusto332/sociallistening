@@ -235,7 +235,12 @@ export default function RightSidebar({
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-400" />
-                <h4 className="font-medium text-white">Clasificación AI</h4>
+                <h4 className="font-medium text-white flex items-center gap-2">
+                  Clasificación
+                  <span className="bg-gray-700 text-gray-200 text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-sm">
+                    IA
+                  </span>
+                </h4>
               </div>
               <div className="flex flex-wrap gap-2">
                 {aiTagOptions.map((tag) => (

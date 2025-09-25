@@ -1669,7 +1669,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   />
                 </div>
                 <div className="min-w-[12rem] w-[12rem]">
-                  <p className="text-sm font-medium mb-2 text-slate-300">Clasificación AI</p>
+                  <p className="text-sm font-medium mb-2 text-slate-300">Clasificación</p>
                   <MultiSelect
                     className="w-full"
                     options={dashboardAiTagOptions}
@@ -1755,7 +1755,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       <CardContent className="p-6 space-y-4 h-full flex flex-col">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                          <p className="font-semibold text-white">Menciones por tag</p>
+                          <p className="font-semibold text-white">Menciones por categoría</p>
                         </div>
                         <div className="flex-1">
                           {dashLoading ? (
@@ -1773,7 +1773,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                       <CardContent className="p-6 space-y-4 h-full flex flex-col">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <p className="font-semibold text-white">Fuentes más activas</p>
+                          <p className="font-semibold text-white">Top 10 orígenes de menciones</p>
                         </div>
                         <div className="flex-1">
                           {dashLoading ? (
