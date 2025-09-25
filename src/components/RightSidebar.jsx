@@ -237,7 +237,7 @@ export default function RightSidebar({
                 <Zap className="w-4 h-4 text-amber-400" />
                 <h4 className="font-medium text-white flex items-center gap-2">
                   Clasificación
-                  <span className="bg-gray-700 text-gray-200 text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-sm">
+                  <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-300 bg-gradient-to-r from-purple-500/10 to-blue-600/10 border border-purple-500/20 rounded-full">
                     IA
                   </span>
                 </h4>
@@ -267,7 +267,12 @@ export default function RightSidebar({
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Smile className="w-4 h-4 text-green-400" />
-                <h4 className="font-medium text-white">Sentimiento</h4>
+                <h4 className="font-medium text-white flex items-center gap-2">
+                  Sentimiento
+                  <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-300 bg-gradient-to-r from-purple-500/10 to-blue-600/10 border border-purple-500/20 rounded-full">
+                    IA
+                  </span>
+                </h4>
               </div>
               <div className="flex flex-wrap gap-2">
                 {sentimentOptions.map((sentiment) => {

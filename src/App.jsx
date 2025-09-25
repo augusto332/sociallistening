@@ -1659,7 +1659,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   />
                 </div>
                 <div className="min-w-[12rem] w-[12rem]">
-                  <p className="text-sm font-medium mb-2 text-slate-300">Sentimiento</p>
+                  <p className="text-sm font-medium mb-2 text-slate-300 flex items-center gap-2">
+                    Sentimiento
+                    <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-300 bg-gradient-to-r from-purple-500/10 to-blue-600/10 border border-purple-500/20 rounded-full">
+                      IA
+                    </span>
+                  </p>
                   <MultiSelect
                     className="w-full"
                     options={dashboardSentimentOptions}
@@ -1669,7 +1674,12 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   />
                 </div>
                 <div className="min-w-[12rem] w-[12rem]">
-                  <p className="text-sm font-medium mb-2 text-slate-300">Clasificación</p>
+                  <p className="text-sm font-medium mb-2 text-slate-300 flex items-center gap-2">
+                    Clasificación
+                    <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-300 bg-gradient-to-r from-purple-500/10 to-blue-600/10 border border-purple-500/20 rounded-full">
+                      IA
+                    </span>
+                  </p>
                   <MultiSelect
                     className="w-full"
                     options={dashboardAiTagOptions}
