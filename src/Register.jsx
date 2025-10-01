@@ -153,7 +153,7 @@ export default function ModernRegister() {
             <h1 className="text-3xl font-semibold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
               Crear cuenta
             </h1>
-            <p className="text-slate-400">Únete a Social Listening y comienza a monitorear tu marca</p>
+            <p className="text-slate-400">Únete a Listening Lab y comienza a monitorear tu marca</p>
           </div>
 
           {/* Register Form */}
