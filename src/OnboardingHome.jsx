@@ -178,7 +178,7 @@ export default function ModernOnboardingHome() {
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-4xl font-semibold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-4">
-                  Bienvenido a Social Listening
+                  Bienvenido a Listening Lab
                 </h1>
                 <p className="text-xl text-slate-400 max-w-lg mx-auto">
                   Descubre qué se dice sobre tu marca en las redes sociales y mantente al día con las conversaciones importantes.

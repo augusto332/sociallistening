@@ -53,7 +53,7 @@ export default function ModernLogin() {
             <h1 className="text-3xl font-semibold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
               Bienvenido de vuelta
             </h1>
-            <p className="text-slate-400">Inicia sesión en tu cuenta de Social Listening</p>
+            <p className="text-slate-400">Inicia sesión en tu cuenta de Listening Lab</p>
           </div>
 
           {/* Login Form */}

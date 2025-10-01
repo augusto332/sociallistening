@@ -1331,7 +1331,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Social Listening
+              Listening Lab
             </span>
           </div>
 
