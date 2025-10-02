@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import SocialListeningApp from './App'
+import Account from './Account'
 import Login from './Login'
 import Register from './Register'
 import './index.css'
@@ -32,6 +33,14 @@ function Root() {
             element={
               <ProtectedRoute>
                 <SocialListeningApp />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/account"
+            element={
+              <ProtectedRoute>
+                <Account />
               </ProtectedRoute>
             }
           />

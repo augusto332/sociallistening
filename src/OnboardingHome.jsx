@@ -141,7 +141,7 @@ export default function ModernOnboardingHome() {
             <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
               <button
                 onClick={() => {
-                  navigate("/app/mentions?tab=account")
+                  navigate("/app/account")
                   setMenuOpen(false)
                 }}
                 className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
