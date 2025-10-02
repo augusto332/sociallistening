@@ -1,12 +1,35 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
-import { Card, CardContent } from "@/components/ui/card"
+import { useAuth } from "@/context/AuthContext"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Sparkles } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import {
+  Sparkles,
+  User,
+  Mail,
+  Lock,
+  Shield,
+  AlertTriangle,
+  Check,
+  X,
+  Eye,
+  EyeOff,
+  Crown,
+  Calendar,
+  TrendingUp,
+  LogOut,
+  BarChart3,
+  CreditCard,
+} from "lucide-react"
 
 export default function Account() {
+  const { user, plan, planLoading } = useAuth()
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
   const [originalAccountName, setOriginalAccountName] = useState("")
@@ -15,6 +38,13 @@ export default function Account() {
   const [showPasswordFields, setShowPasswordFields] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [savingName, setSavingName] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [accountCreatedAt, setAccountCreatedAt] = useState(null)
+  const [stats, setStats] = useState({ mentions: 0, keywords: 0 })
+  const [activeSection, setActiveSection] = useState("profile")
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -28,11 +58,40 @@ export default function Account() {
         setAccountEmail(user.email || "")
         setAccountName(displayName)
         setOriginalAccountName(displayName)
+        setAccountCreatedAt(user.created_at)
       }
     }
 
     fetchAccount()
   }, [])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return
+
+      const { count: keywordsCount } = await supabase
+        .from("dim_keywords")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("active", true)
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      const { count: mentionsCount } = await supabase
+        .from("fact_mentions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", thirtyDaysAgo.toISOString())
+
+      setStats({
+        keywords: keywordsCount || 0,
+        mentions: mentionsCount || 0,
+      })
+    }
+
+    fetchStats()
+  }, [user])
 
   const togglePasswordFields = () => {
     setShowPasswordFields((prev) => !prev)
@@ -41,58 +100,562 @@ export default function Account() {
     setNewPassword("")
   }
 
+  const getPasswordStrength = (password) => {
+    const requirements = [
+      { test: password.length >= 8, text: "Al menos 8 caracteres" },
+      { test: /[A-Z]/.test(password), text: "Una letra mayúscula" },
+      { test: /[a-z]/.test(password), text: "Una letra minúscula" },
+      { test: /\d/.test(password), text: "Un número" },
+      { test: /[!@#$%^&*(),.?":{}|<>]/.test(password), text: "Un carácter especial" },
+    ]
+
+    const passed = requirements.filter((req) => req.test).length
+    return { requirements, passed, total: requirements.length }
+  }
+
+  const passwordStrength = getPasswordStrength(newPassword)
+  const isPasswordValid = passwordStrength.passed >= 3
+
   const handleChangePassword = async () => {
     setPasswordMessage(null)
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: accountEmail,
-      password: currentPassword,
-    })
-
-    if (signInError) {
-      setPasswordMessage({ type: "error", text: "Contraseña actual incorrecta" })
+    if (!isPasswordValid) {
+      setPasswordMessage({ type: "error", text: "La contraseña debe cumplir al menos 3 requisitos" })
       return
     }
 
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setChangingPassword(true)
 
-    if (error) {
-      setPasswordMessage({ type: "error", text: error.message })
-    } else {
-      setPasswordMessage({ type: "success", text: "Contraseña actualizada" })
-      setShowPasswordFields(false)
-      setCurrentPassword("")
-      setNewPassword("")
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: accountEmail,
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        setPasswordMessage({ type: "error", text: "Contraseña actual incorrecta" })
+        setChangingPassword(false)
+        return
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+      if (error) {
+        setPasswordMessage({ type: "error", text: error.message })
+      } else {
+        setPasswordMessage({ type: "success", text: "Contraseña actualizada exitosamente" })
+        setShowPasswordFields(false)
+        setCurrentPassword("")
+        setNewPassword("")
+      }
+    } finally {
+      setChangingPassword(false)
     }
   }
 
   const handleSaveAccountName = async () => {
     setNameMessage(null)
+    setSavingName(true)
 
-    const { error } = await supabase.auth.updateUser({
-      data: { display_name: accountName },
-    })
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { display_name: accountName },
+      })
 
-    if (error) {
-      setNameMessage({ type: "error", text: error.message })
-    } else {
-      setNameMessage({ type: "success", text: "Nombre actualizado" })
-      setOriginalAccountName(accountName)
+      if (error) {
+        setNameMessage({ type: "error", text: error.message })
+      } else {
+        setNameMessage({ type: "success", text: "Nombre actualizado exitosamente" })
+        setOriginalAccountName(accountName)
+      }
+    } finally {
+      setSavingName(false)
     }
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate("/login")
   }
 
   const handleLogoClick = () => {
     navigate("/app/mentions")
   }
 
+  const getPlanBadge = () => {
+    if (planLoading) return null
+
+    const planConfig = {
+      free: {
+        label: "Plan Gratuito",
+        color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+        icon: User,
+      },
+      premium: {
+        label: "Plan Premium",
+        color: "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20",
+        icon: Crown,
+      },
+    }
+
+    const config = planConfig[plan] || planConfig.free
+    const PlanIcon = config.icon
+
+    return (
+      <Badge variant="secondary" className={`${config.color} flex items-center gap-1.5 px-3 py-1.5`}>
+        <PlanIcon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "—"
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const menuItems = [
+    {
+      id: "profile",
+      title: "Mi Perfil",
+      icon: User,
+    },
+    {
+      id: "security",
+      title: "Seguridad",
+      icon: Shield,
+    },
+    {
+      id: "plan",
+      title: "Plan y Facturación",
+      icon: CreditCard,
+    },
+  ]
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "profile":
+        return (
+          <div className="space-y-6">
+            {/* Profile Overview Card */}
+            <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                      <User className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-xl mb-1">{accountName || "Usuario"}</CardTitle>
+                      <CardDescription className="text-slate-400">{accountEmail}</CardDescription>
+                      <div className="mt-2">{getPlanBadge()}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full h-px bg-slate-700/50 mb-6" />
+
+                {/* Account Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-400">Miembro desde</span>
+                    </div>
+                    <p className="text-lg font-semibold text-white">{formatDate(accountCreatedAt)}</p>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm text-slate-400">Keywords activas</span>
+                    </div>
+                    <p className="text-lg font-semibold text-white">{stats.keywords}</p>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm text-slate-400">Menciones (30 días)</span>
+                    </div>
+                    <p className="text-lg font-semibold text-white">{stats.mentions}</p>
+                  </div>
+                </div>
+
+                <div className="w-full h-px bg-slate-700/50 mb-6" />
+
+                {/* Personal Information */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-white">Información Personal</h3>
+
+                  {/* Email (Read Only) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Correo electrónico
+                    </label>
+                    <Input
+                      className="bg-slate-800/50 border-slate-700/50 text-white cursor-not-allowed"
+                      value={accountEmail}
+                      readOnly
+                    />
+                    <p className="text-xs text-slate-500">El correo electrónico no se puede modificar</p>
+                  </div>
+
+                  {/* Username */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Nombre de usuario</label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        className="bg-slate-800/50 border-slate-700/50 text-white flex-1 focus:border-blue-500/50 focus:ring-blue-500/20"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        placeholder="Tu nombre"
+                      />
+                      {accountName !== originalAccountName && (
+                        <Button
+                          onClick={handleSaveAccountName}
+                          disabled={savingName || !accountName.trim()}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                        >
+                          {savingName ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4 mr-2" />
+                              Guardar
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    {nameMessage && (
+                      <div
+                        className={`p-3 rounded-lg border flex items-center gap-2 ${
+                          nameMessage.type === "error"
+                            ? "bg-red-500/10 border-red-500/20 text-red-400"
+                            : "bg-green-500/10 border-green-500/20 text-green-400"
+                        }`}
+                      >
+                        {nameMessage.type === "success" ? (
+                          <Check className="w-4 h-4 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                        )}
+                        <span className="text-sm">{nameMessage.text}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case "security":
+        return (
+          <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500/20 to-emerald-600/20 rounded-lg flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-green-400" />
+                </div>
+                <CardTitle className="text-white">Seguridad</CardTitle>
+              </div>
+              <CardDescription className="text-slate-400">
+                Gestiona tu contraseña y configuración de seguridad
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!showPasswordFields ? (
+                <Button
+                  onClick={togglePasswordFields}
+                  variant="outline"
+                  className="w-full border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-slate-800/30"
+                >
+                  <Lock className="w-4 h-4 mr-2" />
+                  Cambiar contraseña
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  {/* Current Password */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Contraseña actual</label>
+                    <div className="relative">
+                      <Input
+                        className="bg-slate-800/50 border-slate-700/50 text-white pr-10 focus:border-blue-500/50 focus:ring-blue-500/20"
+                        type={showCurrentPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                      >
+                        {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Nueva contraseña</label>
+                    <div className="relative">
+                      <Input
+                        className="bg-slate-800/50 border-slate-700/50 text-white pr-10 focus:border-blue-500/50 focus:ring-blue-500/20"
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {/* Password Strength */}
+                    {newPassword && (
+                      <div className="p-3 bg-slate-700/30 border border-slate-600/30 rounded-lg space-y-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Shield className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm font-medium text-slate-300">Seguridad de la contraseña</span>
+                        </div>
+                        <div className="space-y-1">
+                          {passwordStrength.requirements.map((req, index) => (
+                            <div key={index} className="flex items-center gap-2 text-xs">
+                              {req.test ? (
+                                <Check className="w-3 h-3 text-green-400" />
+                              ) : (
+                                <X className="w-3 h-3 text-slate-500" />
+                              )}
+                              <span className={req.test ? "text-green-400" : "text-slate-500"}>{req.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-2 flex gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full ${
+                                i < passwordStrength.passed
+                                  ? passwordStrength.passed <= 2
+                                    ? "bg-red-500"
+                                    : passwordStrength.passed <= 3
+                                      ? "bg-yellow-500"
+                                      : "bg-green-500"
+                                  : "bg-slate-600"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Password Message */}
+                  {passwordMessage && (
+                    <div
+                      className={`p-3 rounded-lg border flex items-center gap-2 ${
+                        passwordMessage.type === "error"
+                          ? "bg-red-500/10 border-red-500/20 text-red-400"
+                          : "bg-green-500/10 border-green-500/20 text-green-400"
+                      }`}
+                    >
+                      {passwordMessage.type === "success" ? (
+                        <Check className="w-4 h-4 flex-shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <span className="text-sm">{passwordMessage.text}</span>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      onClick={handleChangePassword}
+                      disabled={changingPassword || !currentPassword || !newPassword || !isPasswordValid}
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                    >
+                      {changingPassword ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Guardar cambios
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={togglePasswordFields}
+                      variant="outline"
+                      className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-slate-800/30"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )
+
+      case "plan":
+        return (
+          <div className="space-y-6">
+            {/* Current Plan */}
+            <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <CardTitle className="text-white">Plan Actual</CardTitle>
+                </div>
+                <CardDescription className="text-slate-400">Información sobre tu suscripción</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">
+                      {plan === "free" ? "Plan Gratuito" : "Plan Premium"}
+                    </h4>
+                    <p className="text-sm text-slate-400">
+                      {plan === "free"
+                        ? "Acceso básico a funciones de monitoreo"
+                        : "Acceso completo a todas las funciones premium"}
+                    </p>
+                  </div>
+                  {getPlanBadge()}
+                </div>
+
+                {plan === "free" && (
+                  <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <h4 className="font-medium text-white mb-2">Limitaciones del Plan Gratuito</h4>
+                    <ul className="space-y-2 text-sm text-slate-400">
+                      <li className="flex items-center gap-2">
+                        <X className="w-3 h-3 text-red-400" />
+                        Análisis de sentimientos limitado
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <X className="w-3 h-3 text-red-400" />
+                        Sin acceso a resúmenes AI
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <X className="w-3 h-3 text-red-400" />
+                        Solo YouTube y Reddit
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <X className="w-3 h-3 text-red-400" />
+                        Reportes básicos
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Upgrade Card */}
+            {plan === "free" && (
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 p-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Crown className="w-6 h-6 text-amber-400" />
+                    <h3 className="text-2xl font-bold text-white">Actualiza a Premium</h3>
+                  </div>
+                  <p className="text-slate-300 mb-6">
+                    Desbloquea todas las funciones avanzadas y lleva tu monitoreo al siguiente nivel
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Análisis AI completo
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Resúmenes inteligentes
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Todas las plataformas
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Reportes avanzados
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Alertas personalizadas
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <Check className="w-4 h-4 text-green-400" />
+                      Soporte prioritario
+                    </div>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/25"
+                    onClick={() => alert("Próximamente: página de planes y precios")}
+                  >
+                    <Crown className="w-5 h-5 mr-2" />
+                    Actualizar a Premium
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Billing History */}
+            {plan === "premium" && (
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white">Historial de Facturación</CardTitle>
+                  <CardDescription className="text-slate-400">Tus últimas transacciones</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-slate-400">
+                    <BarChart3 className="w-12 h-12 mx-auto mb-4 text-slate-500" />
+                    <p>No hay historial de facturación disponible</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
         <div className="px-6 py-4">
           <button
             type="button"
             onClick={handleLogoClick}
-            className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-lg"
+            className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-lg transition-all duration-200 hover:opacity-80"
           >
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
@@ -103,94 +666,56 @@ export default function Account() {
           </button>
         </div>
       </header>
-      <section className="p-8 max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
-            Mi Cuenta
-          </h1>
-          <p className="text-slate-400">Gestiona tu información personal y configuración</p>
-        </div>
 
-        <div className="space-y-8">
-          <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50">
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <label className="text-sm font-medium text-slate-300 block mb-2">Correo electrónico</label>
-                <Input className="bg-slate-800/50 border-slate-700/50 text-white" value={accountEmail} readOnly />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-slate-300 block mb-2">Nombre de usuario</label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    className="bg-slate-800/50 border-slate-700/50 text-white flex-1"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                  />
-                  {accountName !== originalAccountName && (
-                    <Button
-                      onClick={handleSaveAccountName}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                    >
-                      Guardar
-                    </Button>
+      <div className="flex">
+        {/* Left Sidebar */}
+        <aside className="w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
+          <nav className="space-y-1 flex-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+                    activeSection === item.id
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+                      : "text-slate-400 hover:text-white hover:bg-slate-700/50",
                   )}
-                </div>
-                {nameMessage && (
-                  <p className={`text-sm mt-2 ${nameMessage.type === "error" ? "text-red-400" : "text-green-400"}`}>
-                    {nameMessage.text}
-                  </p>
-                )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.title}
+                </button>
+              )
+            })}
+          </nav>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-200"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar sesión
+          </button>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          <div className="max-w-5xl mx-auto">
+            {activeSection === "profile" && (
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
+                  {menuItems.find((item) => item.id === activeSection)?.title}
+                </h1>
+                <p className="text-slate-400">Información general de tu cuenta</p>
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50">
-            <CardContent className="p-6 space-y-6">
-              <h3 className="text-lg font-semibold text-white">Seguridad</h3>
-
-              <Button
-                onClick={togglePasswordFields}
-                variant="outline"
-                className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-transparent"
-              >
-                Cambiar contraseña
-              </Button>
-
-              {showPasswordFields && (
-                <div className="space-y-4 pt-4 border-t border-slate-700/50">
-                  <Input
-                    className="bg-slate-800/50 border-slate-700/50 text-white"
-                    type="password"
-                    placeholder="Contraseña actual"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                  />
-                  <Input
-                    className="bg-slate-800/50 border-slate-700/50 text-white"
-                    type="password"
-                    placeholder="Nueva contraseña"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  <Button
-                    onClick={handleChangePassword}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                  >
-                    Guardar cambios
-                  </Button>
-                </div>
-              )}
-
-              {passwordMessage && (
-                <p className={`text-sm ${passwordMessage.type === "error" ? "text-red-400" : "text-green-400"}`}>
-                  {passwordMessage.text}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
