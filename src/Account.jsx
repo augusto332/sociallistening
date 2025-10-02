@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Sparkles } from "lucide-react"
 
 export default function Account() {
   const [accountEmail, setAccountEmail] = useState("")
@@ -13,6 +15,7 @@ export default function Account() {
   const [showPasswordFields, setShowPasswordFields] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -78,8 +81,28 @@ export default function Account() {
     }
   }
 
+  const handleLogoClick = () => {
+    navigate("/app/mentions")
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
+        <div className="px-6 py-4">
+          <button
+            type="button"
+            onClick={handleLogoClick}
+            className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-lg"
+          >
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              Listening Lab
+            </span>
+          </button>
+        </div>
+      </header>
       <section className="p-8 max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
