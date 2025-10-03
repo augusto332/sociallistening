@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import {
   Sparkles,
@@ -26,6 +27,11 @@ import {
   LogOut,
   BarChart3,
   CreditCard,
+  CircleHelp,
+  Headset,
+  Lightbulb,
+  CircleUser,
+  ChevronDown,
 } from "lucide-react"
 
 export default function Account() {
@@ -45,7 +51,11 @@ export default function Account() {
   const [accountCreatedAt, setAccountCreatedAt] = useState(null)
   const [stats, setStats] = useState({ mentions: 0, keywords: 0 })
   const [activeSection, setActiveSection] = useState("profile")
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
+  const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -175,10 +185,14 @@ export default function Account() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    setMenuOpen(false)
+    setHelpMenuOpen(false)
     navigate("/login")
   }
 
   const handleLogoClick = () => {
+    setMenuOpen(false)
+    setHelpMenuOpen(false)
     navigate("/app/mentions")
   }
 
@@ -651,7 +665,7 @@ export default function Account() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
-        <div className="px-6 py-4">
+        <div className="flex items-center justify-between px-6 py-4">
           <button
             type="button"
             onClick={handleLogoClick}
@@ -664,6 +678,80 @@ export default function Account() {
               Listening Lab
             </span>
           </button>
+
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setHelpMenuOpen((prev) => !prev)
+                  setMenuOpen(false)
+                }}
+                className="text-slate-300 hover:text-white"
+              >
+                <CircleHelp className="w-4 h-4" />
+              </Button>
+              {helpMenuOpen && (
+                <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
+                  <button
+                    onClick={() => setHelpMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    <Headset className="w-4 h-4" />
+                    Solicitar soporte
+                  </button>
+                  <button
+                    onClick={() => setHelpMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    <Lightbulb className="w-4 h-4" />
+                    Brindar feedback
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMenuOpen((prev) => !prev)
+                  setHelpMenuOpen(false)
+                }}
+                className="flex items-center gap-2 text-slate-300 hover:text-white"
+              >
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src="/placeholder.svg?height=28&width=28" />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs">
+                    {avatarLabel}
+                  </AvatarFallback>
+                </Avatar>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                    }}
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    <CircleUser className="w-4 h-4" />
+                    Mi Cuenta
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -690,14 +778,6 @@ export default function Account() {
               )
             })}
           </nav>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-200"
-          >
-            <LogOut className="w-4 h-4" />
-            Cerrar sesión
-          </button>
         </aside>
 
         {/* Main Content */}
