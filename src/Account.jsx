@@ -35,6 +35,29 @@ import {
   Menu,
 } from "lucide-react"
 
+export const planConfig = {
+  free: {
+    label: "Plan Gratuito",
+    color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    icon: User,
+  },
+  basic: {
+    label: "Plan Básico",
+    color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    icon: CircleUser,
+  },
+  pro: {
+    label: "Plan Pro",
+    color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    icon: Sparkles,
+  },
+  enterprise: {
+    label: "Plan Enterprise",
+    color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    icon: TrendingUp,
+  },
+}
+
 export default function Account() {
   const { user, plan, planLoading } = useAuth()
   const [accountEmail, setAccountEmail] = useState("")
@@ -58,6 +81,9 @@ export default function Account() {
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
+  const planTier = plan ?? "free"
+  const currentPlanConfig = planConfig[planTier] ?? planConfig.free
+  const isPaidPlan = planTier !== "free"
 
   const openAccountSidebar = () => setIsAccountSidebarOpen(true)
   const closeAccountSidebar = () => setIsAccountSidebarOpen(false)
@@ -203,35 +229,6 @@ export default function Account() {
 
   const getPlanBadge = () => {
     if (planLoading) return null
-
-    const planConfig = {
-      free: {
-        label: "Plan Gratuito",
-        color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-        icon: User,
-      },
-      basic: {
-        label: "Plan Básico",
-        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-        icon: CircleUser,
-      },
-      pro: {
-        label: "Plan Pro",
-        color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-        icon: Sparkles,
-      },
-      enterprise: {
-        label: "Plan Enterprise",
-        color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        icon: TrendingUp,
-      },
-      premium: {
-        label: "Plan Premium",
-        color:
-          "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20",
-        icon: Crown,
-      },
-    }
 
     const config = planConfig[plan] ?? planConfig.free
     const PlanIcon = config.icon
@@ -599,19 +596,17 @@ export default function Account() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
                   <div>
-                    <h4 className="font-medium text-white mb-1">
-                      {plan === "free" ? "Plan Gratuito" : "Plan Premium"}
-                    </h4>
+                    <h4 className="font-medium text-white mb-1">{currentPlanConfig.label}</h4>
                     <p className="text-sm text-slate-400">
-                      {plan === "free"
-                        ? "Acceso básico a funciones de monitoreo"
-                        : "Acceso completo a todas las funciones premium"}
+                      {isPaidPlan
+                        ? "Acceso completo a las funciones avanzadas"
+                        : "Acceso básico a funciones de monitoreo"}
                     </p>
                   </div>
                   {getPlanBadge()}
                 </div>
 
-                {plan === "free" && (
+                {planTier === "free" && (
                   <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
                     <h4 className="font-medium text-white mb-2">Limitaciones del Plan Gratuito</h4>
                     <ul className="space-y-2 text-sm text-slate-400">
@@ -638,13 +633,13 @@ export default function Account() {
             </Card>
 
             {/* Upgrade Card */}
-            {plan === "free" && (
+            {planTier === "free" && (
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 p-8">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-2xl"></div>
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-4">
                     <Crown className="w-6 h-6 text-amber-400" />
-                    <h3 className="text-2xl font-bold text-white">Actualiza a Premium</h3>
+                    <h3 className="text-2xl font-bold text-white">Actualiza tu plan</h3>
                   </div>
                   <p className="text-slate-300 mb-6">
                     Desbloquea todas las funciones avanzadas y lleva tu monitoreo al siguiente nivel
@@ -683,14 +678,14 @@ export default function Account() {
                     onClick={() => alert("Próximamente: página de planes y precios")}
                   >
                     <Crown className="w-5 h-5 mr-2" />
-                    Actualizar a Premium
+                    Actualiza tu plan
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Billing History */}
-            {plan === "premium" && (
+            {isPaidPlan && (
               <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-white">Historial de Facturación</CardTitle>
