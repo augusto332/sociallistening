@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
@@ -77,6 +77,8 @@ export default function Account() {
   const [activeSection, setActiveSection] = useState("profile")
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
+  const helpMenuRef = useRef(null)
+  const userMenuRef = useRef(null)
   const [isAccountSidebarOpen, setIsAccountSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
@@ -84,6 +86,25 @@ export default function Account() {
   const planTier = plan ?? "free"
   const currentPlanConfig = planConfig[planTier] ?? planConfig.free
   const isPaidPlan = planTier !== "free"
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (helpMenuRef.current && !helpMenuRef.current.contains(event.target)) {
+        setHelpMenuOpen(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("touchstart", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+    }
+  }, [])
 
   const openAccountSidebar = () => setIsAccountSidebarOpen(true)
   const closeAccountSidebar = () => setIsAccountSidebarOpen(false)
@@ -739,7 +760,7 @@ export default function Account() {
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="relative">
+            <div className="relative" ref={helpMenuRef}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -752,17 +773,17 @@ export default function Account() {
                 <CircleHelp className="w-4 h-4" />
               </Button>
               {helpMenuOpen && (
-                <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[180px]">
+                <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[210px]">
                   <button
                     onClick={() => setHelpMenuOpen(false)}
-                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors whitespace-nowrap"
                   >
                     <Headset className="w-4 h-4" />
                     Solicitar soporte
                   </button>
                   <button
                     onClick={() => setHelpMenuOpen(false)}
-                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors whitespace-nowrap"
                   >
                     <Lightbulb className="w-4 h-4" />
                     Brindar feedback
@@ -771,7 +792,7 @@ export default function Account() {
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <Button
                 variant="ghost"
                 onClick={() => {
