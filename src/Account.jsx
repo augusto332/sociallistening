@@ -32,6 +32,7 @@ import {
   Lightbulb,
   CircleUser,
   ChevronDown,
+  Menu,
 } from "lucide-react"
 
 export default function Account() {
@@ -53,9 +54,13 @@ export default function Account() {
   const [activeSection, setActiveSection] = useState("profile")
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
+  const [isAccountSidebarOpen, setIsAccountSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
+
+  const openAccountSidebar = () => setIsAccountSidebarOpen(true)
+  const closeAccountSidebar = () => setIsAccountSidebarOpen(false)
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -249,6 +254,36 @@ export default function Account() {
       icon: CreditCard,
     },
   ]
+
+  const renderSidebarContent = (onItemSelect) => (
+    <nav className="space-y-1 flex-1">
+      {menuItems.map((item) => {
+        const Icon = item.icon
+        const handleClick = () => {
+          setActiveSection(item.id)
+          if (onItemSelect) {
+            onItemSelect()
+          }
+        }
+
+        return (
+          <button
+            key={item.id}
+            onClick={handleClick}
+            className={cn(
+              "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+              activeSection === item.id
+                ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+            )}
+          >
+            <Icon className="w-4 h-4" />
+            {item.title}
+          </button>
+        )
+      })}
+    </nav>
+  )
 
   const renderContent = () => {
     switch (activeSection) {
@@ -680,6 +715,19 @@ export default function Account() {
           </button>
 
           <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                openAccountSidebar()
+                setMenuOpen(false)
+                setHelpMenuOpen(false)
+              }}
+              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-700/60 bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+              aria-label="Abrir menú de Mi Cuenta"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
             <div className="relative">
               <Button
                 variant="ghost"
@@ -755,29 +803,35 @@ export default function Account() {
         </div>
       </header>
 
+      {isAccountSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={closeAccountSidebar} />
+          <div className="relative ml-0 flex h-full">
+            <div
+              className="relative h-full w-72 max-w-[80vw] bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Mi Cuenta</h2>
+                <button
+                  type="button"
+                  onClick={closeAccountSidebar}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                  aria-label="Cerrar menú de Mi Cuenta"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {renderSidebarContent(closeAccountSidebar)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex">
         {/* Left Sidebar */}
-        <aside className="w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <nav className="space-y-1 flex-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveSection(item.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-                    activeSection === item.id
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-                      : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.title}
-                </button>
-              )
-            })}
-          </nav>
+        <aside className="hidden lg:flex w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
+          {renderSidebarContent()}
         </aside>
 
         {/* Main Content */}
