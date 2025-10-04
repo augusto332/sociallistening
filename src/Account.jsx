@@ -210,14 +210,30 @@ export default function Account() {
         color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
         icon: User,
       },
+      basic: {
+        label: "Plan Básico",
+        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        icon: CircleUser,
+      },
+      pro: {
+        label: "Plan Pro",
+        color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+        icon: Sparkles,
+      },
+      enterprise: {
+        label: "Plan Enterprise",
+        color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        icon: TrendingUp,
+      },
       premium: {
         label: "Plan Premium",
-        color: "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20",
+        color:
+          "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20",
         icon: Crown,
       },
     }
 
-    const config = planConfig[plan] || planConfig.free
+    const config = planConfig[plan] ?? planConfig.free
     const PlanIcon = config.icon
 
     return (
