@@ -37,6 +37,7 @@ import {
   Loader2,
   Smile,
   Frown,
+  Menu,
 } from "lucide-react"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -155,6 +156,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const loadedMentionIdsRef = useRef(new Set())
   const [menuOpen, setMenuOpen] = useState(false)
   const [helpMenuOpen, setHelpMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [sourcesFilter, setSourcesFilter] = useState([])
   const [keywordsFilter, setKeywordsFilter] = useState(["all"])
   const [tagsFilter, setTagsFilter] = useState([])
@@ -1267,26 +1269,103 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setActiveTab("home")
     setMenuOpen(false)
     setHelpMenuOpen(false)
+    setIsSidebarOpen(false)
     navigate("/app/mentions")
   }
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setIsSidebarOpen(false)
+  }
+
+  const SidebarContent = ({ onSelect }) => (
+    <>
+      <nav className="space-y-1">
+        <button
+          onClick={() => onSelect("home")}
+          className={cn(
+            "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+            activeTab === "home"
+              ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+              : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+          )}
+        >
+          <Home className="w-4 h-4" />
+          Inicio
+        </button>
+
+        <button
+          onClick={() => onSelect("dashboard")}
+          className={cn(
+            "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+            activeTab === "dashboard"
+              ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+              : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+          )}
+        >
+          <BarChart2 className="w-4 h-4" />
+          Dashboard
+        </button>
+
+        <button
+          onClick={() => onSelect("reportes")}
+          className={cn(
+            "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+            activeTab === "reportes"
+              ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+              : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+          )}
+        >
+          <FileChartLine className="w-4 h-4" />
+          Reportes
+        </button>
+      </nav>
+
+      <div className="flex-1" />
+
+      <button
+        onClick={() => onSelect("config")}
+        className={cn(
+          "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+          activeTab === "config"
+            ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+            : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+        )}
+      >
+        <Settings className="w-4 h-4" />
+        Configuración
+      </button>
+    </>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Modern Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
         <div className="flex items-center justify-between px-6 py-4">
-          <button
-            type="button"
-            onClick={handleLogoClick}
-            className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-lg"
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Listening Lab
-            </span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-700/50 bg-slate-800/60 text-slate-200 hover:bg-slate-700/60 transition"
+              aria-label="Abrir menú"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-lg"
+            >
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                Listening Lab
+              </span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -1365,68 +1444,31 @@ export default function ModernSocialListeningApp({ onLogout }) {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Modern Sidebar */}
-        <aside className="w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <nav className="space-y-1">
-            <button
-              onClick={() => setActiveTab("home")}
-              className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-                activeTab === "home"
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-              )}
-            >
-              <Home className="w-4 h-4" />
-              Inicio
-            </button>
-
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-                activeTab === "dashboard"
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-              )}
-            >
-              <BarChart2 className="w-4 h-4" />
-              Dashboard
-            </button>
-
-            <button
-              onClick={() => setActiveTab("reportes")}
-              className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-                activeTab === "reportes"
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-              )}
-            >
-              <FileChartLine className="w-4 h-4" />
-              Reportes
-            </button>
-          </nav>
-
-          <div className="flex-1" />
-
-          <button
-            onClick={() => setActiveTab("config")}
-            className={cn(
-              "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-              activeTab === "config"
-                ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-            )}
-          >
-            <Settings className="w-4 h-4" />
-            Configuración
-          </button>
+        <aside className="hidden md:flex lg:flex lg:w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
+          <SidebarContent onSelect={handleTabChange} />
         </aside>
 
+        {isSidebarOpen && (
+          <div className="fixed inset-0 z-50 flex lg:hidden">
+            <div
+              className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+            <div className="relative ml-0 flex h-full">
+              <div
+                className="relative h-full w-72 max-w-[80vw] bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SidebarContent onSelect={handleTabChange} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="w-full lg:flex-1 overflow-y-auto">
           {activeTab === "home" && (
             <section className="p-8">
               <div className="flex items-start gap-8 min-h-screen">
