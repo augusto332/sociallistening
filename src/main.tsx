@@ -10,6 +10,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import OnboardingHome from './OnboardingHome'
+import Landing from './Landing' // 👈 NUEVA IMPORTACIÓN
 
 function Root() {
   const { session, loading } = useAuth()
@@ -20,6 +21,13 @@ function Root() {
     <FavoritesProvider>
       <BrowserRouter>
         <Routes>
+
+          {/* 👇 NUEVA RUTA PRINCIPAL */}
+          <Route
+            path="/"
+            element={session ? <Navigate to="/app/mentions" replace /> : <Landing />}
+          />
+
           <Route
             path="/login"
             element={session ? <Navigate to="/app/mentions" replace /> : <Login />}
@@ -28,6 +36,7 @@ function Root() {
             path="/register"
             element={session ? <Navigate to="/app/mentions" replace /> : <Register />}
           />
+
           <Route
             path="/app/mentions"
             element={
@@ -52,6 +61,8 @@ function Root() {
               </ProtectedRoute>
             }
           />
+
+          {/* Cualquier otra ruta redirige según el estado de sesión */}
           <Route
             path="*"
             element={<Navigate to={session ? '/app/mentions' : '/login'} replace />}
