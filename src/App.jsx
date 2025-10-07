@@ -32,7 +32,6 @@ import {
   ChevronDown,
   Sparkles,
   LogOut,
-  Lightbulb,
   Headset,
   Loader2,
   Smile,
@@ -1404,18 +1403,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
               {helpMenuOpen && (
                 <div className="absolute right-0 top-12 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 shadow-xl rounded-lg p-2 space-y-1 z-50 min-w-[210px]">
                   <button
-                    onClick={() => setHelpMenuOpen(false)}
+                    onClick={() => {
+                      setHelpMenuOpen(false)
+                      navigate("/app/support")
+                    }}
                     className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors whitespace-nowrap"
                   >
                     <Headset className="w-4 h-4" />
                     Solicitar soporte
-                  </button>
-                  <button
-                    onClick={() => setHelpMenuOpen(false)}
-                    className="flex items-center gap-3 w-full text-left p-3 rounded-md hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors whitespace-nowrap"
-                  >
-                    <Lightbulb className="w-4 h-4" />
-                    Brindar feedback
                   </button>
                 </div>
               )}

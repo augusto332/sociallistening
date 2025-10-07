@@ -11,6 +11,7 @@ import ProtectedRoute from './ProtectedRoute'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import OnboardingHome from './OnboardingHome'
 import Landing from './Landing' // 👈 NUEVA IMPORTACIÓN
+import Support from './Support'
 
 function Root() {
   const { session, loading } = useAuth()
@@ -50,6 +51,14 @@ function Root() {
             element={
               <ProtectedRoute>
                 <Account />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/app/support"
+            element={
+              <ProtectedRoute>
+                <Support />
               </ProtectedRoute>
             }
           />
