@@ -17,7 +17,6 @@ import {
   Bell,
   CheckCircle,
   Crown,
-  User,
   ArrowRight,
   Menu,
   X,
@@ -69,35 +68,63 @@ export default function Landing() {
 
   const plans = [
     {
-      name: "Gratuito",
-      price: "$0",
-      period: "por siempre",
-      description: "Perfecto para comenzar a monitorear tu marca",
-      features: ["2 plataformas (YouTube, Reddit)", "Hasta 5 keywords", "Reportes básicos", "Soporte por email"],
-      limitations: ["Sin análisis de sentimientos", "Sin resúmenes AI", "Historial limitado a 7 días"],
-      icon: User,
-      cta: "Comenzar Gratis",
+      name: "Básico",
+      price: "$29.99",
+      period: "por mes",
+      description: "Ideal para quienes están comenzando con el monitoreo",
+      features: [
+        "Hasta 3,000 menciones/mes",
+        "Análisis de sentimiento básico",
+        "Reportes descargables estándar",
+        "Historial de menciones por 1 mes",
+        "Soporte vía correo electrónico",
+      ],
+      limitations: ["No incluye comentarios", "Sin clasificación automática AI", "Sin resúmenes automáticos"],
+      icon: TrendingUp,
+      cta: "Probar 7 días gratis",
       highlighted: false,
+      trial: true,
     },
     {
-      name: "Premium",
-      price: "$29",
+      name: "Pro",
+      price: "$99.99",
       period: "por mes",
-      description: "Para equipos que necesitan análisis avanzados",
+      description: "Para equipos que necesitan análisis profundo con IA",
       features: [
-        "Todas las plataformas",
-        "Keywords ilimitadas",
-        "Análisis de sentimientos completo",
-        "Resúmenes AI automáticos",
-        "Reportes avanzados y exportación",
-        "Alertas personalizadas",
-        "Historial ilimitado",
-        "Soporte prioritario 24/7",
+        "Hasta 10,000 menciones/mes",
+        "Análisis avanzado con IA",
+        "Incluye comentarios de menciones",
+        "Clasificación automática por IA",
+        "Reportes avanzados impulsados por IA",
+        "Historial de menciones por 1 año",
+        "Soporte personalizado prioritario",
       ],
       limitations: [],
       icon: Crown,
-      cta: "Comenzar Prueba",
+      cta: "Probar 7 días gratis",
       highlighted: true,
+      trial: true,
+    },
+    {
+      name: "Enterprise",
+      price: "Personalizado",
+      period: "",
+      description: "Para organizaciones con grandes volúmenes de datos",
+      features: [
+        "Límite de menciones a medida",
+        "Funcionalidades personalizadas",
+        "Todas las funcionalidades Pro",
+        "Integraciones a medida",
+        "Historial configurable",
+        "Soporte premium 24/7",
+        "Account Manager dedicado",
+        "Acompañamiento estratégico",
+      ],
+      limitations: [],
+      icon: Shield,
+      cta: "Contactar Ventas",
+      highlighted: false,
+      trial: false,
     },
   ]
 
@@ -283,8 +310,8 @@ export default function Landing() {
             </h1>
 
             <p className="text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-              Descubre qué se dice sobre tu marca en tiempo real. Analiza sentimientos, identifica tendencias y toma
-              decisiones basadas en datos con inteligencia artificial.
+              Descubre qué se dice sobre tu marca en tiempo real.
+              Analiza la competencia, identifica tendencias y optimiza tus estrategias con insights impulsados por inteligencia artificial.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -408,11 +435,11 @@ export default function Landing() {
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Planes simples y transparentes</h2>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              Comienza gratis y actualiza cuando necesites funciones avanzadas
+              Todos los planes incluyen prueba gratuita de 7 días. Sin tarjeta de crédito requerida.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {plans.map((plan, index) => {
               const Icon = plan.icon
               return (
@@ -453,13 +480,26 @@ export default function Landing() {
                       <p className="text-sm text-slate-400">{plan.description}</p>
                     </div>
 
+                    {plan.trial && (
+                      <Badge variant="secondary" className="mb-4 bg-green-500/10 text-green-400 border-green-500/20">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Prueba gratuita de 7 días
+                      </Badge>
+                    )}
+
                     <Button
                       className={`w-full mb-6 ${
                         plan.highlighted
                           ? "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                           : "bg-slate-700 hover:bg-slate-600"
                       }`}
-                      onClick={() => navigate("/register")}
+                      onClick={() => {
+                        if (plan.name === "Enterprise") {
+                          window.location.href = "mailto:ventas@listeninglab.com?subject=Consulta Plan Enterprise"
+                        } else {
+                          navigate("/register")
+                        }
+                      }}
                     >
                       {plan.cta}
                     </Button>
@@ -495,7 +535,7 @@ export default function Landing() {
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Mira Listening Lab en acción</h2>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              Descubre cómo nuestro dashboard te ayuda a entender tu presencia en redes sociales
+              Descubre cómo nuestra herramienta te ayuda a entender tu presencia en redes sociales
             </p>
           </div>
 
