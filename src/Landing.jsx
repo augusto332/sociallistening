@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -32,6 +32,43 @@ export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [openFaq, setOpenFaq] = useState(null)
+
+  // Text carousel states
+  const [currentHeadingIndex, setCurrentHeadingIndex] = useState(0)
+  const [currentDescriptionIndex, setCurrentDescriptionIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
+  // Carousel content
+  const headingVariations = ["redes sociales", "tiempo real", "múltiples plataformas", "un solo lugar"]
+
+  const descriptionVariations = [
+    "Descubre qué se dice sobre tu marca en tiempo real. Analiza sentimientos, identifica tendencias y toma decisiones basadas en datos con inteligencia artificial.",
+    "Analiza la competencia y descubre oportunidades de mercado. Identifica qué estrategias funcionan y optimiza tu presencia digital con insights accionables.",
+    "Identifica crisis de reputación antes de que escalen. Recibe alertas instantáneas sobre menciones negativas y protege la imagen de tu marca proactivamente.",
+    "Optimiza tu estrategia de contenido con datos reales. Descubre qué temas resuenan con tu audiencia y mejora tu engagement en redes sociales.",
+  ]
+
+  // Carousel effect for heading
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setCurrentHeadingIndex((prev) => (prev + 1) % headingVariations.length)
+        setIsTransitioning(false)
+      }, 300)
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Carousel effect for description (slightly offset timing)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDescriptionIndex((prev) => (prev + 1) % descriptionVariations.length)
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const features = [
     {
@@ -304,15 +341,54 @@ export default function Landing() {
                 Monitorea tu marca en
               </span>
               <br />
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                redes sociales
+              <span
+                className={`inline-block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-300 ${
+                  isTransitioning ? "opacity-0 transform -translate-y-2" : "opacity-100 transform translate-y-0"
+                }`}
+                style={{ minHeight: "1.2em" }}
+              >
+                {headingVariations[currentHeadingIndex]}
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-              Descubre qué se dice sobre tu marca en tiempo real.
-              Analiza la competencia, identifica tendencias y optimiza tus estrategias con insights impulsados por inteligencia artificial.
-            </p>
+            <div className="relative min-h-[120px] md:min-h-[100px] mb-8">
+              <p
+                className={`text-lg md:text-xl text-slate-400 max-w-2xl mx-auto absolute inset-0 transition-all duration-500 ${
+                  currentDescriptionIndex === 0
+                    ? "opacity-100 transform translate-y-0"
+                    : "opacity-0 transform -translate-y-4 pointer-events-none"
+                }`}
+              >
+                {descriptionVariations[0]}
+              </p>
+              <p
+                className={`text-lg md:text-xl text-slate-400 max-w-2xl mx-auto absolute inset-0 transition-all duration-500 ${
+                  currentDescriptionIndex === 1
+                    ? "opacity-100 transform translate-y-0"
+                    : "opacity-0 transform -translate-y-4 pointer-events-none"
+                }`}
+              >
+                {descriptionVariations[1]}
+              </p>
+              <p
+                className={`text-lg md:text-xl text-slate-400 max-w-2xl mx-auto absolute inset-0 transition-all duration-500 ${
+                  currentDescriptionIndex === 2
+                    ? "opacity-100 transform translate-y-0"
+                    : "opacity-0 transform -translate-y-4 pointer-events-none"
+                }`}
+              >
+                {descriptionVariations[2]}
+              </p>
+              <p
+                className={`text-lg md:text-xl text-slate-400 max-w-2xl mx-auto absolute inset-0 transition-all duration-500 ${
+                  currentDescriptionIndex === 3
+                    ? "opacity-100 transform translate-y-0"
+                    : "opacity-0 transform -translate-y-4 pointer-events-none"
+                }`}
+              >
+                {descriptionVariations[3]}
+              </p>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button
