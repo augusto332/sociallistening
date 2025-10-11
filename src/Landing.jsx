@@ -39,7 +39,7 @@ export default function Landing() {
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   // Carousel content
-  const headingVariations = ["redes sociales", "tiempo real", "múltiples plataformas", "un solo lugar"]
+  const headingVariations = ["tu marca", "la competencia", "figuras públicas", "temas sociales"]
 
   const descriptionVariations = [
     "Descubre qué se dice sobre tu marca en tiempo real. Analiza sentimientos, identifica tendencias y toma decisiones basadas en datos con inteligencia artificial.",
@@ -338,7 +338,7 @@ export default function Landing() {
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                Monitorea tu marca en
+                Descubre que se dice sobre
               </span>
               <br />
               <span

@@ -192,13 +192,11 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
               </th>
               <th className="text-left p-4 text-slate-300 font-medium">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
                   Plataformas
                 </div>
               </th>
               <th className="text-left p-4 text-slate-300 font-medium">
                 <div className="flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
                   Palabras clave
                 </div>
               </th>
@@ -211,7 +209,7 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
               <th className="text-center p-4 text-slate-300 font-medium">
                 <div className="flex items-center justify-center gap-2">
                   <Clock className="w-4 h-4" />
-                  Programación
+                  Frecuencia
                 </div>
               </th>
               <th className="text-left p-4 text-slate-300 font-medium">Comentarios</th>
