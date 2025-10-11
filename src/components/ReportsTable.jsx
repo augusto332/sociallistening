@@ -11,6 +11,7 @@ import {
   Eye,
   Edit,
   Copy,
+  Clock,
 } from "lucide-react"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
@@ -87,6 +88,57 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
     return report.keywords || "Sin definir"
   }
 
+  const getScheduleTimeDisplay = (scheduleTime) => {
+    if (!scheduleTime) return "hora no definida"
+
+    const hasTimezoneInfo = /[zZ]|[+-]\d\d:?\d\d$/.test(scheduleTime)
+    const isoTimeString = `1970-01-01T${hasTimezoneInfo ? scheduleTime : `${scheduleTime}Z`}`
+    const date = new Date(isoTimeString)
+
+    if (Number.isNaN(date.getTime())) {
+      return scheduleTime
+    }
+
+    const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+    const offsetMinutes = -date.getTimezoneOffset()
+    const sign = offsetMinutes >= 0 ? "+" : "-"
+    const absoluteMinutes = Math.abs(offsetMinutes)
+    const hours = Math.floor(absoluteMinutes / 60)
+    const minutes = absoluteMinutes % 60
+    const offset = minutes ? `${hours}:${minutes.toString().padStart(2, "0")}` : `${hours}`
+
+    return `${timeString} hs (GMT${sign}${offset})`
+  }
+
+  const getScheduleTooltip = (report) => {
+    if (!report.isScheduled) {
+      return "Sin programación activa"
+    }
+
+    const timeDisplay = getScheduleTimeDisplay(report.scheduleTime)
+
+    if (report.schedule === "daily") {
+      return `Envío diario a las ${timeDisplay}`
+    }
+
+    if (report.schedule === "weekly") {
+      const dayNames = {
+        1: "lunes",
+        2: "martes",
+        3: "miércoles",
+        4: "jueves",
+        5: "viernes",
+        6: "sábado",
+        7: "domingo",
+      }
+
+      const dayName = dayNames[report.scheduleDay] || "día sin definir"
+      return `Envío semanal los ${dayName} a las ${timeDisplay}`
+    }
+
+    return "Programación sin detalles"
+  }
+
   useEffect(() => {
     if (openDropdown !== null) {
       const handleMouseDown = (e) => {
@@ -156,6 +208,12 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                   Período
                 </div>
               </th>
+              <th className="text-center p-4 text-slate-300 font-medium">
+                <div className="flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Programación
+                </div>
+              </th>
               <th className="text-left p-4 text-slate-300 font-medium">Comentarios</th>
               <th className="text-right p-4 text-slate-300 font-medium"></th>
             </tr>
@@ -207,6 +265,27 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
 
                 <td className="p-4">
                   <div className="text-sm text-slate-300">{formatDateRange(report)}</div>
+                </td>
+
+                <td className="p-4">
+                  <div className="flex justify-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className={`text-xl ${
+                              report.isScheduled ? "text-emerald-400" : "text-slate-500"
+                            }`}
+                            role="img"
+                            aria-label={report.isScheduled ? "Programación activa" : "Sin programación"}
+                          >
+                            {report.isScheduled ? "✅" : "❌"}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{getScheduleTooltip(report)}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </td>
 
                 <td className="p-4">
