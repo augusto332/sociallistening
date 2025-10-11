@@ -12,6 +12,7 @@ import MentionsLineChart from "@/components/MentionsLineChart"
 import MultiSelect from "@/components/MultiSelect"
 import { Button } from "@/components/ui/button"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import RightSidebar from "@/components/RightSidebar"
 import SentimentKPI from "@/components/SentimentKPI"
@@ -47,6 +48,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import AISummary from "@/components/AISummary"
+
+const WEEK_DAYS = [
+  { value: "1", label: "Lunes" },
+  { value: "2", label: "Martes" },
+  { value: "3", label: "Miércoles" },
+  { value: "4", label: "Jueves" },
+  { value: "5", label: "Viernes" },
+  { value: "6", label: "Sábado" },
+  { value: "7", label: "Domingo" },
+]
+
+const TIMEZONE_OPTIONS = [
+  { value: "-08:00", label: "UTC-8 (Pacífico)" },
+  { value: "-06:00", label: "UTC-6 (Centroamérica)" },
+  { value: "-05:00", label: "UTC-5 (CDMX / Bogotá)" },
+  { value: "-04:00", label: "UTC-4 (Santiago)" },
+  { value: "-03:00", label: "UTC-3 (Buenos Aires)" },
+  { value: "+00:00", label: "UTC" },
+  { value: "+01:00", label: "UTC+1 (Madrid)" },
+]
 
 // ===== Helpers for time buckets and engagement metrics =====
 // Hours elapsed since a given ISO date
@@ -190,6 +211,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [newReportName, setNewReportName] = useState("")
   const [reportKeyword, setReportKeyword] = useState("")
   const [reportDateOption, setReportDateOption] = useState("range")
+  const [isReportScheduled, setIsReportScheduled] = useState(false)
+  const [reportScheduleFrequency, setReportScheduleFrequency] = useState("daily")
+  const [reportScheduleDay, setReportScheduleDay] = useState("1")
+  const [reportScheduleTime, setReportScheduleTime] = useState("09:00")
+  const [reportScheduleTimezone, setReportScheduleTimezone] = useState("-05:00")
   const { user } = useAuth()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
@@ -845,6 +871,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       endDate: r.isdynamicdate ? "" : r.date_to,
       datePreset: r.isdynamicdate ? (r.last_x_days ? String(r.last_x_days) : "") : "",
       includeComments: r.comments,
+      isScheduled: r.is_scheduled,
+      schedule: r.schedule,
+      scheduleDay: r.schedule_day,
+      scheduleTime: r.schedule_time,
     }))
     setSavedReports(mapped)
   }
@@ -1164,6 +1194,19 @@ export default function ModernSocialListeningApp({ onLogout }) {
     if (!user) return
     const keywordObj = keywords.find((k) => k.keyword === reportKeyword)
     const isDynamic = reportDateOption !== "range"
+    const scheduleTimeValue =
+      isReportScheduled && reportScheduleTime
+        ? `${reportScheduleTime.length === 5 ? `${reportScheduleTime}:00` : reportScheduleTime}${
+            reportScheduleTimezone.startsWith("+") || reportScheduleTimezone.startsWith("-")
+              ? reportScheduleTimezone
+              : `+${reportScheduleTimezone}`
+          }`
+        : null
+    const scheduleValue = isReportScheduled ? reportScheduleFrequency : null
+    const scheduleDayValue =
+      isReportScheduled && reportScheduleFrequency === "weekly"
+        ? Number(reportScheduleDay)
+        : null
     const insertData = {
       name: newReportName || `Reporte ${savedReports.length + 1}`,
       platform: reportPlatform,
@@ -1174,6 +1217,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
       last_x_days: isDynamic ? Number(reportDateOption) : null,
       comments: includeComments,
       user_id: user.id,
+      is_scheduled: isReportScheduled,
+      schedule: scheduleValue,
+      schedule_day: scheduleDayValue,
+      schedule_time: scheduleTimeValue,
     }
     const { data, error } = await supabase
       .from("user_reports_parameters")
@@ -1192,6 +1239,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
         endDate: r.isdynamicdate ? "" : r.date_to,
         datePreset: r.isdynamicdate ? (r.last_x_days ? String(r.last_x_days) : "") : "",
         includeComments: r.comments,
+        isScheduled: r.is_scheduled,
+        schedule: r.schedule,
+        scheduleDay: r.schedule_day,
+        scheduleTime: r.schedule_time,
       }
       setSavedReports((prev) => [...prev, newRep])
       setNewReportName("")
@@ -1201,6 +1252,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setReportEndDate("")
       setReportDateOption("range")
       setIncludeComments(false)
+      setIsReportScheduled(false)
+      setReportScheduleFrequency("daily")
+      setReportScheduleDay("1")
+      setReportScheduleTime("09:00")
+      setReportScheduleTimezone("-05:00")
       setShowReportForm(false)
     }
   }
@@ -1958,6 +2014,89 @@ export default function ModernSocialListeningApp({ onLogout }) {
                         <SelectItem value="no">No</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-slate-300">Programar envío por correo</p>
+                        <p className="text-xs text-slate-500">Recibe el reporte automáticamente según la frecuencia seleccionada.</p>
+                      </div>
+                      <Switch checked={isReportScheduled} onCheckedChange={setIsReportScheduled} />
+                    </div>
+
+                    {isReportScheduled && (
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium mb-2 text-slate-300">Frecuencia</p>
+                          <Select
+                            value={reportScheduleFrequency}
+                            onValueChange={(value) => {
+                              setReportScheduleFrequency(value)
+                              if (value !== "weekly") {
+                                setReportScheduleDay("1")
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">Diario</SelectItem>
+                              <SelectItem value="weekly">Semanal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {reportScheduleFrequency === "weekly" && (
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-slate-300">Día de envío</p>
+                            <Select value={reportScheduleDay} onValueChange={setReportScheduleDay}>
+                              <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {WEEK_DAYS.map((day) => (
+                                  <SelectItem key={day.value} value={day.value}>
+                                    {day.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-slate-300">Hora de envío</p>
+                            <Input
+                              type="time"
+                              value={reportScheduleTime}
+                              onChange={(e) => setReportScheduleTime(e.target.value)}
+                              className="bg-slate-800/50 border-slate-700/50 text-white"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-slate-300">Zona horaria</p>
+                            <Select
+                              value={reportScheduleTimezone}
+                              onValueChange={setReportScheduleTimezone}
+                            >
+                              <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIMEZONE_OPTIONS.map((tz) => (
+                                  <SelectItem key={tz.value} value={tz.value}>
+                                    {tz.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Button
