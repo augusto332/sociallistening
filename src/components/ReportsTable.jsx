@@ -91,23 +91,35 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
   const getScheduleTimeDisplay = (scheduleTime) => {
     if (!scheduleTime) return "hora no definida"
 
-    const hasTimezoneInfo = /[zZ]|[+-]\d\d:?\d\d$/.test(scheduleTime)
+    const hasTimezoneInfo = /[zZ]|[+-]\d\d:?\d\d?$/.test(scheduleTime)
     const isoTimeString = `1970-01-01T${hasTimezoneInfo ? scheduleTime : `${scheduleTime}Z`}`
     const date = new Date(isoTimeString)
 
     if (Number.isNaN(date.getTime())) {
       return scheduleTime
+        .replace(/\s*\(.*?\)\s*$/, "")
+        .replace(/[+-]\d\d:?\d\d?$/, "")
+        .replace(/[zZ]$/, "")
+        .trim() || "hora no definida"
     }
 
     const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
-    const offsetMinutes = -date.getTimezoneOffset()
-    const sign = offsetMinutes >= 0 ? "+" : "-"
-    const absoluteMinutes = Math.abs(offsetMinutes)
-    const hours = Math.floor(absoluteMinutes / 60)
-    const minutes = absoluteMinutes % 60
-    const offset = minutes ? `${hours}:${minutes.toString().padStart(2, "0")}` : `${hours}`
 
-    return `${timeString} hs (GMT${sign}${offset})`
+    return `${timeString} hs`
+  }
+
+  const getFrequencyLabel = (report) => {
+    if (!report?.isScheduled) {
+      return "N/A"
+    }
+
+    const scheduleMap = {
+      weekly: "semanal",
+      biweekly: "quincenal",
+      monthly: "mensual",
+    }
+
+    return scheduleMap[report.schedule] || "N/A"
   }
 
   const getScheduleTooltip = (report) => {
@@ -292,13 +304,13 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span
-                            className={`text-xl ${
-                              report.isScheduled ? "text-emerald-400" : "text-slate-500"
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                              report.isScheduled
+                                ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+                                : "bg-slate-700/40 text-slate-300 border border-slate-600/60"
                             }`}
-                            role="img"
-                            aria-label={report.isScheduled ? "Programación activa" : "Sin programación"}
                           >
-                            {report.isScheduled ? "✅" : "❌"}
+                            {getFrequencyLabel(report)}
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>{getScheduleTooltip(report)}</TooltipContent>
