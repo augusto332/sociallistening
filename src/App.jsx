@@ -59,6 +59,11 @@ const WEEK_DAYS = [
   { value: "7", label: "Domingo" },
 ]
 
+const MONTH_DAYS = Array.from({ length: 31 }, (_, index) => {
+  const day = index + 1
+  return { value: String(day), label: `Día ${day}` }
+})
+
 const TIMEZONE_OPTIONS = [
   { value: "-08:00", label: "UTC-8 (Pacífico)" },
   { value: "-06:00", label: "UTC-6 (Centroamérica)" },
@@ -212,7 +217,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportKeyword, setReportKeyword] = useState("")
   const [reportDateOption, setReportDateOption] = useState("range")
   const [isReportScheduled, setIsReportScheduled] = useState(false)
-  const [reportScheduleFrequency, setReportScheduleFrequency] = useState("daily")
+  const [reportScheduleFrequency, setReportScheduleFrequency] = useState("weekly")
   const [reportScheduleDay, setReportScheduleDay] = useState("1")
   const [reportScheduleTime, setReportScheduleTime] = useState("09:00")
   const [reportScheduleTimezone, setReportScheduleTimezone] = useState("-05:00")
@@ -1203,8 +1208,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
           }`
         : null
     const scheduleValue = isReportScheduled ? reportScheduleFrequency : null
+    const needsScheduleDay = ["weekly", "biweekly", "monthly"].includes(
+      reportScheduleFrequency
+    )
     const scheduleDayValue =
-      isReportScheduled && reportScheduleFrequency === "weekly"
+      isReportScheduled && needsScheduleDay
         ? Number(reportScheduleDay)
         : null
     const insertData = {
@@ -1253,7 +1261,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setReportDateOption("range")
       setIncludeComments(false)
       setIsReportScheduled(false)
-      setReportScheduleFrequency("daily")
+      setReportScheduleFrequency("weekly")
       setReportScheduleDay("1")
       setReportScheduleTime("09:00")
       setReportScheduleTimezone("-05:00")
@@ -2033,7 +2041,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
                             value={reportScheduleFrequency}
                             onValueChange={(value) => {
                               setReportScheduleFrequency(value)
-                              if (value !== "weekly") {
+                              if ((value === "weekly" || value === "biweekly") && Number(reportScheduleDay) > 7) {
+                                setReportScheduleDay("1")
+                              }
+                              if (value === "monthly" && Number(reportScheduleDay) > 31) {
                                 setReportScheduleDay("1")
                               }
                             }}
@@ -2042,21 +2053,45 @@ export default function ModernSocialListeningApp({ onLogout }) {
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="daily">Diario</SelectItem>
                               <SelectItem value="weekly">Semanal</SelectItem>
+                              <SelectItem value="biweekly">Cada dos semanas</SelectItem>
+                              <SelectItem value="monthly">Mensual</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
-                        {reportScheduleFrequency === "weekly" && (
+                        {(reportScheduleFrequency === "weekly" ||
+                          reportScheduleFrequency === "biweekly") && (
                           <div>
-                            <p className="text-sm font-medium mb-2 text-slate-300">Día de envío</p>
+                            <p className="text-sm font-medium mb-2 text-slate-300">
+                              {reportScheduleFrequency === "weekly"
+                                ? "Día de envío"
+                                : "Día de la semana"}
+                            </p>
                             <Select value={reportScheduleDay} onValueChange={setReportScheduleDay}>
                               <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
                                 <SelectValue placeholder="Seleccionar" />
                               </SelectTrigger>
                               <SelectContent>
                                 {WEEK_DAYS.map((day) => (
+                                  <SelectItem key={day.value} value={day.value}>
+                                    {day.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {reportScheduleFrequency === "monthly" && (
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-slate-300">Día del mes</p>
+                            <Select value={reportScheduleDay} onValueChange={setReportScheduleDay}>
+                              <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50 text-white">
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {MONTH_DAYS.map((day) => (
                                   <SelectItem key={day.value} value={day.value}>
                                     {day.label}
                                   </SelectItem>
