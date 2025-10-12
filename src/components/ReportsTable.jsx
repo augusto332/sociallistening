@@ -136,6 +136,27 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
       return `Envío semanal los ${dayName} a las ${timeDisplay}`
     }
 
+    if (report.schedule === "biweekly") {
+      const dayNames = {
+        1: "lunes",
+        2: "martes",
+        3: "miércoles",
+        4: "jueves",
+        5: "viernes",
+        6: "sábado",
+        7: "domingo",
+      }
+
+      const dayName = dayNames[report.scheduleDay] || "día sin definir"
+      return `Envío cada dos semanas los ${dayName} a las ${timeDisplay}`
+    }
+
+    if (report.schedule === "monthly") {
+      const dayNumber = report.scheduleDay
+      const dayText = dayNumber ? `el día ${dayNumber}` : "en un día sin definir"
+      return `Envío mensual ${dayText} a las ${timeDisplay}`
+    }
+
     return "Programación sin detalles"
   }
 
