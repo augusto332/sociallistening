@@ -25,7 +25,6 @@ import {
   Calendar,
   TrendingUp,
   LogOut,
-  BarChart3,
   CreditCard,
   CircleHelp,
   Headset,
@@ -626,34 +625,11 @@ export default function Account() {
                   {getPlanBadge()}
                 </div>
 
-                {planTier === "free" && (
-                  <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                    <h4 className="font-medium text-white mb-2">Limitaciones del Plan Gratuito</h4>
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      <li className="flex items-center gap-2">
-                        <X className="w-3 h-3 text-red-400" />
-                        Análisis de sentimientos limitado
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <X className="w-3 h-3 text-red-400" />
-                        Sin acceso a resúmenes AI
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <X className="w-3 h-3 text-red-400" />
-                        Solo YouTube y Reddit
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <X className="w-3 h-3 text-red-400" />
-                        Reportes básicos
-                      </li>
-                    </ul>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
             {/* Upgrade Card */}
-            {planTier === "free" && (
+            {planTier !== "enterprise" && (
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 p-8">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-2xl"></div>
                 <div className="relative">
@@ -661,36 +637,7 @@ export default function Account() {
                     <Crown className="w-6 h-6 text-amber-400" />
                     <h3 className="text-2xl font-bold text-white">Actualiza tu plan</h3>
                   </div>
-                  <p className="text-slate-300 mb-6">
-                    Desbloquea todas las funciones avanzadas y lleva tu monitoreo al siguiente nivel
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Análisis AI completo
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Resúmenes inteligentes
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Todas las plataformas
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Reportes avanzados
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Alertas personalizadas
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400" />
-                      Soporte prioritario
-                    </div>
-                  </div>
+                  <p className="text-slate-300 mb-6">Descubre funciones avanzadas y elige el plan que mejor se adapte a tu equipo.</p>
 
                   <Button
                     size="lg"
@@ -704,21 +651,6 @@ export default function Account() {
               </div>
             )}
 
-            {/* Billing History */}
-            {isPaidPlan && (
-              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white">Historial de Facturación</CardTitle>
-                  <CardDescription className="text-slate-400">Tus últimas transacciones</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-slate-400">
-                    <BarChart3 className="w-12 h-12 mx-auto mb-4 text-slate-500" />
-                    <p>No hay historial de facturación disponible</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )
 
