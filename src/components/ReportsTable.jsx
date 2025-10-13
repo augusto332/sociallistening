@@ -91,19 +91,25 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
   const getScheduleTimeDisplay = (scheduleTime) => {
     if (!scheduleTime) return "hora no definida"
 
-    const hasTimezoneInfo = /[zZ]|[+-]\d\d:?\d\d?$/.test(scheduleTime)
-    const isoTimeString = `1970-01-01T${hasTimezoneInfo ? scheduleTime : `${scheduleTime}Z`}`
-    const date = new Date(isoTimeString)
+    // 🔹 Eliminar cualquier sufijo de zona horaria: -03, -0300, -03:00, +02, +0200, +02:00 o Z
+    const cleanedTime = scheduleTime
+      .replace(/([+-]\d{2}:?\d{0,2}|[zZ])$/, "") // elimina cualquier zona horaria al final
+      .trim()
+
+    // 🔹 Intentar parsear el horario (añadiendo Z para que sea UTC y evitar offset local)
+    const date = new Date(`1970-01-01T${cleanedTime}Z`)
 
     if (Number.isNaN(date.getTime())) {
-      return scheduleTime
-        .replace(/\s*\(.*?\)\s*$/, "")
-        .replace(/[+-]\d\d:?\d\d?$/, "")
-        .replace(/[zZ]$/, "")
-        .trim() || "hora no definida"
+      // Si no se puede parsear, devolver el valor limpio sin segundos ni zona
+      return cleanedTime.replace(/:00$/, "") + " hs"
     }
 
-    const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+    // 🔹 Mostrar solo horas y minutos en formato 24h
+    const timeString = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
 
     return `${timeString} hs`
   }
@@ -114,9 +120,9 @@ export default function ModernReportsTable({ reports = [], onDownload, onDelete,
     }
 
     const scheduleMap = {
-      weekly: "semanal",
-      biweekly: "quincenal",
-      monthly: "mensual",
+      weekly: "Semanal",
+      biweekly: "Quincenal",
+      monthly: "Mensual",
     }
 
     return scheduleMap[report.schedule] || "N/A"

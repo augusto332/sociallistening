@@ -1076,12 +1076,14 @@ export default function ModernSocialListeningApp({ onLogout }) {
         p_ai_classification_tags: aiTags,
       })
       if (error) throw error
+      
       setTopWords(
         (data || []).map((item) => ({ text: item.word, value: Number(item.cnt) }))
       )
     } catch (err) {
       console.error("Error fetching top words", err)
     }
+    
   }
 
   const fetchTopSources = async () => {
@@ -1901,7 +1903,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
                   Mis Reportes
                 </h1>
-                <p className="text-slate-400">Crea y gestiona tus reportes descargables</p>
+                <p className="text-slate-400">Crea y gestiona tus reportes descargables y automatiza su envío por correo</p>
               </div>
 
               <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
