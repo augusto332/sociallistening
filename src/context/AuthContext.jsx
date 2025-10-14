@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
         const { data, error } = await supabase
           .from('profiles')
           .select('plan')
-          .eq('id', currentSession.user.id)
+          .eq('user_id', currentSession.user.id)
           .single()
 
         if (!error && data?.plan) {
