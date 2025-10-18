@@ -56,8 +56,21 @@ export const planConfig = {
   },
 }
 
+const roleConfig = {
+  admin: {
+    label: "Administrador",
+    color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    icon: Shield,
+  },
+  contributor: {
+    label: "Colaborador",
+    color: "bg-slate-500/10 text-slate-300 border-slate-500/20",
+    icon: CircleUser,
+  },
+}
+
 export default function Account() {
-  const { user, plan, planLoading } = useAuth()
+  const { user, plan, planLoading, role } = useAuth()
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
   const [originalAccountName, setOriginalAccountName] = useState("")
@@ -260,6 +273,21 @@ export default function Account() {
     )
   }
 
+  const getRoleBadge = () => {
+    if (planLoading) return null
+
+    const normalizedRole = typeof role === "string" ? role.toLowerCase() : "contributor"
+    const config = roleConfig[normalizedRole] ?? roleConfig.contributor
+    const RoleIcon = config.icon
+
+    return (
+      <Badge variant="secondary" className={`${config.color} flex items-center gap-1.5 px-3 py-1.5`}>
+        <RoleIcon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    )
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return "—"
     return new Date(dateString).toLocaleDateString("es-ES", {
@@ -333,7 +361,7 @@ export default function Account() {
                     <div>
                       <CardTitle className="text-white text-xl mb-1">{accountName || "Usuario"}</CardTitle>
                       <CardDescription className="text-slate-400">{accountEmail}</CardDescription>
-                      <div className="mt-2">{getPlanBadge()}</div>
+                      <div className="mt-2">{getRoleBadge()}</div>
                     </div>
                   </div>
                 </div>
