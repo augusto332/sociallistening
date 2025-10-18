@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import {
   Sparkles,
@@ -29,9 +30,12 @@ import {
   CircleHelp,
   Headset,
   CircleUser,
+  Users,
   ChevronDown,
   Menu,
 } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 export const planConfig = {
   free: {
@@ -91,6 +95,9 @@ export default function Account() {
   const helpMenuRef = useRef(null)
   const userMenuRef = useRef(null)
   const [isAccountSidebarOpen, setIsAccountSidebarOpen] = useState(false)
+  const [teamMembers, setTeamMembers] = useState([])
+  const [teamLoading, setTeamLoading] = useState(false)
+  const [teamError, setTeamError] = useState(null)
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
@@ -164,6 +171,54 @@ export default function Account() {
     }
 
     fetchStats()
+  }, [user])
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      if (!user) return
+
+      setTeamLoading(true)
+      setTeamError(null)
+
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("account_id")
+          .eq("user_id", user.id)
+          .single()
+
+        if (profileError) {
+          throw profileError
+        }
+
+        const accountId = profileData?.account_id
+
+        if (!accountId) {
+          setTeamMembers([])
+          setTeamLoading(false)
+          return
+        }
+
+        const { data: membersData, error: membersError } = await supabase
+          .from("profiles")
+          .select("user_id, email, role, created_at")
+          .eq("account_id", accountId)
+          .order("created_at", { ascending: false })
+
+        if (membersError) {
+          throw membersError
+        }
+
+        setTeamMembers(membersData || [])
+      } catch (error) {
+        setTeamError("No pudimos cargar tu equipo. Intenta nuevamente más tarde.")
+        setTeamMembers([])
+      } finally {
+        setTeamLoading(false)
+      }
+    }
+
+    fetchTeamMembers()
   }, [user])
 
   const togglePasswordFields = () => {
@@ -312,6 +367,11 @@ export default function Account() {
       id: "plan",
       title: "Plan y Facturación",
       icon: CreditCard,
+    },
+    {
+      id: "team",
+      title: "Gestionar equipo",
+      icon: Users,
     },
   ]
 
@@ -679,6 +739,52 @@ export default function Account() {
               </div>
             )}
 
+          </div>
+        )
+
+      case "team":
+        return (
+          <div className="space-y-6">
+            <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white">Gestiona tu equipo</CardTitle>
+                <CardDescription className="text-slate-400">
+                  Consulta los miembros asociados a tu cuenta y sus roles.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {teamLoading ? (
+                  <p className="text-sm text-slate-400">Cargando equipo...</p>
+                ) : teamError ? (
+                  <p className="text-sm text-red-400">{teamError}</p>
+                ) : teamMembers.length === 0 ? (
+                  <p className="text-sm text-slate-400">Aún no hay miembros asociados a esta cuenta.</p>
+                ) : (
+                  <Table className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-md text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead>Fecha de registro</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {teamMembers.map((member) => (
+                        <TableRow key={member.user_id}>
+                          <TableCell className="font-medium">{member.email || "-"}</TableCell>
+                          <TableCell className="capitalize">{member.role || "-"}</TableCell>
+                          <TableCell>
+                            {member.created_at
+                              ? format(new Date(member.created_at), "dd/MM/yyyy HH:mm", { locale: es })
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )
 
