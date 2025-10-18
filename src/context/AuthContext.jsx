@@ -7,6 +7,7 @@ const AuthContext = createContext({
   loading: true,
   plan: 'free',
   planLoading: true,
+  role: 'contributor',
 })
 
 export const AuthProvider = ({ children }) => {
@@ -14,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState('free')
   const [planLoading, setPlanLoading] = useState(true)
+  const [role, setRole] = useState('contributor')
 
   useEffect(() => {
     const fetchUserPlan = async (currentSession) => {
@@ -21,20 +23,26 @@ export const AuthProvider = ({ children }) => {
         setPlanLoading(true)
         const { data, error } = await supabase
           .from('profiles')
-          .select('plan')
+          .select('plan, role')
           .eq('user_id', currentSession.user.id)
           .single()
 
-        if (!error && data?.plan) {
-          setPlan(data.plan)
+        const nextPlan = data?.plan || 'free'
+        const nextRole = data?.role || 'contributor'
+
+        if (!error) {
+          setPlan(nextPlan)
+          setRole(nextRole)
         } else {
           setPlan('free')
+          setRole('contributor')
         }
         setPlanLoading(false)
         return
       }
 
       setPlan('free')
+      setRole('contributor')
       setPlanLoading(false)
     }
 
@@ -61,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user, loading, plan, planLoading }}
+      value={{ session, user: session?.user, loading, plan, planLoading, role }}
     >
       {children}
     </AuthContext.Provider>
