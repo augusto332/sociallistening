@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function ProtectedRoute({ children }) {
-  const { session, loading } = useAuth()
+  const { session, loading, accountId } = useAuth()
   const location = useLocation()
   const [checkingKeywords, setCheckingKeywords] = useState(true)
   const [hasKeywords, setHasKeywords] = useState(false)
@@ -17,9 +17,20 @@ export default function ProtectedRoute({ children }) {
         return
       }
 
+      if (accountId === undefined) {
+        return
+      }
+
+      if (!accountId) {
+        setHasKeywords(false)
+        setCheckingKeywords(false)
+        return
+      }
+
       const { count, error } = await supabase
         .from('dim_keywords')
         .select('keyword_id', { count: 'exact', head: true })
+        .eq('account_id', accountId)
       if (error) {
         console.error('Error checking keywords', error)
       }
@@ -27,7 +38,7 @@ export default function ProtectedRoute({ children }) {
       setCheckingKeywords(false)
     }
     checkKeywords()
-  }, [session, location.pathname])
+  }, [session, accountId, location.pathname])
 
   if (loading || checkingKeywords) return null
   if (!session) return <Navigate to="/login" replace />

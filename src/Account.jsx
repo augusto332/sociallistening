@@ -74,7 +74,7 @@ const roleConfig = {
 }
 
 export default function Account() {
-  const { user, plan, planLoading, role } = useAuth()
+  const { user, plan, planLoading, role, accountId } = useAuth()
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
   const [originalAccountName, setOriginalAccountName] = useState("")
@@ -147,13 +147,19 @@ export default function Account() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!user) return
+      if (!user || accountId === undefined) return
 
-      const { count: keywordsCount } = await supabase
-        .from("dim_keywords")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("active", true)
+      let keywordsCount = 0
+
+      if (accountId) {
+        const { count } = await supabase
+          .from("dim_keywords")
+          .select("*", { count: "exact", head: true })
+          .eq("account_id", accountId)
+          .eq("active", true)
+
+        keywordsCount = count || 0
+      }
 
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -165,13 +171,13 @@ export default function Account() {
         .gte("created_at", thirtyDaysAgo.toISOString())
 
       setStats({
-        keywords: keywordsCount || 0,
+        keywords: keywordsCount,
         mentions: mentionsCount || 0,
       })
     }
 
     fetchStats()
-  }, [user])
+  }, [user, accountId])
 
   useEffect(() => {
     const fetchTeamMembers = async () => {

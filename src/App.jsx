@@ -221,7 +221,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportScheduleDay, setReportScheduleDay] = useState("1")
   const [reportScheduleTime, setReportScheduleTime] = useState("09:00")
   const [reportScheduleTimezone, setReportScheduleTimezone] = useState("-05:00")
-  const { user } = useAuth()
+  const { user, accountId } = useAuth()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
 
@@ -723,11 +723,17 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const fetchKeywords = async () => {
+    if (!accountId) {
+      setKeywords([])
+      return
+    }
+
     const { data, error } = await supabase
       .from("dim_keywords")
       .select(
         "keyword, keyword_id, created_at, active, language, last_processed_at_yt, last_processed_at_rd, last_processed_at_tw",
       )
+      .eq("account_id", accountId)
       .order("created_at", { ascending: false })
     if (error) {
       console.error("Error fetching keywords", error)
@@ -792,11 +798,15 @@ export default function ModernSocialListeningApp({ onLogout }) {
       setAddKeywordMessage({ type: "error", text: "Debes iniciar sesión" })
       return
     }
+    if (!accountId) {
+      setAddKeywordMessage({ type: "error", text: "No pudimos identificar tu cuenta" })
+      return
+    }
     const { data, error } = await supabase
       .from("dim_keywords")
       .insert({
         keyword: pendingKeyword,
-        user_id: user.id,
+        account_id: accountId,
         created_at: new Date().toISOString(),
         active: false,
         language: newKeywordLang,
@@ -819,8 +829,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   useEffect(() => {
+    if (accountId === undefined) {
+      return
+    }
     fetchKeywords()
-  }, [])
+  }, [accountId])
 
   useEffect(() => {
     if (activeTab === "dashboard") {
