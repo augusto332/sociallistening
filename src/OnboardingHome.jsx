@@ -48,7 +48,7 @@ export default function ModernOnboardingHome() {
   const [step, setStep] = useState(0)
   const [language, setLanguage] = useState("")
   const [savingLanguage, setSavingLanguage] = useState(false)
-  const { user } = useAuth()
+  const { user, accountId } = useAuth()
   const navigate = useNavigate()
 
   const accountName =
@@ -80,11 +80,15 @@ export default function ModernOnboardingHome() {
 
   const saveLanguage = async () => {
     if (!language) return
+    if (!accountId) {
+      console.error("No se pudo determinar la cuenta del usuario")
+      return
+    }
     setSavingLanguage(true)
     const { error } = await supabase
       .from("dim_keywords")
       .update({ language })
-      .eq("user_id", user.id)
+      .eq("account_id", accountId)
       .in("keyword", keywords)
     setSavingLanguage(false)
     if (!error) {
@@ -96,10 +100,14 @@ export default function ModernOnboardingHome() {
 
   const saveKeywords = async () => {
     if (!keywords.length) return
+    if (!accountId) {
+      console.error("No se pudo determinar la cuenta del usuario")
+      return
+    }
     setSaving(true)
     const rows = keywords.map((k) => ({
       keyword: k,
-      user_id: user.id,
+      account_id: accountId,
       created_at: new Date().toISOString(),
       active: true,
     }))
