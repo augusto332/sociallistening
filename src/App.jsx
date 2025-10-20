@@ -1216,6 +1216,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const { data: userData } = await supabase.auth.getUser()
     const { user } = userData || {}
     if (!user) return
+    if (!accountId) {
+      console.error("Missing account ID for current user")
+      return
+    }
     const keywordObj = keywords.find((k) => k.keyword === reportKeyword)
     const isDynamic = reportDateOption !== "range"
     const scheduleTimeValue =
@@ -1244,6 +1248,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       last_x_days: isDynamic ? Number(reportDateOption) : null,
       comments: includeComments,
       user_id: user.id,
+      account_id: accountId,
       is_scheduled: isReportScheduled,
       schedule: scheduleValue,
       schedule_day: scheduleDayValue,
