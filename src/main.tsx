@@ -39,7 +39,7 @@ function Root() {
           />
 
           <Route
-            path="/app/mentions"
+            path="/app/*"
             element={
               <ProtectedRoute>
                 <SocialListeningApp />

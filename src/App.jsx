@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation, NavLink, Routes, Route, Navigate } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import DatePickerInput from "@/components/DatePickerInput"
@@ -18,6 +18,7 @@ import RightSidebar from "@/components/RightSidebar"
 import SentimentKPI from "@/components/SentimentKPI"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
+import ConfigPage from "./ConfigPage"
 import {
   Search,
   CircleUser,
@@ -206,6 +207,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [newKeywordLang, setNewKeywordLang] = useState("")
   const [pendingKeyword, setPendingKeyword] = useState("")
   const navigate = useNavigate()
+  const location = useLocation()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [reportStartDate, setReportStartDate] = useState("")
   const [reportEndDate, setReportEndDate] = useState("")
@@ -224,6 +226,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const { user, accountId } = useAuth()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
+  const isConfigRoute = location.pathname.startsWith("/app/config")
+  const currentTab = activeTab
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -836,7 +840,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }, [accountId])
 
   useEffect(() => {
-    if (activeTab === "dashboard") {
+    if (currentTab === "dashboard") {
       setMentionsLoading(false)
       return
     }
@@ -844,7 +848,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     const view = onlyFavorites ? "total_mentions_highlighted_vw" : "mentions_display_vw"
     loadFirstPage(view, mentionsFilters)
     refreshGlobalFilterOptions(view, mentionsFilters)
-  }, [activeTab, onlyFavorites, mentionsFilters])
+  }, [currentTab, onlyFavorites, mentionsFilters])
 
   useEffect(() => {
     const node = sentinelRef.current
@@ -855,7 +859,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
         entry.isIntersecting &&
         hasMore &&
         !isLoadingMore &&
-        activeTab !== "dashboard"
+        currentTab !== "dashboard"
       ) {
         const view =
           onlyFavorites
@@ -866,7 +870,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [hasMore, isLoadingMore, activeTab, onlyFavorites, mentions, mentionsFilters])
+  }, [hasMore, isLoadingMore, currentTab, onlyFavorites, mentions, mentionsFilters])
 
   const fetchSavedReports = async () => {
     const { data: userData } = await supabase.auth.getUser()
@@ -1171,7 +1175,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   useEffect(() => {
-    if (activeTab !== "dashboard") return
+    if (currentTab !== "dashboard") return
 
     let isSubscribed = true
 
@@ -1198,7 +1202,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       isSubscribed = false
     }
   }, [
-    activeTab,
+    currentTab,
     startDate,
     endDate,
     selectedDashboardPlatforms,
@@ -1373,18 +1377,27 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   const handleTabChange = (tab) => {
-    setActiveTab(tab)
     setIsSidebarOpen(false)
+    setActiveTab(tab)
+    if (location.pathname !== "/app/mentions") {
+      navigate("/app/mentions")
+    }
   }
 
-  const SidebarContent = ({ onSelect }) => (
+  const handleConfigNavigate = () => {
+    setIsSidebarOpen(false)
+    setMenuOpen(false)
+    setHelpMenuOpen(false)
+  }
+
+  const SidebarContent = ({ onTabSelect, onConfigNavigate }) => (
     <>
       <nav className="space-y-1">
         <button
-          onClick={() => onSelect("home")}
+          onClick={() => onTabSelect("home")}
           className={cn(
             "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-            activeTab === "home"
+            currentTab === "home"
               ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
               : "text-slate-400 hover:text-white hover:bg-slate-700/50",
           )}
@@ -1394,10 +1407,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
         </button>
 
         <button
-          onClick={() => onSelect("dashboard")}
+          onClick={() => onTabSelect("dashboard")}
           className={cn(
             "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-            activeTab === "dashboard"
+            currentTab === "dashboard"
               ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
               : "text-slate-400 hover:text-white hover:bg-slate-700/50",
           )}
@@ -1407,10 +1420,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
         </button>
 
         <button
-          onClick={() => onSelect("reportes")}
+          onClick={() => onTabSelect("reportes")}
           className={cn(
             "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-            activeTab === "reportes"
+            currentTab === "reportes"
               ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
               : "text-slate-400 hover:text-white hover:bg-slate-700/50",
           )}
@@ -1422,18 +1435,21 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
       <div className="flex-1" />
 
-      <button
-        onClick={() => onSelect("config")}
-        className={cn(
-          "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-          activeTab === "config"
-            ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-            : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-        )}
+      <NavLink
+        to="/app/config"
+        className={({ isActive }) =>
+          cn(
+            "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+            isActive
+              ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+              : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+          )
+        }
+        onClick={onConfigNavigate}
       >
         <Settings className="w-4 h-4" />
         Configuración
-      </button>
+      </NavLink>
     </>
   )
 
@@ -1542,7 +1558,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
       <div className="flex flex-col lg:flex-row">
         {/* Modern Sidebar */}
         <aside className="hidden md:flex lg:flex lg:w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <SidebarContent onSelect={handleTabChange} />
+          <SidebarContent onTabSelect={handleTabChange} onConfigNavigate={handleConfigNavigate} />
         </aside>
 
         {isSidebarOpen && (
@@ -1556,7 +1572,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 className="relative h-full w-72 max-w-[80vw] bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 p-6 flex flex-col space-y-2 overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <SidebarContent onSelect={handleTabChange} />
+                <SidebarContent
+                  onTabSelect={handleTabChange}
+                  onConfigNavigate={handleConfigNavigate}
+                />
               </div>
             </div>
           </div>
@@ -1564,7 +1583,31 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
         {/* Main Content */}
         <main className="w-full lg:flex-1 overflow-y-auto">
-          {activeTab === "home" && (
+          <Routes>
+            <Route
+              path="config"
+              element={
+                <ConfigPage
+                  newKeyword={newKeyword}
+                  setNewKeyword={setNewKeyword}
+                  openKeywordLangSelector={openKeywordLangSelector}
+                  showKeywordLangs={showKeywordLangs}
+                  setShowKeywordLangs={setShowKeywordLangs}
+                  newKeywordLang={newKeywordLang}
+                  setNewKeywordLang={setNewKeywordLang}
+                  saveNewKeyword={saveNewKeyword}
+                  addKeywordMessage={addKeywordMessage}
+                  keywords={keywords}
+                  handleKeywordToggle={handleKeywordToggle}
+                  saveKeywordChanges={saveKeywordChanges}
+                  keywordChanges={keywordChanges}
+                  saveKeywordMessage={saveKeywordMessage}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="mentions" replace />} />
+          </Routes>
+          {!isConfigRoute && currentTab === "home" && (
             <section className="p-8">
               <div className="flex items-start gap-8 min-h-screen">
                 <div className="flex-1">
@@ -1702,7 +1745,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             </section>
           )}
 
-          {activeTab === "dashboard" && (
+          {!isConfigRoute && currentTab === "dashboard" && (
             <section className="p-8">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
@@ -1910,7 +1953,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
             </section>
           )}
 
-          {activeTab === "reportes" && (
+          {!isConfigRoute && currentTab === "reportes" && (
             <section className="p-8 space-y-8">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
@@ -2160,112 +2203,9 @@ export default function ModernSocialListeningApp({ onLogout }) {
             </section>
           )}
 
-          {activeTab === "config" && (
-            <section className="p-8">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
-                  Configuración
-                </h1>
-                <p className="text-slate-400">Gestiona tus palabras clave y configuración del sistema</p>
-              </div>
-
-              <div className="space-y-8">
-                <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50">
-                  <CardContent className="p-6 space-y-6">
-                    <h3 className="text-lg font-semibold text-white">Agregar nueva keyword</h3>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        className="flex-1 bg-slate-800/50 border-slate-700/50 text-white"
-                        value={newKeyword}
-                        onChange={(e) => setNewKeyword(e.target.value)}
-                        placeholder="Nueva keyword"
-                      />
-                      <Button
-                        onClick={openKeywordLangSelector}
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {showKeywordLangs && (
-                      <div className="flex items-center gap-3 mt-4">
-                        <Select value={newKeywordLang} onValueChange={setNewKeywordLang}>
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Selecciona un idioma" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            <SelectItem value="es">Español</SelectItem>
-                            <SelectItem value="en">Inglés</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          onClick={saveNewKeyword}
-                          disabled={!newKeywordLang}
-                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
-                        >
-                          Guardar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowKeywordLangs(false)
-                            setNewKeywordLang("")
-                          }}
-                          className="border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 bg-transparent"
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    )}
-                    {addKeywordMessage && (
-                      <p
-                        className={`text-sm ${addKeywordMessage.type === "error" ? "text-red-400" : "text-green-400"}`}
-                      >
-                        {addKeywordMessage.text}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50">
-                  <CardContent className="p-6 space-y-6">
-                    <h3 className="text-lg font-semibold text-white">Palabras clave</h3>
-                    {keywords.length ? (
-                      <div className="bg-slate-800/50 rounded-lg p-4">
-                        <KeywordTable keywords={keywords} onToggle={handleKeywordToggle} />
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Search className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                        <p className="text-slate-400">No hay keywords configuradas</p>
-                        <p className="text-slate-500 text-sm">Agrega tu primera keyword para comenzar</p>
-                      </div>
-                    )}
-
-                    <Button
-                      onClick={saveKeywordChanges}
-                      disabled={Object.keys(keywordChanges).length === 0}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
-                    >
-                      Guardar cambios
-                    </Button>
-
-                    {saveKeywordMessage && (
-                      <p
-                        className={`text-sm ${saveKeywordMessage.type === "error" ? "text-red-400" : "text-green-400"}`}
-                      >
-                        {saveKeywordMessage.text}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-          )}
         </main>
       </div>
     </div>
   )
 }
+
