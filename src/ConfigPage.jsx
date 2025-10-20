@@ -23,13 +23,16 @@ export default function ConfigPage({
   keywordChanges,
   saveKeywordMessage,
 }) {
-  const [dailyMentionLimit, setDailyMentionLimit] = useState(250)
+  const [dailyMentionLimit, setDailyMentionLimit] = useState(100)
   const availableSources = useMemo(
     () => [
       { id: "youtube", label: "YouTube" },
       { id: "twitter", label: "Twitter" },
       { id: "reddit", label: "Reddit" },
       { id: "instagram", label: "Instagram" },
+      { id: "tiktok", label: "Tiktok" },
+      { id: "facebook", label: "Facebook" },
+      { id: "others", label: "Otros" },
     ],
     [],
   )
