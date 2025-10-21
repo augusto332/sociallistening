@@ -165,31 +165,73 @@ export default function ConfigPage({
       return
     }
 
-    if (savedKeywordDistribution && savedKeywordDistribution.length) {
+    const savedItems = Array.isArray(savedKeywordDistribution)
+      ? savedKeywordDistribution
+      : []
+
+    setKeywordDistribution((prev) => {
+      const prevMap = new Map(prev.map((item) => [item.id, item]))
       const savedMap = new Map(
-        savedKeywordDistribution.map((item) => [item.keyword_id, item.percentage ?? 0]),
+        savedItems.map((item) => [item.keyword_id, item.percentage ?? 0]),
       )
 
-      const normalized = keywords.map((keyword) => ({
+      const activeKeywords = keywords.filter((keyword) => keyword.active)
+      const inactiveKeywords = keywords.filter((keyword) => !keyword.active)
+
+      const activeItems = activeKeywords.map((keyword) => {
+        const prevItem = prevMap.get(keyword.keyword_id)
+        const savedValue = savedMap.get(keyword.keyword_id)
+
+        const basePercentage =
+          typeof prevItem?.percentage === "number"
+            ? prevItem.percentage
+            : typeof savedValue === "number"
+              ? savedValue
+              : 0
+
+        return {
+          id: keyword.keyword_id,
+          label: keyword.keyword,
+          percentage: basePercentage,
+          active: true,
+        }
+      })
+
+      const redistributedActive = activeItems.length
+        ? distributeByRatio(activeItems, 100)
+        : []
+
+      const inactiveItems = inactiveKeywords.map((keyword) => ({
         id: keyword.keyword_id,
         label: keyword.keyword,
-        percentage: savedMap.get(keyword.keyword_id) ?? 0,
+        percentage: 0,
+        active: false,
       }))
 
-      setKeywordDistribution(distributeByRatio(normalized, 100))
-      return
-    }
+      const combined = new Map(
+        [...redistributedActive, ...inactiveItems].map((item) => [item.id, item]),
+      )
 
-    const even = Math.floor(100 / keywords.length)
-    const remainder = 100 - even * keywords.length
-    setKeywordDistribution(
-      keywords.map((keyword, index) => ({
-        id: keyword.keyword_id,
-        label: keyword.keyword,
-        percentage: even + (index < remainder ? 1 : 0),
-      })),
-    )
+      return keywords.map((keyword) => {
+        const item = combined.get(keyword.keyword_id)
+        if (item) {
+          return item
+        }
+
+        return {
+          id: keyword.keyword_id,
+          label: keyword.keyword,
+          percentage: 0,
+          active: !!keyword.active,
+        }
+      })
+    })
   }, [keywords, savedKeywordDistribution])
+
+  const activeKeywordCount = useMemo(
+    () => keywordDistribution.filter((item) => item.active).length,
+    [keywordDistribution],
+  )
 
   const toggleSource = (id) => {
     setActiveSources((prev) => ({
@@ -203,34 +245,49 @@ export default function ConfigPage({
 
     setKeywordDistribution((prev) => {
       if (!prev.length) return prev
-      if (prev.length === 1) {
-        return prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                percentage: 100,
-              }
-            : item,
-        )
-      }
 
       const targetIndex = prev.findIndex((item) => item.id === id)
       if (targetIndex === -1) return prev
 
-      const target = { ...prev[targetIndex], percentage: normalizedValue }
-      const others = prev.filter((item) => item.id !== id)
+      const target = prev[targetIndex]
+      if (!target.active) return prev
+
+      const activeItems = prev.filter((item) => item.active)
+      if (activeItems.length <= 1) {
+        return prev.map((item) => {
+          if (!item.active) {
+            return { ...item, percentage: 0 }
+          }
+
+          return {
+            ...item,
+            percentage: item.id === id ? 100 : 0,
+          }
+        })
+      }
+
       const remainder = 100 - normalizedValue
+      const others = activeItems
+        .filter((item) => item.id !== id)
+        .map((item) => ({ ...item }))
+
       const redistributedOthers = distributeByRatio(others, remainder)
+      const updatedMap = new Map(
+        redistributedOthers.map((item) => [item.id, item]),
+      )
 
-      const merged = prev.map((item) => {
-        if (item.id === id) {
-          return target
+      return prev.map((item) => {
+        if (!item.active) {
+          return { ...item, percentage: 0 }
         }
-        const updated = redistributedOthers.find((other) => other.id === item.id)
-        return updated || item
-      })
 
-      return merged
+        if (item.id === id) {
+          return { ...item, percentage: normalizedValue }
+        }
+
+        const updated = updatedMap.get(item.id)
+        return updated ? { ...item, percentage: updated.percentage } : item
+      })
     })
   }
 
@@ -365,19 +422,36 @@ export default function ConfigPage({
                 <div className="space-y-4">
                   {keywordDistribution.map((item) => {
                     const mentions = Math.round((dailyMentionLimit * item.percentage) / 100)
+                    const isActive = item.active
+                    const sliderDisabled = !isActive || activeKeywordCount <= 1
                     return (
-                      <div key={item.id} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-300 font-medium">{item.label}</span>
-                          <span className="text-slate-400">
+                      <div
+                        key={item.id}
+                        className={`space-y-2 ${isActive ? "" : "opacity-60"}`}
+                      >
+                        <div
+                          className={`flex items-center justify-between text-sm ${
+                            isActive ? "text-slate-300" : "text-slate-500"
+                          }`}
+                        >
+                          <span className="font-medium">{item.label}</span>
+                          <span className={`${isActive ? "text-slate-400" : "text-slate-500"}`}>
                             {item.percentage}% · {mentions} menciones
                           </span>
                         </div>
                         <div className="relative h-3">
-                          <div className="h-2 rounded-full bg-slate-700/60" />
                           <div
-                            className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
-                            style={{ width: `${item.percentage}%` }}
+                            className={`h-2 rounded-full ${
+                              isActive ? "bg-slate-700/60" : "bg-slate-800/50"
+                            }`}
+                          />
+                          <div
+                            className={`absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full ${
+                              isActive
+                                ? "bg-gradient-to-r from-blue-500 to-purple-600"
+                                : "bg-slate-600/60"
+                            }`}
+                            style={{ width: `${isActive ? item.percentage : 0}%` }}
                           />
                           <input
                             type="range"
@@ -385,7 +459,8 @@ export default function ConfigPage({
                             max={100}
                             value={item.percentage}
                             onChange={(event) => handleDistributionChange(item.id, Number(event.target.value))}
-                            className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent"
+                            disabled={sliderDisabled}
+                            className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent disabled:cursor-not-allowed"
                           />
                         </div>
                       </div>
