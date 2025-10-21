@@ -206,6 +206,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [showKeywordLangs, setShowKeywordLangs] = useState(false)
   const [newKeywordLang, setNewKeywordLang] = useState("")
   const [pendingKeyword, setPendingKeyword] = useState("")
+  const [accountSettingsVersion, setAccountSettingsVersion] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
   const [onlyFavorites, setOnlyFavorites] = useState(false)
@@ -823,6 +824,22 @@ export default function ModernSocialListeningApp({ onLogout }) {
         text: `No se pudo agregar la keyword: ${error?.message || "Error desconocido"}`,
       })
     } else {
+      const { error: resetError } = await supabase
+        .from("account_settings")
+        .upsert(
+          {
+            account_id: accountId,
+            keyword_distribution: null,
+          },
+          { onConflict: "account_id" },
+        )
+
+      if (resetError) {
+        console.error("Error resetting keyword distribution", resetError)
+      } else {
+        setAccountSettingsVersion((prev) => prev + 1)
+      }
+
       setKeywords((k) => [...data, ...k])
       setNewKeyword("")
       setPendingKeyword("")
@@ -1607,6 +1624,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
                   saveKeywordChanges={saveKeywordChanges}
                   keywordChanges={keywordChanges}
                   saveKeywordMessage={saveKeywordMessage}
+                  accountId={accountId}
+                  accountSettingsVersion={accountSettingsVersion}
                 />
               }
             />

@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import KeywordTable from "@/components/KeywordTable"
 import { Search, Plus } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function ConfigPage({
   newKeyword,
@@ -22,6 +23,8 @@ export default function ConfigPage({
   saveKeywordChanges,
   keywordChanges,
   saveKeywordMessage,
+  accountId,
+  accountSettingsVersion,
 }) {
   const [dailyMentionLimit, setDailyMentionLimit] = useState(100)
   const availableSources = useMemo(
@@ -36,13 +39,20 @@ export default function ConfigPage({
     ],
     [],
   )
-  const [activeSources, setActiveSources] = useState(() =>
-    availableSources.reduce((acc, source) => {
-      acc[source.id] = true
-      return acc
-    }, {}),
+  const defaultActiveSources = useMemo(
+    () =>
+      availableSources.reduce((acc, source) => {
+        acc[source.id] = true
+        return acc
+      }, {}),
+    [availableSources],
   )
+  const [activeSources, setActiveSources] = useState(defaultActiveSources)
   const [keywordDistribution, setKeywordDistribution] = useState([])
+  const [savedKeywordDistribution, setSavedKeywordDistribution] = useState(null)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [settingsMessage, setSettingsMessage] = useState(null)
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
 
   const distributeByRatio = (items, total) => {
     if (!items.length) return []
@@ -86,34 +96,100 @@ export default function ConfigPage({
   }
 
   useEffect(() => {
+    if (!accountId) {
+      setActiveSources(defaultActiveSources)
+      setDailyMentionLimit(100)
+      setSavedKeywordDistribution(null)
+      setKeywordDistribution([])
+      return
+    }
+
+    let isMounted = true
+
+    setSettingsMessage(null)
+
+    const loadAccountSettings = async () => {
+      setIsLoadingSettings(true)
+      const { data, error } = await supabase
+        .from("account_settings")
+        .select(
+          "mentions_daily_limit, keyword_distribution, is_youtube_active, is_twitter_active, is_reddit_active, is_instagram_active, is_tiktok_active, is_facebook_active, is_others_active",
+        )
+        .eq("account_id", accountId)
+        .maybeSingle()
+
+      if (!isMounted) return
+
+      if (error) {
+        console.error("Error fetching account settings", error)
+        setActiveSources(defaultActiveSources)
+        setDailyMentionLimit(100)
+        setSavedKeywordDistribution(null)
+      } else if (data) {
+        setActiveSources({
+          youtube: !!data.is_youtube_active,
+          twitter: !!data.is_twitter_active,
+          reddit: !!data.is_reddit_active,
+          instagram: !!data.is_instagram_active,
+          tiktok: !!data.is_tiktok_active,
+          facebook: !!data.is_facebook_active,
+          others: !!data.is_others_active,
+        })
+        setDailyMentionLimit(
+          typeof data.mentions_daily_limit === "number" ? data.mentions_daily_limit : 100,
+        )
+        setSavedKeywordDistribution(
+          Array.isArray(data.keyword_distribution) || data.keyword_distribution === null
+            ? data.keyword_distribution
+            : null,
+        )
+      } else {
+        setActiveSources(defaultActiveSources)
+        setDailyMentionLimit(100)
+        setSavedKeywordDistribution(null)
+      }
+
+      setIsLoadingSettings(false)
+    }
+
+    loadAccountSettings()
+
+    return () => {
+      isMounted = false
+    }
+  }, [accountId, accountSettingsVersion, defaultActiveSources])
+
+  useEffect(() => {
     if (!keywords.length) {
       setKeywordDistribution([])
       return
     }
 
-    setKeywordDistribution((prev) => {
-      const prevMap = new Map(prev.map((item) => [item.id, item.percentage]))
-      const hasNewKeyword = keywords.some((keyword) => !prevMap.has(keyword.keyword_id))
+    if (savedKeywordDistribution && savedKeywordDistribution.length) {
+      const savedMap = new Map(
+        savedKeywordDistribution.map((item) => [item.keyword_id, item.percentage ?? 0]),
+      )
 
-      if (!prev.length || hasNewKeyword) {
-        const even = Math.floor(100 / keywords.length)
-        const remainder = 100 - even * keywords.length
-        return keywords.map((keyword, index) => ({
-          id: keyword.keyword_id,
-          label: keyword.keyword,
-          percentage: even + (index < remainder ? 1 : 0),
-        }))
-      }
-
-      const preserved = keywords.map((keyword) => ({
+      const normalized = keywords.map((keyword) => ({
         id: keyword.keyword_id,
         label: keyword.keyword,
-        percentage: prevMap.get(keyword.keyword_id) ?? 0,
+        percentage: savedMap.get(keyword.keyword_id) ?? 0,
       }))
 
-      return distributeByRatio(preserved, 100)
-    })
-  }, [keywords])
+      setKeywordDistribution(distributeByRatio(normalized, 100))
+      return
+    }
+
+    const even = Math.floor(100 / keywords.length)
+    const remainder = 100 - even * keywords.length
+    setKeywordDistribution(
+      keywords.map((keyword, index) => ({
+        id: keyword.keyword_id,
+        label: keyword.keyword,
+        percentage: even + (index < remainder ? 1 : 0),
+      })),
+    )
+  }, [keywords, savedKeywordDistribution])
 
   const toggleSource = (id) => {
     setActiveSources((prev) => ({
@@ -158,6 +234,50 @@ export default function ConfigPage({
     })
   }
 
+  const handleSaveSettings = async () => {
+    if (!accountId) return
+    setIsSavingSettings(true)
+    setSettingsMessage(null)
+
+    const sanitizedLimit = Number.isFinite(dailyMentionLimit) ? dailyMentionLimit : 0
+    const formattedDistribution = keywordDistribution.length
+      ? keywordDistribution.map((item) => ({
+          keyword_id: item.id,
+          percentage: item.percentage,
+        }))
+      : null
+
+    const payload = {
+      account_id: accountId,
+      mentions_daily_limit: Math.max(0, Math.floor(sanitizedLimit)),
+      is_youtube_active: !!activeSources.youtube,
+      is_twitter_active: !!activeSources.twitter,
+      is_reddit_active: !!activeSources.reddit,
+      is_instagram_active: !!activeSources.instagram,
+      is_tiktok_active: !!activeSources.tiktok,
+      is_facebook_active: !!activeSources.facebook,
+      is_others_active: !!activeSources.others,
+      keyword_distribution: formattedDistribution,
+    }
+
+    const { error } = await supabase
+      .from("account_settings")
+      .upsert(payload, { onConflict: "account_id" })
+
+    if (error) {
+      console.error("Error saving account settings", error)
+      setSettingsMessage({
+        type: "error",
+        text: error.message || "Ocurrió un error al guardar la configuración",
+      })
+    } else {
+      setSavedKeywordDistribution(formattedDistribution)
+      setSettingsMessage({ type: "success", text: "Configuración guardada" })
+    }
+
+    setIsSavingSettings(false)
+  }
+
   const totalActiveSources = Object.values(activeSources).filter(Boolean).length
 
   return (
@@ -188,7 +308,14 @@ export default function ConfigPage({
                 type="number"
                 min={0}
                 value={dailyMentionLimit}
-                onChange={(event) => setDailyMentionLimit(Number(event.target.value))}
+                onChange={(event) => {
+                  const value = Number(event.target.value)
+                  if (Number.isNaN(value)) {
+                    setDailyMentionLimit(0)
+                  } else {
+                    setDailyMentionLimit(Math.max(0, Math.floor(value)))
+                  }
+                }}
                 className="bg-slate-800/50 border-slate-700/50 text-white"
               />
             </div>
@@ -258,6 +385,25 @@ export default function ConfigPage({
               ) : (
                 <p className="text-sm text-slate-500">
                   Agrega keywords para poder distribuir tu límite de menciones.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                onClick={handleSaveSettings}
+                disabled={isSavingSettings || isLoadingSettings || !accountId}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+              >
+                {isSavingSettings ? "Guardando..." : "Guardar"}
+              </Button>
+              {settingsMessage && (
+                <p
+                  className={`text-sm ${
+                    settingsMessage.type === "error" ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  {settingsMessage.text}
                 </p>
               )}
             </div>
