@@ -824,27 +824,41 @@ export default function ModernSocialListeningApp({ onLogout }) {
         text: `No se pudo agregar la keyword: ${error?.message || "Error desconocido"}`,
       })
     } else {
-      const { error: resetError } = await supabase
-        .from("account_settings")
-        .upsert(
-          {
-            account_id: accountId,
-            keyword_distribution: null,
-          },
-          { onConflict: "account_id" },
-        )
-
-      if (resetError) {
-        console.error("Error resetting keyword distribution", resetError)
-      } else {
-        setAccountSettingsVersion((prev) => prev + 1)
-      }
-
       setKeywords((k) => [...data, ...k])
       setNewKeyword("")
       setPendingKeyword("")
       setNewKeywordLang("")
       setShowKeywordLangs(false)
+
+      const { data: resetData, error: resetError } = await supabase
+        .from("account_settings")
+        .update({ keyword_distribution: null })
+        .eq("account_id", accountId)
+        .select()
+
+      if (resetError) {
+        console.error("Error resetting keyword distribution", resetError)
+        setAddKeywordMessage({
+          type: "error",
+          text:
+            resetError.message ||
+            "No se pudo reiniciar la distribución de keywords. Inténtalo de nuevo o contacta al administrador.",
+        })
+        return
+      }
+
+      if (!resetData || resetData.length === 0) {
+        console.warn(
+          "No account settings rows were updated. Ensure the row exists or seed it via an authorized flow.",
+        )
+        setAddKeywordMessage({
+          type: "error",
+          text: "No se encontró configuración para esta cuenta. Crea el registro desde un flujo autorizado (por ejemplo, desde el backend) o registra la incidencia.",
+        })
+        return
+      }
+
+      setAccountSettingsVersion((prev) => prev + 1)
       setAddKeywordMessage({ type: "success", text: "Keyword agregada" })
     }
   }
