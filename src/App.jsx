@@ -824,39 +824,48 @@ export default function ModernSocialListeningApp({ onLogout }) {
         text: `No se pudo agregar la keyword: ${error?.message || "Error desconocido"}`,
       })
     } else {
-      setKeywords((k) => [...data, ...k])
-      setNewKeyword("")
-      setPendingKeyword("")
-      setNewKeywordLang("")
-      setShowKeywordLangs(false)
+      const [insertedKeyword] = data
 
       const { data: resetData, error: resetError } = await supabase
         .from("account_settings")
         .update({ keyword_distribution: null })
         .eq("account_id", accountId)
-        .select()
+        .select("account_id")
+        .maybeSingle()
 
-      if (resetError) {
-        console.error("Error resetting keyword distribution", resetError)
+      if (resetError || !resetData) {
+        if (resetError) {
+          console.error("Error resetting keyword distribution", resetError)
+        } else {
+          console.warn(
+            "No account settings rows were updated. Ensure the row exists or seed it via an authorized flow.",
+          )
+        }
+
+        const { error: rollbackError } = await supabase
+          .from("dim_keywords")
+          .delete()
+          .eq("keyword_id", insertedKeyword.keyword_id)
+          .eq("account_id", accountId)
+
+        if (rollbackError) {
+          console.error("Error rolling back keyword insertion", rollbackError)
+        }
+
         setAddKeywordMessage({
           type: "error",
           text:
-            resetError.message ||
+            resetError?.message ||
             "No se pudo reiniciar la distribución de keywords. Inténtalo de nuevo o contacta al administrador.",
         })
         return
       }
 
-      if (!resetData || resetData.length === 0) {
-        console.warn(
-          "No account settings rows were updated. Ensure the row exists or seed it via an authorized flow.",
-        )
-        setAddKeywordMessage({
-          type: "error",
-          text: "No se encontró configuración para esta cuenta. Crea el registro desde un flujo autorizado (por ejemplo, desde el backend) o registra la incidencia.",
-        })
-        return
-      }
+      setKeywords((k) => [insertedKeyword, ...k])
+      setNewKeyword("")
+      setPendingKeyword("")
+      setNewKeywordLang("")
+      setShowKeywordLangs(false)
 
       setAccountSettingsVersion((prev) => prev + 1)
       setAddKeywordMessage({ type: "success", text: "Keyword agregada" })
