@@ -260,15 +260,25 @@ export default function ConfigPage({
       keyword_distribution: formattedDistribution,
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("account_settings")
-      .upsert(payload, { onConflict: "account_id" })
+      .update(payload)
+      .eq("account_id", accountId)
+      .select()
 
     if (error) {
       console.error("Error saving account settings", error)
       setSettingsMessage({
         type: "error",
         text: error.message || "Ocurrió un error al guardar la configuración",
+      })
+    } else if (!data || data.length === 0) {
+      console.warn(
+        "No account settings rows were updated. Ensure the row exists or seed it via an authorized flow.",
+      )
+      setSettingsMessage({
+        type: "error",
+        text: "No se encontró configuración para esta cuenta. Crea el registro desde un flujo autorizado (por ejemplo, desde el backend) o registra la incidencia.",
       })
     } else {
       setSavedKeywordDistribution(formattedDistribution)
