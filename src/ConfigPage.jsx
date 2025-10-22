@@ -568,7 +568,7 @@ export default function ConfigPage({
             )}
 
             <Button
-              onClick={saveKeywordChanges}
+              onClick={() => saveKeywordChanges(keywordDistribution)}
               disabled={Object.keys(keywordChanges).length === 0}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
             >
