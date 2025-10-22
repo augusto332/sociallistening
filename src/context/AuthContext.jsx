@@ -23,25 +23,47 @@ export const AuthProvider = ({ children }) => {
     const fetchUserPlan = async (currentSession) => {
       if (currentSession?.user) {
         setPlanLoading(true)
-        const { data, error } = await supabase
+
+        const {
+          data: profile,
+          error: profileError,
+        } = await supabase
           .from('profiles')
-          .select('plan, role, account_id')
+          .select('role, account_id')
           .eq('user_id', currentSession.user.id)
           .single()
 
-        const nextPlan = data?.plan || 'free'
-        const nextRole = data?.role || 'contributor'
-        const nextAccountId = data?.account_id ?? null
-
-        if (!error) {
-          setPlan(nextPlan)
-          setRole(nextRole)
-          setAccountId(nextAccountId)
-        } else {
+        if (profileError) {
           setPlan('free')
           setRole('contributor')
           setAccountId(null)
+          setPlanLoading(false)
+          return
         }
+
+        const nextRole = profile?.role || 'contributor'
+        const nextAccountId = profile?.account_id ?? null
+
+        let nextPlan = 'free'
+
+        if (nextAccountId) {
+          const {
+            data: account,
+            error: accountError,
+          } = await supabase
+            .from('accounts')
+            .select('plan')
+            .eq('id', nextAccountId)
+            .single()
+
+          if (!accountError && account?.plan) {
+            nextPlan = account.plan
+          }
+        }
+
+        setPlan(nextPlan)
+        setRole(nextRole)
+        setAccountId(nextAccountId)
         setPlanLoading(false)
         return
       }
