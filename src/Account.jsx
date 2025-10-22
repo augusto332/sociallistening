@@ -33,6 +33,7 @@ import {
   Users,
   ChevronDown,
   Menu,
+  UserPlus,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -98,6 +99,8 @@ export default function Account() {
   const [teamMembers, setTeamMembers] = useState([])
   const [teamLoading, setTeamLoading] = useState(false)
   const [teamError, setTeamError] = useState(null)
+  const [newMemberEmail, setNewMemberEmail] = useState("")
+  const [newMemberTempPassword, setNewMemberTempPassword] = useState("")
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
@@ -751,6 +754,71 @@ export default function Account() {
       case "team":
         return (
           <div className="space-y-6">
+            <Card className="bg-gradient-to-br from-slate-800/50 to-slate-800/30 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <UserPlus className="w-5 h-5" />
+                      Invita a un nuevo miembro
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Agrega usuarios a tu equipo ingresando su correo electrónico y una contraseña temporaria.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300 flex items-center gap-2" htmlFor="new-member-email">
+                        <Mail className="w-4 h-4" />
+                        Correo electrónico del miembro
+                      </label>
+                      <Input
+                        id="new-member-email"
+                        type="email"
+                        placeholder="nombre@empresa.com"
+                        className="bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20"
+                        value={newMemberEmail}
+                        onChange={(event) => setNewMemberEmail(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300 flex items-center gap-2" htmlFor="new-member-password">
+                        <Lock className="w-4 h-4" />
+                        Contraseña temporaria
+                      </label>
+                      <Input
+                        id="new-member-password"
+                        type="password"
+                        placeholder="Ingresa una contraseña segura"
+                        className="bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20"
+                        value={newMemberTempPassword}
+                        onChange={(event) => setNewMemberTempPassword(event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      Esta acción estará disponible próximamente.
+                    </p>
+                    <Button
+                      type="button"
+                      disabled
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Añadir al equipo
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Gestiona tu equipo</CardTitle>
