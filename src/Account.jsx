@@ -176,7 +176,6 @@ export default function Account() {
       const { count: mentionsCount } = await supabase
         .from("fact_mentions")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
         .gte("created_at", thirtyDaysAgo.toISOString())
 
       setStats({
