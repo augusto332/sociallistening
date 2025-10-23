@@ -34,6 +34,7 @@ import {
   ChevronDown,
   Menu,
   UserPlus,
+  Loader2,
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -101,6 +102,10 @@ export default function Account() {
   const [teamError, setTeamError] = useState(null)
   const [newMemberEmail, setNewMemberEmail] = useState("")
   const [newMemberTempPassword, setNewMemberTempPassword] = useState("")
+  const [addingMember, setAddingMember] = useState(false)
+  const [newMemberError, setNewMemberError] = useState(null)
+  const [newMemberSuccess, setNewMemberSuccess] = useState(null)
+  const [teamReloadKey, setTeamReloadKey] = useState(0)
   const navigate = useNavigate()
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
@@ -228,7 +233,76 @@ export default function Account() {
     }
 
     fetchTeamMembers()
-  }, [user])
+  }, [user, teamReloadKey])
+
+  const handleAddTeamMember = async () => {
+    if (!newMemberEmail.trim() || !newMemberTempPassword.trim()) {
+      setNewMemberError("Debes completar el correo y la contraseña temporaria.")
+      setNewMemberSuccess(null)
+      return
+    }
+
+    setAddingMember(true)
+    setNewMemberError(null)
+    setNewMemberSuccess(null)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const accessToken = session?.access_token
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/+$/, "")
+
+      if (!accessToken) {
+        throw new Error("No se pudo obtener la sesión actual. Vuelve a iniciar sesión e inténtalo nuevamente.")
+      }
+
+      if (!supabaseUrl) {
+        throw new Error("La URL de Supabase no está configurada correctamente.")
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-collaborator`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          email: newMemberEmail.trim(),
+          password: newMemberTempPassword,
+        }),
+      })
+
+      let responsePayload = null
+
+      try {
+        responsePayload = await response.json()
+      } catch (_error) {
+        responsePayload = null
+      }
+
+      if (!response.ok) {
+        const errorMessage =
+          (responsePayload && (responsePayload.error || responsePayload.message)) ||
+          "No se pudo crear el colaborador. Intenta nuevamente."
+        throw new Error(errorMessage)
+      }
+
+      const successMessage =
+        (responsePayload && (responsePayload.message || responsePayload?.data?.message)) ||
+        "El nuevo colaborador fue creado correctamente."
+
+      setNewMemberSuccess(successMessage)
+      setNewMemberEmail("")
+      setNewMemberTempPassword("")
+      setTeamReloadKey((previousKey) => previousKey + 1)
+    } catch (error) {
+      setNewMemberError(error.message || "Ocurrió un error al crear el colaborador.")
+    } finally {
+      setAddingMember(false)
+    }
+  }
 
   const togglePasswordFields = () => {
     setShowPasswordFields((prev) => !prev)
@@ -782,7 +856,11 @@ export default function Account() {
                         placeholder="nombre@empresa.com"
                         className="bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20"
                         value={newMemberEmail}
-                        onChange={(event) => setNewMemberEmail(event.target.value)}
+                        onChange={(event) => {
+                          setNewMemberEmail(event.target.value)
+                          setNewMemberError(null)
+                          setNewMemberSuccess(null)
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -796,23 +874,46 @@ export default function Account() {
                         placeholder="Ingresa una contraseña segura"
                         className="bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20"
                         value={newMemberTempPassword}
-                        onChange={(event) => setNewMemberTempPassword(event.target.value)}
+                        onChange={(event) => {
+                          setNewMemberTempPassword(event.target.value)
+                          setNewMemberError(null)
+                          setNewMemberSuccess(null)
+                        }}
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <p className="text-sm text-slate-400 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
-                      Esta acción estará disponible próximamente.
-                    </p>
+                    <div className="flex-1 space-y-2">
+                      {newMemberError && (
+                        <p className="text-sm text-red-400 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                          {newMemberError}
+                        </p>
+                      )}
+                      {newMemberSuccess && (
+                        <p className="text-sm text-emerald-400 flex items-center gap-2">
+                          <Check className="w-4 h-4 flex-shrink-0" />
+                          {newMemberSuccess}
+                        </p>
+                      )}
+                    </div>
                     <Button
                       type="button"
-                      disabled
+                      onClick={handleAddTeamMember}
+                      disabled={
+                        addingMember ||
+                        !newMemberEmail.trim() ||
+                        !newMemberTempPassword.trim()
+                      }
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Añadir al equipo
+                      {addingMember ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <UserPlus className="w-4 h-4 mr-2" />
+                      )}
+                      {addingMember ? "Creando..." : "Añadir al equipo"}
                     </Button>
                   </div>
                 </div>
