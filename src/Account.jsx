@@ -77,6 +77,7 @@ const roleConfig = {
 
 export default function Account() {
   const { user, plan, planLoading, role, accountId } = useAuth()
+  const userId = user?.id
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
   const [originalAccountName, setOriginalAccountName] = useState("")
@@ -189,7 +190,7 @@ export default function Account() {
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
-      if (!user) return
+      if (!userId) return
 
       setTeamLoading(true)
       setTeamError(null)
@@ -198,7 +199,7 @@ export default function Account() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("account_id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .single()
 
         if (profileError) {
@@ -233,7 +234,7 @@ export default function Account() {
     }
 
     fetchTeamMembers()
-  }, [user, teamReloadKey])
+  }, [userId, teamReloadKey])
 
   const handleAddTeamMember = async () => {
     if (!newMemberEmail.trim() || !newMemberTempPassword.trim()) {
