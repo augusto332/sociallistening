@@ -988,13 +988,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }, [hasMore, isLoadingMore, currentTab, onlyFavorites, mentions, mentionsFilters])
 
   const fetchSavedReports = async () => {
-    const { data: userData } = await supabase.auth.getUser()
-    const { user } = userData || {}
-    if (!user) return
+    if (!accountId) return
     const { data, error } = await supabase
       .from("user_reports_parameters")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("account_id", accountId)
     if (error) {
       console.error("Error fetching reports", error)
       return
@@ -1017,10 +1015,10 @@ export default function ModernSocialListeningApp({ onLogout }) {
   }
 
   useEffect(() => {
-    if (keywords.length) {
+    if (keywords.length && accountId) {
       fetchSavedReports()
     }
-  }, [keywords])
+  }, [keywords, accountId])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
