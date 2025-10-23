@@ -102,6 +102,7 @@ export default function Account() {
   const [teamError, setTeamError] = useState(null)
   const [newMemberEmail, setNewMemberEmail] = useState("")
   const [newMemberTempPassword, setNewMemberTempPassword] = useState("")
+  const [showNewMemberTempPassword, setShowNewMemberTempPassword] = useState(false)
   const [addingMember, setAddingMember] = useState(false)
   const [newMemberError, setNewMemberError] = useState(null)
   const [newMemberSuccess, setNewMemberSuccess] = useState(null)
@@ -868,18 +869,32 @@ export default function Account() {
                         <Lock className="w-4 h-4" />
                         Contraseña temporaria
                       </label>
-                      <Input
-                        id="new-member-password"
-                        type="password"
-                        placeholder="Ingresa una contraseña segura"
-                        className="bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-500/50 focus:ring-blue-500/20"
-                        value={newMemberTempPassword}
-                        onChange={(event) => {
-                          setNewMemberTempPassword(event.target.value)
-                          setNewMemberError(null)
-                          setNewMemberSuccess(null)
-                        }}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="new-member-password"
+                          type={showNewMemberTempPassword ? "text" : "password"}
+                          placeholder="Ingresa una contraseña segura"
+                          className="bg-slate-800/50 border-slate-700/50 text-white pr-10 focus:border-blue-500/50 focus:ring-blue-500/20"
+                          value={newMemberTempPassword}
+                          onChange={(event) => {
+                            setNewMemberTempPassword(event.target.value)
+                            setNewMemberError(null)
+                            setNewMemberSuccess(null)
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewMemberTempPassword((prev) => !prev)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 transform text-slate-400 hover:text-slate-300 transition-colors"
+                          aria-label={showNewMemberTempPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        >
+                          {showNewMemberTempPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
