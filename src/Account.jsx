@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/context/AuthContext"
@@ -77,6 +77,7 @@ const roleConfig = {
 
 export default function Account() {
   const { user, plan, planLoading, role, accountId } = useAuth()
+  const isAdmin = role?.toLowerCase?.() === "admin"
   const userId = user?.id
   const [accountEmail, setAccountEmail] = useState("")
   const [accountName, setAccountName] = useState("")
@@ -237,6 +238,7 @@ export default function Account() {
   }, [userId, teamReloadKey])
 
   const handleAddTeamMember = async () => {
+    if (!isAdmin) return
     if (!newMemberEmail.trim() || !newMemberTempPassword.trim()) {
       setNewMemberError("Debes completar el correo y la contraseña temporaria.")
       setNewMemberSuccess(null)
@@ -436,28 +438,42 @@ export default function Account() {
     })
   }
 
-  const menuItems = [
-    {
-      id: "profile",
-      title: "Mi Perfil",
-      icon: User,
-    },
-    {
-      id: "security",
-      title: "Seguridad",
-      icon: Shield,
-    },
-    {
-      id: "plan",
-      title: "Plan y Facturación",
-      icon: CreditCard,
-    },
-    {
-      id: "team",
-      title: "Gestionar equipo",
-      icon: Users,
-    },
-  ]
+  const menuItems = useMemo(() => {
+    const items = [
+      {
+        id: "profile",
+        title: "Mi Perfil",
+        icon: User,
+      },
+      {
+        id: "security",
+        title: "Seguridad",
+        icon: Shield,
+      },
+      {
+        id: "plan",
+        title: "Plan y Facturación",
+        icon: CreditCard,
+      },
+      {
+        id: "team",
+        title: "Gestionar equipo",
+        icon: Users,
+      },
+    ]
+
+    if (isAdmin) {
+      return items
+    }
+
+    return items.filter((item) => item.id !== "plan" && item.id !== "team")
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (!isAdmin && (activeSection === "plan" || activeSection === "team")) {
+      setActiveSection("profile")
+    }
+  }, [isAdmin, activeSection])
 
   const renderSidebarContent = (onItemSelect) => (
     <nav className="space-y-1 flex-1">
