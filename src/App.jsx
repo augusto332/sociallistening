@@ -224,7 +224,8 @@ export default function ModernSocialListeningApp({ onLogout }) {
   const [reportScheduleDay, setReportScheduleDay] = useState("1")
   const [reportScheduleTime, setReportScheduleTime] = useState("09:00")
   const [reportScheduleTimezone, setReportScheduleTimezone] = useState("-05:00")
-  const { user, accountId } = useAuth()
+  const { user, accountId, role } = useAuth()
+  const isAdmin = role?.toLowerCase?.() === "admin"
   const avatarDisplayName = user?.user_metadata?.display_name || user?.email || ""
   const avatarLabel = avatarDisplayName ? avatarDisplayName.charAt(0).toUpperCase() : "U"
   const isConfigRoute = location.pathname.startsWith("/app/config")
@@ -1508,7 +1509,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setHelpMenuOpen(false)
   }
 
-  const SidebarContent = ({ onTabSelect, onConfigNavigate }) => (
+  const SidebarContent = ({ onTabSelect, onConfigNavigate, isAdmin }) => (
     <>
       <nav className="space-y-1">
         <button
@@ -1553,21 +1554,23 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
       <div className="flex-1" />
 
-      <NavLink
-        to="/app/config"
-        className={({ isActive }) =>
-          cn(
-            "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
-            isActive
-              ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-700/50",
-          )
-        }
-        onClick={onConfigNavigate}
-      >
-        <Settings className="w-4 h-4" />
-        Configuración
-      </NavLink>
+      {isAdmin && (
+        <NavLink
+          to="/app/config"
+          className={({ isActive }) =>
+            cn(
+              "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+              isActive
+                ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-blue-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-700/50",
+            )
+          }
+          onClick={onConfigNavigate}
+        >
+          <Settings className="w-4 h-4" />
+          Configuración
+        </NavLink>
+      )}
     </>
   )
 
@@ -1676,7 +1679,11 @@ export default function ModernSocialListeningApp({ onLogout }) {
       <div className="flex flex-col lg:flex-row">
         {/* Modern Sidebar */}
         <aside className="hidden md:flex lg:flex lg:w-64 bg-slate-800/50 backdrop-blur-xl border-r border-slate-700/50 p-6 flex-col space-y-2 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <SidebarContent onTabSelect={handleTabChange} onConfigNavigate={handleConfigNavigate} />
+          <SidebarContent
+            onTabSelect={handleTabChange}
+            onConfigNavigate={handleConfigNavigate}
+            isAdmin={isAdmin}
+          />
         </aside>
 
         {isSidebarOpen && (
@@ -1693,6 +1700,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
                 <SidebarContent
                   onTabSelect={handleTabChange}
                   onConfigNavigate={handleConfigNavigate}
+                  isAdmin={isAdmin}
                 />
               </div>
             </div>
@@ -1705,24 +1713,28 @@ export default function ModernSocialListeningApp({ onLogout }) {
             <Route
               path="config"
               element={
-                <ConfigPage
-                  newKeyword={newKeyword}
-                  setNewKeyword={setNewKeyword}
-                  openKeywordLangSelector={openKeywordLangSelector}
-                  showKeywordLangs={showKeywordLangs}
-                  setShowKeywordLangs={setShowKeywordLangs}
-                  newKeywordLang={newKeywordLang}
-                  setNewKeywordLang={setNewKeywordLang}
-                  saveNewKeyword={saveNewKeyword}
-                  addKeywordMessage={addKeywordMessage}
-                  keywords={keywords}
-                  handleKeywordToggle={handleKeywordToggle}
-                  saveKeywordChanges={saveKeywordChanges}
-                  keywordChanges={keywordChanges}
-                  saveKeywordMessage={saveKeywordMessage}
-                  accountId={accountId}
-                  accountSettingsVersion={accountSettingsVersion}
-                />
+                isAdmin ? (
+                  <ConfigPage
+                    newKeyword={newKeyword}
+                    setNewKeyword={setNewKeyword}
+                    openKeywordLangSelector={openKeywordLangSelector}
+                    showKeywordLangs={showKeywordLangs}
+                    setShowKeywordLangs={setShowKeywordLangs}
+                    newKeywordLang={newKeywordLang}
+                    setNewKeywordLang={setNewKeywordLang}
+                    saveNewKeyword={saveNewKeyword}
+                    addKeywordMessage={addKeywordMessage}
+                    keywords={keywords}
+                    handleKeywordToggle={handleKeywordToggle}
+                    saveKeywordChanges={saveKeywordChanges}
+                    keywordChanges={keywordChanges}
+                    saveKeywordMessage={saveKeywordMessage}
+                    accountId={accountId}
+                    accountSettingsVersion={accountSettingsVersion}
+                  />
+                ) : (
+                  <Navigate to="mentions" replace />
+                )
               }
             />
             <Route path="*" element={<Navigate to="mentions" replace />} />
