@@ -765,7 +765,7 @@ export default function ModernSocialListeningApp({ onLogout }) {
     setKeywordChanges((prev) => ({ ...prev, [id]: active }))
   }
 
-  const saveKeywordChanges = async (distributionSnapshot) => {
+  const saveKeywordChanges = async () => {
     setSaveKeywordMessage(null)
     let hasError = false
     let errorMsg = ""
@@ -787,74 +787,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
 
     if (!accountId) {
       setSaveKeywordMessage({ type: "success", text: "Cambios guardados" })
-      return
-    }
-
-    const formattedDistribution = (() => {
-      if (Array.isArray(distributionSnapshot)) {
-        if (distributionSnapshot.length === 0) {
-          return null
-        }
-
-        const mapped = distributionSnapshot.reduce((acc, item) => {
-          const keywordId = item?.keyword_id ?? item?.id
-          if (keywordId === undefined || keywordId === null) {
-            return acc
-          }
-
-          const percentage =
-            typeof item.percentage === "number" && Number.isFinite(item.percentage)
-              ? Math.max(0, Math.min(100, Math.round(item.percentage)))
-              : 0
-
-          acc.push({ keyword_id: keywordId, percentage })
-          return acc
-        }, [])
-
-        return mapped.length ? mapped : null
-      }
-
-      if (!keywords.length) {
-        return null
-      }
-
-      const activeKeywords = keywords.filter((keyword) => keyword.active)
-      if (!activeKeywords.length) {
-        return keywords.map((keyword) => ({ keyword_id: keyword.keyword_id, percentage: 0 }))
-      }
-
-      const evenShare = Math.floor(100 / activeKeywords.length)
-      let remainder = 100 - evenShare * activeKeywords.length
-
-      return keywords.map((keyword) => {
-        if (!keyword.active) {
-          return { keyword_id: keyword.keyword_id, percentage: 0 }
-        }
-
-        const extra = remainder > 0 ? 1 : 0
-        if (remainder > 0) {
-          remainder -= 1
-        }
-
-        return { keyword_id: keyword.keyword_id, percentage: evenShare + extra }
-      })
-    })()
-
-    const { error: distributionError } = await supabase
-      .from("account_settings")
-      .update({ keyword_distribution: formattedDistribution })
-      .eq("account_id", accountId)
-      .select("account_id")
-      .maybeSingle()
-
-    if (distributionError) {
-      console.error("Error updating keyword distribution", distributionError)
-      setSaveKeywordMessage({
-        type: "error",
-        text:
-          distributionError.message ||
-          "Los estados de las keywords se guardaron, pero no pudimos actualizar la distribución. Inténtalo nuevamente.",
-      })
       return
     }
 
@@ -901,41 +833,6 @@ export default function ModernSocialListeningApp({ onLogout }) {
       })
     } else {
       const [insertedKeyword] = data
-
-      const { data: resetData, error: resetError } = await supabase
-        .from("account_settings")
-        .update({ keyword_distribution: null })
-        .eq("account_id", accountId)
-        .select("account_id")
-        .maybeSingle()
-
-      if (resetError || !resetData) {
-        if (resetError) {
-          console.error("Error resetting keyword distribution", resetError)
-        } else {
-          console.warn(
-            "No account settings rows were updated. Ensure the row exists or seed it via an authorized flow.",
-          )
-        }
-
-        const { error: rollbackError } = await supabase
-          .from("dim_keywords")
-          .delete()
-          .eq("keyword_id", insertedKeyword.keyword_id)
-          .eq("account_id", accountId)
-
-        if (rollbackError) {
-          console.error("Error rolling back keyword insertion", rollbackError)
-        }
-
-        setAddKeywordMessage({
-          type: "error",
-          text:
-            resetError?.message ||
-            "No se pudo reiniciar la distribución de keywords. Inténtalo de nuevo o contacta al administrador.",
-        })
-        return
-      }
 
       setKeywords((k) => [insertedKeyword, ...k])
       setNewKeyword("")
