@@ -26,7 +26,6 @@ export default function ConfigPage({
   accountId,
   accountSettingsVersion,
 }) {
-  const [dailyMentionLimit, setDailyMentionLimit] = useState(100)
   const availableSources = useMemo(
     () => [
       { id: "youtube", label: "YouTube" },
@@ -98,7 +97,6 @@ export default function ConfigPage({
   useEffect(() => {
     if (!accountId) {
       setActiveSources(defaultActiveSources)
-      setDailyMentionLimit(100)
       setSavedKeywordDistribution(null)
       setKeywordDistribution([])
       return
@@ -113,7 +111,7 @@ export default function ConfigPage({
       const { data, error } = await supabase
         .from("account_settings")
         .select(
-          "mentions_daily_limit, keyword_distribution, is_youtube_active, is_twitter_active, is_reddit_active, is_instagram_active, is_tiktok_active, is_facebook_active, is_others_active",
+          "keyword_distribution, is_youtube_active, is_twitter_active, is_reddit_active, is_instagram_active, is_tiktok_active, is_facebook_active, is_others_active",
         )
         .eq("account_id", accountId)
         .maybeSingle()
@@ -123,7 +121,6 @@ export default function ConfigPage({
       if (error) {
         console.error("Error fetching account settings", error)
         setActiveSources(defaultActiveSources)
-        setDailyMentionLimit(100)
         setSavedKeywordDistribution(null)
       } else if (data) {
         setActiveSources({
@@ -135,9 +132,6 @@ export default function ConfigPage({
           facebook: !!data.is_facebook_active,
           others: !!data.is_others_active,
         })
-        setDailyMentionLimit(
-          typeof data.mentions_daily_limit === "number" ? data.mentions_daily_limit : 100,
-        )
         setSavedKeywordDistribution(
           Array.isArray(data.keyword_distribution) || data.keyword_distribution === null
             ? data.keyword_distribution
@@ -145,7 +139,6 @@ export default function ConfigPage({
         )
       } else {
         setActiveSources(defaultActiveSources)
-        setDailyMentionLimit(100)
         setSavedKeywordDistribution(null)
       }
 
@@ -296,7 +289,6 @@ export default function ConfigPage({
     setIsSavingSettings(true)
     setSettingsMessage(null)
 
-    const sanitizedLimit = Number.isFinite(dailyMentionLimit) ? dailyMentionLimit : 0
     const formattedDistribution = keywordDistribution.length
       ? keywordDistribution.map((item) => ({
           keyword_id: item.id,
@@ -306,7 +298,6 @@ export default function ConfigPage({
 
     const payload = {
       account_id: accountId,
-      mentions_daily_limit: Math.max(0, Math.floor(sanitizedLimit)),
       is_youtube_active: !!activeSources.youtube,
       is_twitter_active: !!activeSources.twitter,
       is_reddit_active: !!activeSources.reddit,
@@ -362,29 +353,8 @@ export default function ConfigPage({
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-white">Límites y preferencias de uso</h3>
               <p className="text-sm text-slate-400">
-                Ajusta los límites diarios y decide cómo repartir tus menciones entre plataformas y keywords.
+                Ajusta tus preferencias y decide cómo repartir tus menciones entre plataformas y keywords.
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-200">Límite de menciones por día</span>
-                <span className="text-xs text-slate-400">Total disponible: {dailyMentionLimit}</span>
-              </div>
-              <Input
-                type="number"
-                min={0}
-                value={dailyMentionLimit}
-                onChange={(event) => {
-                  const value = Number(event.target.value)
-                  if (Number.isNaN(value)) {
-                    setDailyMentionLimit(0)
-                  } else {
-                    setDailyMentionLimit(Math.max(0, Math.floor(value)))
-                  }
-                }}
-                className="bg-slate-800/50 border-slate-700/50 text-white"
-              />
             </div>
 
             <div className="space-y-3">
@@ -412,16 +382,15 @@ export default function ConfigPage({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-200">Límite por keyword</span>
-                <span className="text-xs text-slate-400">
-                  Distribuye el 100% de {dailyMentionLimit} menciones
+                <span className="text-sm font-medium text-slate-200">
+                  Distribución de menciones por palabra clave
                 </span>
+                <span className="text-xs text-slate-400">Distribuye el 100% de tus menciones</span>
               </div>
 
               {keywordDistribution.length ? (
                 <div className="space-y-4">
                   {keywordDistribution.map((item) => {
-                    const mentions = Math.round((dailyMentionLimit * item.percentage) / 100)
                     const isActive = item.active
                     const sliderDisabled = !isActive || activeKeywordCount <= 1
                     return (
@@ -436,7 +405,7 @@ export default function ConfigPage({
                         >
                           <span className="font-medium">{item.label}</span>
                           <span className={`${isActive ? "text-slate-400" : "text-slate-500"}`}>
-                            {item.percentage}% · {mentions} menciones
+                            {item.percentage}%
                           </span>
                         </div>
                         <div className="relative h-3">
@@ -469,7 +438,7 @@ export default function ConfigPage({
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  Agrega keywords para poder distribuir tu límite de menciones.
+                  Agrega keywords para poder distribuir tus menciones.
                 </p>
               )}
             </div>
